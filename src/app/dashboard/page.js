@@ -8,11 +8,12 @@ import { useClassStore } from '@/stores/useClassStore';
 import { useGalaxyStore } from '@/stores/useGalaxyStore';
 import { useRaceStore } from '@/stores/useRaceStore';
 import { connectSocket, getSocket } from '@/lib/socket';
+import s from './page.module.css';
 
 const DashLoadingUI = ({ emoji, text }) => (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-void)' }}>
-        <div className="animate-spin" style={{ fontSize: '2rem' }}>{emoji}</div>
-        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>{text}</p>
+    <div className={s.loadingContainer}>
+        <div className={`animate-spin ${s.loadingEmoji}`}>{emoji}</div>
+        <p className={s.loadingText}>{text}</p>
     </div>
 );
 
@@ -28,26 +29,26 @@ const GradientRaceScene = dynamic(() => import('@/components/3d/GradientRaceScen
 
 export default function DashboardPage() {
     const isMobile = useIsMobile();
-    const students = useClassStore((s) => s.students);
-    const setStudents = useClassStore((s) => s.setStudents);
-    const addStudent = useClassStore((s) => s.addStudent);
-    const removeStudent = useClassStore((s) => s.removeStudent);
-    const notifications = useClassStore((s) => s.notifications);
-    const addNotification = useClassStore((s) => s.addNotification);
+    const students = useClassStore((st) => st.students);
+    const setStudents = useClassStore((st) => st.setStudents);
+    const addStudent = useClassStore((st) => st.addStudent);
+    const removeStudent = useClassStore((st) => st.removeStudent);
+    const notifications = useClassStore((st) => st.notifications);
+    const addNotification = useClassStore((st) => st.addNotification);
 
-    const stars = useGalaxyStore((s) => s.stars);
-    const addOrUpdateStar = useGalaxyStore((s) => s.addOrUpdateStar);
-    const removeStar = useGalaxyStore((s) => s.removeStar);
-    const loadFromRoomState = useGalaxyStore((s) => s.loadFromRoomState);
+    const stars = useGalaxyStore((st) => st.stars);
+    const addOrUpdateStar = useGalaxyStore((st) => st.addOrUpdateStar);
+    const removeStar = useGalaxyStore((st) => st.removeStar);
+    const loadFromRoomState = useGalaxyStore((st) => st.loadFromRoomState);
 
-    const racePhase = useRaceStore((s) => s.racePhase);
-    const setRacePhase = useRaceStore((s) => s.setRacePhase);
-    const raceTeams = useRaceStore((s) => s.teams);
-    const setTeams = useRaceStore((s) => s.setTeams);
-    const updateBalls = useRaceStore((s) => s.updateBalls);
-    const setResults = useRaceStore((s) => s.setResults);
-    const raceResults = useRaceStore((s) => s.results);
-    const resetRace = useRaceStore((s) => s.reset);
+    const racePhase = useRaceStore((st) => st.racePhase);
+    const setRacePhase = useRaceStore((st) => st.setRacePhase);
+    const raceTeams = useRaceStore((st) => st.teams);
+    const setTeams = useRaceStore((st) => st.setTeams);
+    const updateBalls = useRaceStore((st) => st.updateBalls);
+    const setResults = useRaceStore((st) => st.setResults);
+    const raceResults = useRaceStore((st) => st.results);
+    const resetRace = useRaceStore((st) => st.reset);
 
     const [roomCode, setRoomCode] = useState('');
     const [isConnected, setIsConnected] = useState(false);
@@ -208,18 +209,18 @@ export default function DashboardPage() {
     // ── 미연결 상태 ──
     if (!isConnected) {
         return (
-            <div style={styles.loginContainer}>
-                <div className="glass-card animate-fade-in" style={styles.loginCard}>
-                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                        <div style={{ fontSize: '4rem', marginBottom: 12 }} className="animate-float">🎓</div>
-                        <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+            <div className={s.loginContainer}>
+                <div className={`glass-card animate-fade-in ${s.loginCard}`}>
+                    <div className={s.loginHeader}>
+                        <div className={`animate-float ${s.loginEmoji}`}>🎓</div>
+                        <h1 className={s.loginTitle}>
                             <span className="text-gradient">교사 관제탑</span>
                         </h1>
-                        <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
+                        <p className={s.loginSubtext}>
                             학생들의 우주를 한눈에 관찰하고 관리합니다
                         </p>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className={s.loginForm}>
                         <div>
                             <label className="label-cosmic">수업 방 코드</label>
                             <input
@@ -230,7 +231,7 @@ export default function DashboardPage() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
                             />
                         </div>
-                        <button className="btn-nova" style={{ width: '100%' }} onClick={handleConnect}>
+                        <button className={`btn-nova ${s.loginBtn}`} onClick={handleConnect}>
                             <span>🔭 관제탑 접속</span>
                         </button>
                     </div>
@@ -244,53 +245,48 @@ export default function DashboardPage() {
     const raceTeamCount = Object.keys(raceTeams).length;
 
     return (
-        <div style={{
-            ...styles.container,
-            ...(isMobile ? { height: 'auto', minHeight: '100vh', overflow: 'auto' } : {}),
-        }}>
+        <div className={`${s.container} ${isMobile ? s.containerMobile : ''}`}>
             {/* 상단 바 */}
-            <div style={styles.topBar}>
-                <div style={styles.topLeft}>
-                    <h1 style={styles.dashTitle}>🎓 관제탑</h1>
+            <div className={s.topBar}>
+                <div className={s.topLeft}>
+                    <h1 className={s.dashTitle}>🎓 관제탑</h1>
                     <span className="badge-glow online">🟢 방: {roomCode}</span>
                     <span className="badge-glow">👨‍🚀 {students.length}명</span>
 
                     {/* 주차 선택 탭 */}
-                    <div style={styles.weekTabs}>
+                    <div className={s.weekTabs}>
                         <button
-                            style={{ ...styles.weekTab, ...(activeWeek === 3 ? styles.weekTabActive : {}) }}
+                            className={`${s.weekTab} ${activeWeek === 3 ? s.weekTabActive : ''}`}
                             onClick={() => setActiveWeek(3)}
                         >
                             🌌 3주차
                         </button>
                         <button
-                            style={{ ...styles.weekTab, ...(activeWeek === 5 ? styles.weekTabActive : {}) }}
+                            className={`${s.weekTab} ${activeWeek === 5 ? s.weekTabActive : ''}`}
                             onClick={() => setActiveWeek(5)}
                         >
                             🏎️ 5주차
                         </button>
                         <button
-                            style={{ ...styles.weekTab, ...(activeWeek === 10 ? styles.weekTabActive : {}) }}
+                            className={`${s.weekTab} ${activeWeek === 10 ? s.weekTabActive : ''}`}
                             onClick={() => setActiveWeek(10)}
                         >
                             ✨ 10주차
                         </button>
                     </div>
                 </div>
-                <div style={styles.topRight}>
+                <div className={s.topRight}>
                     {activeWeek === 5 && (
                         <>
                             <button
-                                className="btn-nova"
-                                style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                                className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleStartRace}
                                 disabled={racePhase === 'racing'}
                             >
                                 <span>🏁 레이스 시작 ({raceTeamCount}팀)</span>
                             </button>
                             <button
-                                className="btn-nova"
-                                style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                                className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleResetRace}
                             >
                                 <span>🔄 리셋</span>
@@ -298,15 +294,13 @@ export default function DashboardPage() {
                         </>
                     )}
                     <button
-                        className="btn-nova"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                        className={`btn-nova ${s.btnSmall}`}
                         onClick={() => setShowQuizPanel(!showQuizPanel)}
                     >
                         <span>📝 퀴즈</span>
                     </button>
                     <button
-                        className="btn-nova"
-                        style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                        className={`btn-nova ${s.btnSmall}`}
                         onClick={() => handleTeacherCommand('PAUSE')}
                     >
                         <span>⏸️ 일시정지</span>
@@ -315,15 +309,9 @@ export default function DashboardPage() {
             </div>
 
             {/* 메인 영역 */}
-            <div style={{
-                ...styles.mainArea,
-                ...(isMobile ? { flexDirection: 'column' } : {}),
-            }}>
+            <div className={`${s.mainArea} ${isMobile ? s.mainAreaMobile : ''}`}>
                 {/* 3D 메인 스크린 */}
-                <div style={{
-                    ...styles.canvasArea,
-                    ...(isMobile ? { height: 350, flex: 'none' } : {}),
-                }}>
+                <div className={`${s.canvasArea} ${isMobile ? s.canvasAreaMobile : ''}`}>
                     {activeWeek === 3 ? (
                         <WebGLErrorBoundary fallbackProps={{
                             weekTitle: '3D 임베딩 은하수',
@@ -341,8 +329,8 @@ export default function DashboardPage() {
                     ) : (
                         <AttentionOverview attentionStates={attentionStates} />
                     )}
-                    <div style={styles.overlayBadge}>
-                        <span className="badge-glow" style={{ fontSize: '1rem', padding: '8px 18px' }}>
+                    <div className={s.overlayBadge}>
+                        <span className={`badge-glow ${s.overlayBadgeText}`}>
                             {activeWeek === 3
                                 ? '🌌 임베딩 은하수 · 빔프로젝터 투사용'
                                 : activeWeek === 5
@@ -353,36 +341,33 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 우측 사이드바 */}
-                <div style={{
-                    ...styles.sidebar,
-                    ...(isMobile ? { width: '100%', borderLeft: 'none', borderTop: '1px solid var(--border-subtle)' } : {}),
-                }}>
+                <div className={`${s.sidebar} ${isMobile ? s.sidebarMobile : ''}`}>
                     {/* 학생 현황 */}
-                    <div className="glass-card" style={styles.sideSection}>
+                    <div className={`glass-card ${s.sideSection}`}>
                         <label className="label-cosmic">접속 학생 현황</label>
                         {students.length === 0 ? (
-                            <div style={styles.emptyState}>
-                                <span style={{ fontSize: '2rem' }}>👨‍🚀</span>
+                            <div className={s.emptyState}>
+                                <span className={s.emptyIcon}>👨‍🚀</span>
                                 <p>학생들이 입장하면 여기에 표시됩니다</p>
                             </div>
                         ) : (
-                            <div style={styles.studentGrid}>
-                                {students.map((s) => (
-                                    <div key={s.id} style={styles.studentCard}>
-                                        <div style={{
-                                            ...styles.cardDot,
-                                            background: s.color || 'var(--accent-nova)',
-                                        }} />
+                            <div className={s.studentGrid}>
+                                {students.map((st) => (
+                                    <div key={st.id} className={s.studentCard}>
+                                        <div
+                                            className={s.cardDot}
+                                            style={{ background: st.color || 'var(--accent-nova)' }}
+                                        />
                                         <div>
-                                            <div style={styles.cardName}>{s.studentName}</div>
-                                            <div style={styles.cardSchool}>
-                                                {s.schoolCode === 'SEOUL_HIGH' ? '서울고' :
-                                                    s.schoolCode === 'DONGDUK_GIRL' ? '동덕여고' :
-                                                        s.schoolCode === 'SANGMUN_HIGH' ? '상문고' : s.schoolCode}
+                                            <div className={s.cardName}>{st.studentName}</div>
+                                            <div className={s.cardSchool}>
+                                                {st.schoolCode === 'SEOUL_HIGH' ? '서울고' :
+                                                    st.schoolCode === 'DONGDUK_GIRL' ? '동덕여고' :
+                                                        st.schoolCode === 'SANGMUN_HIGH' ? '상문고' : st.schoolCode}
                                             </div>
                                         </div>
-                                        {stars[s.id] && (
-                                            <span style={styles.cardWord}>{stars[s.id].word}</span>
+                                        {stars[st.id] && (
+                                            <span className={s.cardWord}>{stars[st.id].word}</span>
                                         )}
                                     </div>
                                 ))}
@@ -392,13 +377,13 @@ export default function DashboardPage() {
 
                     {/* 레이스 결과 (Week 5) */}
                     {activeWeek === 5 && raceResults.length > 0 && (
-                        <div className="glass-card" style={styles.sideSection}>
+                        <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">🏆 레이스 결과</label>
                             {raceResults.map((r) => (
-                                <div key={r.teamId} style={styles.resultRow}>
+                                <div key={r.teamId} className={s.resultRow}>
                                     <span>{r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}</span>
-                                    <span style={{ flex: 1, fontWeight: 600, fontSize: '0.82rem' }}>{r.teamName}</span>
-                                    <span style={{ fontSize: '0.75rem', color: r.status === 'escaped' ? '#f43f5e' : '#10b981', fontFamily: 'monospace' }}>
+                                    <span className={s.resultName}>{r.teamName}</span>
+                                    <span className={r.status === 'escaped' ? s.resultEscaped : s.resultSuccess}>
                                         {r.status === 'escaped' ? '이탈' : `${r.finalLoss?.toFixed(3)}`}
                                     </span>
                                 </div>
@@ -408,15 +393,15 @@ export default function DashboardPage() {
 
                     {/* 어텐션 참여자 (Week 10) */}
                     {activeWeek === 10 && Object.keys(attentionStates).length > 0 && (
-                        <div className="glass-card" style={styles.sideSection}>
+                        <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">✨ 어텐션 참여자</label>
-                            <div style={styles.studentGrid}>
+                            <div className={s.studentGrid}>
                                 {Object.values(attentionStates).map((a) => (
-                                    <div key={a.studentId} style={styles.studentCard}>
-                                        <div style={{ ...styles.cardDot, background: '#fbbf24' }} />
+                                    <div key={a.studentId} className={s.studentCard}>
+                                        <div className={`${s.cardDot} ${s.attentionDot}`} />
                                         <div>
-                                            <div style={styles.cardName}>{a.studentName}</div>
-                                            <div style={styles.cardSchool}>
+                                            <div className={s.cardName}>{a.studentName}</div>
+                                            <div className={s.cardSchool}>
                                                 {a.sentenceName || '-'} · H{a.headCount || 1}
                                             </div>
                                         </div>
@@ -428,55 +413,50 @@ export default function DashboardPage() {
 
                     {/* 퀴즈 패널 */}
                     {showQuizPanel && !quizLive && (
-                        <div className="glass-card" style={styles.sideSection}>
+                        <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">📝 퀴즈 만들기</label>
-                            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                            <div className={s.quizBtnRow}>
                                 <button
                                     onClick={() => { setQuizType('ox'); setQuizCorrect('O'); }}
-                                    style={{
-                                        ...styles.quizTypeBtn,
-                                        ...(quizType === 'ox' ? styles.quizTypeBtnActive : {}),
-                                    }}
+                                    className={`${s.quizTypeBtn} ${quizType === 'ox' ? s.quizTypeBtnActive : ''}`}
                                 >⭕❌ O/X</button>
                                 <button
                                     onClick={() => { setQuizType('choice'); setQuizCorrect(''); }}
-                                    style={{
-                                        ...styles.quizTypeBtn,
-                                        ...(quizType === 'choice' ? styles.quizTypeBtnActive : {}),
-                                    }}
+                                    className={`${s.quizTypeBtn} ${quizType === 'choice' ? s.quizTypeBtnActive : ''}`}
                                 >①②③④ 선택</button>
                             </div>
                             <input
-                                className="input-cosmic"
+                                className={`input-cosmic ${s.inputSmall}`}
                                 placeholder="질문을 입력하세요"
                                 value={quizQuestion}
                                 onChange={e => setQuizQuestion(e.target.value)}
-                                style={{ fontSize: '0.85rem' }}
                             />
                             {quizType === 'ox' && (
-                                <div style={{ display: 'flex', gap: 6 }}>
+                                <div className={s.oxRow}>
                                     <button
                                         onClick={() => setQuizCorrect('O')}
+                                        className={s.quizTypeBtn}
                                         style={{
-                                            ...styles.quizTypeBtn, flex: 1,
+                                            flex: 1,
                                             ...(quizCorrect === 'O' ? { background: 'rgba(96,165,250,0.2)', border: '1px solid #60a5fa', color: '#60a5fa' } : {}),
                                         }}
                                     >정답: ⭕ O</button>
                                     <button
                                         onClick={() => setQuizCorrect('X')}
+                                        className={s.quizTypeBtn}
                                         style={{
-                                            ...styles.quizTypeBtn, flex: 1,
+                                            flex: 1,
                                             ...(quizCorrect === 'X' ? { background: 'rgba(248,113,113,0.2)', border: '1px solid #f87171', color: '#f87171' } : {}),
                                         }}
                                     >정답: ❌ X</button>
                                 </div>
                             )}
                             {quizType === 'choice' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div className={s.choiceCol}>
                                     {quizOptions.map((opt, i) => (
-                                        <div key={i} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                        <div key={i} className={s.choiceRow}>
                                             <input
-                                                className="input-cosmic"
+                                                className={`input-cosmic ${s.choiceInput}`}
                                                 placeholder={`선택지 ${i + 1}`}
                                                 value={opt}
                                                 onChange={e => {
@@ -484,7 +464,6 @@ export default function DashboardPage() {
                                                     next[i] = e.target.value;
                                                     setQuizOptions(next);
                                                 }}
-                                                style={{ flex: 1, fontSize: '0.8rem', padding: '6px 10px' }}
                                             />
                                             <button
                                                 onClick={() => setQuizCorrect(opt)}
@@ -500,8 +479,8 @@ export default function DashboardPage() {
                                     ))}
                                 </div>
                             )}
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>제한시간:</span>
+                            <div className={s.timeLimitRow}>
+                                <span className={s.timeLimitLabel}>제한시간:</span>
                                 {[10, 15, 20, 30].map(t => (
                                     <button key={t} onClick={() => setQuizTimeLimit(t)} style={{
                                         padding: '4px 10px', borderRadius: 6, fontSize: '0.75rem',
@@ -512,7 +491,7 @@ export default function DashboardPage() {
                                     }}>{t}초</button>
                                 ))}
                             </div>
-                            <button className="btn-nova" style={{ width: '100%', padding: '10px' }} onClick={handleSendQuiz}>
+                            <button className={`btn-nova ${s.quizSendBtn}`} onClick={handleSendQuiz}>
                                 <span>🚀 퀴즈 전송 ({students.length}명에게)</span>
                             </button>
                         </div>
@@ -520,122 +499,94 @@ export default function DashboardPage() {
 
                     {/* 진행 중인 퀴즈 */}
                     {quizLive && !quizResults && (
-                        <div className="glass-card" style={styles.sideSection}>
+                        <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">📝 퀴즈 진행 중</label>
-                            <p style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+                            <p className={s.quizLiveQuestion}>
                                 {quizLive.question}
                             </p>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                                    응답: <strong style={{ color: '#10b981' }}>{quizAnswerCount}</strong> / {students.length}명
+                            <div className={s.quizLiveRow}>
+                                <span className={s.quizLiveCount}>
+                                    응답: <strong className={s.quizLiveCountHighlight}>{quizAnswerCount}</strong> / {students.length}명
                                 </span>
-                                <div style={{
-                                    width: 60, height: 6, borderRadius: 3,
-                                    background: 'rgba(255,255,255,0.1)',
-                                }}>
-                                    <div style={{
-                                        width: `${students.length > 0 ? (quizAnswerCount / students.length * 100) : 0}%`,
-                                        height: '100%', borderRadius: 3,
-                                        background: '#10b981', transition: 'width 0.3s',
-                                    }} />
+                                <div className={s.progressBarOuter}>
+                                    <div
+                                        className={s.progressBarInner}
+                                        style={{ width: `${students.length > 0 ? (quizAnswerCount / students.length * 100) : 0}%` }}
+                                    />
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button className="btn-nova" style={{ flex: 1, padding: '8px' }} onClick={handleRevealResults}>
+                            <div className={s.quizActionRow}>
+                                <button className={`btn-nova ${s.quizRevealBtn}`} onClick={handleRevealResults}>
                                     <span>📊 결과 공개</span>
                                 </button>
-                                <button onClick={handleCancelQuiz} style={{
-                                    padding: '8px 14px', borderRadius: 8,
-                                    background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)',
-                                    color: '#f43f5e', fontSize: '0.82rem', cursor: 'pointer',
-                                }}>취소</button>
+                                <button onClick={handleCancelQuiz} className={s.quizCancelBtn}>취소</button>
                             </div>
                         </div>
                     )}
 
                     {/* 퀴즈 결과 */}
                     {quizResults && (
-                        <div className="glass-card" style={styles.sideSection}>
+                        <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">📊 퀴즈 결과</label>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                            <p className={s.quizResultQuestion}>
                                 {quizResults.question}
                             </p>
-                            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                                <div style={styles.quizResultStat}>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>
+                            <div className={s.quizResultStatRow}>
+                                <div className={s.quizResultStat}>
+                                    <span className={`${s.quizResultStatValue} ${s.quizResultStatValueGreen}`}>
                                         {quizResults.correctRate}%
                                     </span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>정답률</span>
+                                    <span className={s.quizResultStatLabel}>정답률</span>
                                 </div>
-                                <div style={styles.quizResultStat}>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#60a5fa' }}>
+                                <div className={s.quizResultStat}>
+                                    <span className={`${s.quizResultStatValue} ${s.quizResultStatValueBlue}`}>
                                         {quizResults.correctCount}/{quizResults.totalAnswered}
                                     </span>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>정답/응답</span>
+                                    <span className={s.quizResultStatLabel}>정답/응답</span>
                                 </div>
                             </div>
                             {quizResults.fastest && (
-                                <div style={{
-                                    padding: '6px 10px', borderRadius: 6,
-                                    background: 'rgba(251,191,36,0.1)',
-                                    fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center',
-                                }}>
+                                <div className={s.fastestBadge}>
                                     ⚡ 최빠 정답: {quizResults.fastest.studentName} ({(quizResults.fastest.responseTime / 1000).toFixed(1)}초)
                                 </div>
                             )}
                             {/* 답변 분포 */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div className={s.tallyCol}>
                                 {Object.entries(quizResults.tally).map(([answer, count]) => (
-                                    <div key={answer} style={{
-                                        display: 'flex', alignItems: 'center', gap: 8,
-                                        padding: '4px 8px', borderRadius: 6,
-                                        background: answer === quizResults.correctAnswer
-                                            ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)',
-                                    }}>
-                                        <span style={{
-                                            fontSize: '0.8rem', fontWeight: 600, minWidth: 30,
-                                            color: answer === quizResults.correctAnswer ? '#10b981' : 'var(--text-dim)',
-                                        }}>
+                                    <div key={answer} className={`${s.tallyRow} ${answer === quizResults.correctAnswer ? s.tallyRowCorrect : s.tallyRowWrong}`}>
+                                        <span className={`${s.tallyAnswer} ${answer === quizResults.correctAnswer ? s.tallyAnswerCorrect : s.tallyAnswerWrong}`}>
                                             {answer === quizResults.correctAnswer ? '✅' : ''} {answer}
                                         </span>
-                                        <div style={{
-                                            flex: 1, height: 6, borderRadius: 3,
-                                            background: 'rgba(255,255,255,0.05)',
-                                        }}>
-                                            <div style={{
-                                                width: `${quizResults.totalAnswered > 0 ? (count / quizResults.totalAnswered * 100) : 0}%`,
-                                                height: '100%', borderRadius: 3,
-                                                background: answer === quizResults.correctAnswer ? '#10b981' : '#64748b',
-                                            }} />
+                                        <div className={s.tallyBarOuter}>
+                                            <div
+                                                className={`${s.tallyBarInner} ${answer === quizResults.correctAnswer ? s.tallyBarCorrect : s.tallyBarWrong}`}
+                                                style={{ width: `${quizResults.totalAnswered > 0 ? (count / quizResults.totalAnswered * 100) : 0}%` }}
+                                            />
                                         </div>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', minWidth: 20 }}>
+                                        <span className={s.tallyCount}>
                                             {count}
                                         </span>
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => setQuizResults(null)} style={{
-                                padding: '6px 12px', borderRadius: 6,
-                                background: 'rgba(124,92,252,0.1)', border: '1px solid rgba(124,92,252,0.2)',
-                                color: '#a78bfa', fontSize: '0.78rem', cursor: 'pointer', width: '100%',
-                            }}>닫기</button>
+                            <button onClick={() => setQuizResults(null)} className={s.quizCloseBtn}>닫기</button>
                         </div>
                     )}
 
                     {/* 알림 로그 */}
-                    <div className="glass-card" style={{ ...styles.sideSection, flex: 1, minHeight: 0 }}>
+                    <div className={`glass-card ${s.sideSection} ${s.sideSectionFlex}`}>
                         <label className="label-cosmic">실시간 알림 📢</label>
-                        <div style={styles.notifScroll}>
+                        <div className={s.notifScroll}>
                             {notifications.length === 0 ? (
-                                <div style={styles.emptyState}>
-                                    <span style={{ fontSize: '1.5rem' }}>📭</span>
+                                <div className={s.emptyState}>
+                                    <span className={s.emptyIconSmall}>📭</span>
                                     <p>아직 알림이 없습니다</p>
                                 </div>
                             ) : (
                                 notifications.map((n) => (
-                                    <div key={n.id} style={styles.notifItem}>
-                                        <span style={styles.notifTime}>{n.time}</span>
-                                        <span style={styles.notifMsg}>{n.message}</span>
+                                    <div key={n.id} className={s.notifItem}>
+                                        <span className={s.notifTime}>{n.time}</span>
+                                        <span className={s.notifMsg}>{n.message}</span>
                                     </div>
                                 ))
                             )}
@@ -653,14 +604,9 @@ function AttentionOverview({ attentionStates }) {
 
     if (entries.length === 0) {
         return (
-            <div style={{
-                width: '100%', height: '100%',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                background: 'var(--bg-void)',
-            }}>
-                <div style={{ fontSize: '4rem', marginBottom: 16 }}>✨</div>
-                <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>
+            <div className={s.attentionEmpty}>
+                <div className={s.attentionEmptyIcon}>✨</div>
+                <p className={s.attentionEmptyText}>
                     학생들이 어텐션 게임에 참여하면 여기에 표시됩니다
                 </p>
             </div>
@@ -668,33 +614,21 @@ function AttentionOverview({ attentionStates }) {
     }
 
     return (
-        <div style={{
-            width: '100%', height: '100%',
-            padding: 24, overflowY: 'auto',
-            background: 'var(--bg-void)',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-            gap: 16, alignContent: 'start',
-        }}>
+        <div className={s.attentionGrid}>
             {entries.map((a) => (
-                <div key={a.studentId} style={{
-                    padding: 16,
-                    background: 'var(--bg-glass)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-subtle)',
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fbbf24' }}>
+                <div key={a.studentId} className={s.attentionCard}>
+                    <div className={s.attentionCardHeader}>
+                        <span className={s.attentionStudentName}>
                             {a.studentName}
                         </span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+                        <span className={s.attentionMeta}>
                             {a.sentenceName || '-'} · H{a.headCount || 1}
                         </span>
                     </div>
                     {a.attentionWeights ? (
                         <DashboardHeatmap weights={a.attentionWeights} />
                     ) : (
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>데이터 대기 중...</p>
+                        <p className={s.attentionWaiting}>데이터 대기 중...</p>
                     )}
                 </div>
             ))}
@@ -712,19 +646,11 @@ function DashboardHeatmap({ weights }) {
                 row.map((w, j) => (
                     <div
                         key={`${i}-${j}`}
+                        className={s.heatmapCell}
                         style={{
-                            width: '100%',
-                            aspectRatio: '1',
                             background: `rgba(124, 92, 252, ${w * 0.85 + 0.05})`,
-                            borderRadius: 4,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.65rem',
-                            fontFamily: 'monospace',
                             color: w > 0.35 ? '#fff' : 'rgba(255,255,255,0.35)',
                             fontWeight: w > 0.3 ? 700 : 400,
-                            transition: 'all 0.3s ease',
                         }}
                     >
                         {(w * 100).toFixed(0)}
@@ -734,209 +660,3 @@ function DashboardHeatmap({ weights }) {
         </div>
     );
 }
-
-const styles = {
-    loginContainer: {
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    loginCard: {
-        width: '100%',
-        maxWidth: 440,
-        padding: '44px 36px',
-        margin: 20,
-    },
-    container: {
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-    },
-    topBar: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 24px',
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-card)',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    topLeft: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        flexWrap: 'wrap',
-    },
-    topRight: {
-        display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap',
-    },
-    dashTitle: {
-        fontSize: '1.2rem',
-        fontWeight: 800,
-    },
-    weekTabs: {
-        display: 'flex',
-        gap: 4,
-        marginLeft: 8,
-        background: 'rgba(124, 92, 252, 0.08)',
-        borderRadius: 8,
-        padding: 3,
-    },
-    weekTab: {
-        padding: '6px 14px',
-        fontSize: '0.8rem',
-        fontWeight: 600,
-        border: 'none',
-        borderRadius: 6,
-        cursor: 'pointer',
-        background: 'transparent',
-        color: 'var(--text-dim)',
-        transition: 'all 0.2s',
-    },
-    weekTabActive: {
-        background: 'var(--accent-nova)',
-        color: '#fff',
-        boxShadow: '0 2px 8px rgba(124, 92, 252, 0.4)',
-    },
-    mainArea: {
-        flex: 1,
-        display: 'flex',
-        overflow: 'hidden',
-    },
-    canvasArea: {
-        flex: 1,
-        position: 'relative',
-        minHeight: 0,
-        overflow: 'hidden',
-    },
-    overlayBadge: {
-        position: 'absolute',
-        bottom: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-    },
-    sidebar: {
-        width: 340,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        padding: 12,
-        borderLeft: '1px solid var(--border-subtle)',
-        overflowY: 'auto',
-    },
-    sideSection: {
-        padding: 16,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-    },
-    studentGrid: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        maxHeight: 250,
-        overflowY: 'auto',
-    },
-    studentCard: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 12px',
-        borderRadius: 'var(--radius-sm)',
-        background: 'rgba(124, 92, 252, 0.06)',
-        border: '1px solid rgba(124, 92, 252, 0.1)',
-    },
-    cardDot: {
-        width: 12,
-        height: 12,
-        borderRadius: '50%',
-        flexShrink: 0,
-    },
-    cardName: {
-        fontSize: '0.82rem',
-        fontWeight: 700,
-        color: 'var(--text-primary)',
-    },
-    cardSchool: {
-        fontSize: '0.7rem',
-        color: 'var(--text-dim)',
-    },
-    cardWord: {
-        marginLeft: 'auto',
-        fontSize: '0.75rem',
-        color: 'var(--accent-laser-gold)',
-        fontWeight: 600,
-    },
-    resultRow: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '6px 10px',
-        borderRadius: 'var(--radius-sm)',
-        background: 'rgba(124, 92, 252, 0.05)',
-    },
-    notifScroll: {
-        flex: 1,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-    },
-    notifItem: {
-        display: 'flex',
-        gap: 8,
-        padding: '6px 8px',
-        borderRadius: 4,
-        background: 'rgba(124, 92, 252, 0.04)',
-        fontSize: '0.78rem',
-    },
-    notifTime: {
-        color: 'var(--text-dim)',
-        fontFamily: 'monospace',
-        fontSize: '0.7rem',
-        flexShrink: 0,
-    },
-    notifMsg: {
-        color: 'var(--text-secondary)',
-    },
-    emptyState: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        padding: '24px 16px',
-        color: 'var(--text-dim)',
-        fontSize: '0.82rem',
-        textAlign: 'center',
-    },
-    quizTypeBtn: {
-        flex: 1,
-        padding: '6px 12px',
-        borderRadius: 8,
-        fontSize: '0.78rem',
-        fontWeight: 600,
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: 'transparent',
-        color: 'var(--text-dim)',
-        cursor: 'pointer',
-    },
-    quizTypeBtnActive: {
-        background: 'rgba(124, 92, 252, 0.15)',
-        border: '1px solid rgba(124, 92, 252, 0.4)',
-        color: '#a78bfa',
-    },
-    quizResultStat: {
-        textAlign: 'center',
-        padding: '8px 16px',
-        borderRadius: 8,
-        background: 'rgba(15, 10, 40, 0.4)',
-        flex: 1,
-    },
-};

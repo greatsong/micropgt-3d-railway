@@ -1,0 +1,209 @@
+.container {
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.maxWidthWrapper {
+    max-width: 1000px;
+    width: 100%;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    margin-bottom: 15px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.titleEmoji {
+    font-size: 3rem;
+    margin-right: 15px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+/* 브리지 박스 (12주차 → 13주차) */
+.bridgeBox {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.bridgeLabel {
+    color: #fbbf24;
+}
+
+/* 콘텐츠 그리드 (카드 목록) */
+.contentGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.card {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardTitle {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+/* 3단계 처리 과정 스텝 */
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.stepItem {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stepIcon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+/* 블록 내부 2열 그리드 */
+.grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.featureBox {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #60a5fa;
+}
+
+/* Decoder-Only 리스트 */
+.list {
+    padding-left: 20px;
+    line-height: 1.8;
+    color: #cbd5e1;
+}
+
+/* 한 걸음 더 (Deep Dive) */
+.deepDiveContainer {
+    margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+}
+
+.deepDiveButton {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveContent p {
+    margin-bottom: 8px;
+}
+
+.deepDiveContent p:first-child {
+    margin-bottom: 10px;
+}
+
+.deepDiveContent p:last-child {
+    margin-bottom: 0;
+}
+
+.deepDiveParagraphSpaced {
+    margin-bottom: 10px;
+}
+
+.colorBlue {
+    color: #60a5fa;
+}
+
+.colorGreen {
+    color: #10b981;
+}
+
+.colorAmber {
+    color: #f59e0b;
+}
+
+.colorRose {
+    color: #f43f5e;
+}
+
+.formulaBox {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(15, 10, 40, 0.6);
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: #60a5fa;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* CTA 버튼 */
+.ctaButton {
+    margin-top: 40px;
+    width: 100%;
+    padding: 20px;
+    font-size: 1.2rem;
+}

@@ -1,0 +1,359 @@
+/* ── pageStyles ── */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.progressBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.progressDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1;
+}
+
+.progressFill {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    height: 3px;
+    background: var(--accent-nova);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: width 0.3s;
+    z-index: 0;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weekBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(244, 63, 94, 0.15);
+    color: #f43f5e;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.stepCount {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ── ds (design system) ── */
+.dsContainer {
+    padding: 20px;
+}
+
+.welcomeBox {
+    text-align: center;
+    padding: 20px;
+}
+
+.text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.instruction {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.hint {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.metaphorBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.metaphorItem {
+    text-align: center;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    min-width: 100px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.hintBox {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.hintItem {
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(15, 10, 40, 0.5);
+    border: 1px solid rgba(124, 92, 252, 0.1);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    flex: 1;
+    min-width: 100px;
+}
+
+/* ── GradientDescentDemo ── */
+.demoWrapper {
+    text-align: center;
+}
+
+.demoCanvas {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+}
+
+.demoButtons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.demoBtn {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+}
+
+/* ── inline styles extracted ── */
+.bridgeBox {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-align: left;
+}
+
+.bridgeStrong {
+    color: #fbbf24;
+}
+
+.colorRed {
+    color: #f43f5e;
+}
+
+.colorGreen {
+    color: #10b981;
+}
+
+.colorPurple {
+    color: #7c5cfc;
+}
+
+.colorYellow {
+    color: #fbbf24;
+}
+
+.colorBlue {
+    color: #3b82f6;
+}
+
+.textMt16 {
+    margin-top: 16px;
+    font-size: 0.85rem;
+}
+
+.hintMt12 {
+    margin-top: 12px;
+}
+
+.emoji25 {
+    font-size: 2.5rem;
+}
+
+.emoji2 {
+    font-size: 2rem;
+}
+
+.arrowSep {
+    font-size: 1.5rem;
+    color: var(--text-dim);
+}
+
+.headerEmoji {
+    font-size: 3rem;
+}
+
+/* ── lr step ── */
+.sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.sliderLabel {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+
+.sliderInput {
+    flex: 1;
+}
+
+.lrDisplay {
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    font-family: monospace;
+}
+
+.lrFeedback {
+    margin-left: 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ── local minimum step ── */
+.metaphorBoxMt16 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.localCard {
+    text-align: center;
+    padding: 16px;
+    flex: 1;
+}
+
+.localIcon {
+    font-size: 3rem;
+    margin-bottom: 8px;
+}
+
+.localLabelRed {
+    font-weight: 700;
+    color: #f43f5e;
+}
+
+.localLabelYellow {
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+.localDesc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.hintMt16 {
+    margin-top: 16px;
+}
+
+/* ── race step ── */
+.raceContainer {
+    padding: 20px;
+    text-align: center;
+}
+
+.raceEmoji {
+    font-size: 5rem;
+    margin-bottom: 16px;
+}
+
+.raceHint {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.raceBtn {
+    margin-top: 24px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+}
+
+/* ── momentum step metaphor text ── */
+.momentumOff {
+    color: #f43f5e;
+}
+
+.momentumOn {
+    color: #10b981;
+}

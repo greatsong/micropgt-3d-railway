@@ -1,0 +1,722 @@
+.container {
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    margin-right: 20px;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f59e0b;
+    font-family: var(--font-heading);
+}
+
+/* Tabs */
+.tabBar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tabBtn {
+    padding: 10px 18px;
+    background: rgba(30, 25, 60, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.tabBtnActive {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid #f59e0b;
+    color: #f59e0b;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Control Panel */
+.controlPanel {
+    background: rgba(30, 25, 60, 0.5);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panelTitle {
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    font-family: var(--font-heading);
+}
+
+.desc {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+.sliderRow {
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sliderLabel {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.warningBox {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    border-radius: 8px;
+    color: #f43f5e;
+    font-size: 0.85rem;
+}
+
+/* Visualization */
+.vizRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.vizCard {
+    flex: 1;
+    min-width: 280px;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scatterBox {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin: 16px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dot {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.axis {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.statLabel {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.arrowContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #64748b;
+    padding: 0 8px;
+}
+
+.rmsValue {
+    font-size: 0.8rem;
+    color: #f59e0b;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.opBadge {
+    font-size: 0.8rem;
+    color: #fff;
+    font-weight: bold;
+    background: #f59e0b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+/* Formula */
+.formulaBox {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.formulaTitle {
+    color: #f59e0b;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.formula {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 16px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 8px 0;
+}
+
+.formulaDesc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+.formulaSub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.epsilonNote {
+    margin-top: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    font-size: 0.83rem;
+    color: #c4b5fd;
+    line-height: 1.6;
+}
+
+.epsilonLabel {
+    color: #a78bfa;
+}
+
+/* Norm Comparison */
+.normBtnRow {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.normBtn {
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.dataPanel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 12px 16px;
+    border-radius: 10px;
+}
+
+.dataPanelTitle {
+    color: #fff;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.dataValues {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.dataChip {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+}
+
+.barChartPanel {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.barChart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 160px;
+}
+
+.barCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+    height: 100%;
+    justify-content: center;
+}
+
+.barTop {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s;
+}
+
+.barZeroLine {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.barBottom {
+    width: 100%;
+    border-radius: 0 0 4px 4px;
+    transition: height 0.3s;
+}
+
+.barLabel {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-family: monospace;
+    margin-top: 4px;
+}
+
+/* Comparison Table */
+.compTable {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.th {
+    padding: 10px 12px;
+    text-align: left;
+    background: rgba(30, 25, 60, 0.8);
+    color: #fff;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.tdFormula {
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.tdPros {
+    color: #4ade80;
+}
+
+.tdCons {
+    color: #f87171;
+}
+
+.tdBold {
+    font-weight: 600;
+}
+
+/* Training Simulation */
+.trainBtn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+.trainChartRow {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.trainCard {
+    flex: 1;
+    min-width: 280px;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lossChart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px 4px;
+}
+
+.lossBarCol {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+}
+
+.lossBar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.2s;
+    min-height: 2px;
+}
+
+.trainStats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.trainDesc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.resultBox {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    color: #fbbf24;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Layer Chart */
+.layerChart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px 4px;
+}
+
+.layerBarCol {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.layerBar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s;
+    min-height: 2px;
+}
+
+.layerLabel {
+    color: #64748b;
+    font-size: 0.6rem;
+    margin-top: 2px;
+}
+
+/* Model Comparison */
+.modelCompare {
+    background: rgba(30, 25, 60, 0.5);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modelRow {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 12px;
+}
+
+.modelItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.modelBar {
+    width: 40px;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.modelBarFill {
+    border-radius: 4px 4px 0 0;
+    width: 100%;
+    transition: height 0.3s;
+}
+
+/* Theory */
+.theoryCard {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.theoryTitle {
+    color: #f59e0b;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-family: var(--font-heading);
+}
+
+.theoryContent {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Common */
+.infoBox {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+.infoBoxSub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.channelNote {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    font-size: 0.83rem;
+    color: #c4b5fd;
+    line-height: 1.6;
+}
+
+.channelLabel {
+    color: #a78bfa;
+}
+
+.navRow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-bottom: 30px;
+}
+
+.navBtn {
+    padding: 10px 24px;
+    background: rgba(30, 25, 60, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Intro description */
+.introDesc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+/* Train card subtitles */
+.trainCardTitleGreen {
+    color: #10b981;
+    margin-bottom: 8px;
+}
+
+.trainCardTitleRed {
+    color: #f43f5e;
+    margin-bottom: 8px;
+}
+
+.trainStatsGreen {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.trainStatsRed {
+    color: #f43f5e;
+    font-weight: 700;
+}
+
+.barChartTitle {
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.vizCardTitleRed {
+    color: #f43f5e;
+}
+
+.vizCardTitleGreen {
+    color: #10b981;
+}
+
+.modelCompareTitle {
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+/* Deep Dive */
+.deepDiveWrapper {
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.25);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 16px;
+}
+
+.deepDiveBtn {
+    width: 100%;
+    padding: 16px 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #c4b5fd;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.deepDiveContent {
+    padding: 0 24px 20px 24px;
+    color: #cbd5e1;
+    font-size: 0.92rem;
+    line-height: 1.8;
+}
+
+.deepDiveColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.deepDiveMeanVar {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+}
+
+.deepDiveLabel {
+    color: #a78bfa;
+}
+
+.deepDiveAnalogy {
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    font-size: 0.88rem;
+}
+
+.colorRed {
+    color: #f43f5e;
+}
+
+.colorBlue {
+    color: #3b82f6;
+}
+
+.sliderFull {
+    width: 100%;
+}
+
+.arrowEmoji {
+    font-size: 2rem;
+}

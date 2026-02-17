@@ -2,6 +2,7 @@
 
 import { Component, createRef } from 'react';
 import WebGLFallback from './WebGLFallback';
+import s from './WebGLErrorBoundary.module.css';
 
 function detectWebGL() {
     if (typeof window === 'undefined') return true;
@@ -102,7 +103,7 @@ export default class WebGLErrorBoundary extends Component {
         }
 
         return (
-            <div ref={this.containerRef} style={{ width: '100%', height: '100%' }}>
+            <div ref={this.containerRef} className={s.container}>
                 {this.props.children}
             </div>
         );

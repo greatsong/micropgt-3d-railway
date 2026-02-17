@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './page.module.css';
 
 // ── 스텝 데이터 ──
 const STEPS = [
@@ -40,32 +41,32 @@ const STEPS = [
 // ── 원-핫 한계 리캡 ──
 function RecapDemo() {
     return (
-        <div style={demoStyles.container}>
-            <p style={demoStyles.instruction}>
+        <div className={styles.demoContainer}>
+            <p className={styles.instruction}>
                 지난 시간에 원-핫 인코딩의 두 가지 큰 문제를 발견했어요:
             </p>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <div style={demoStyles.problemCard}>
-                    <div style={{ fontSize: '2rem', marginBottom: 8 }}>📏</div>
-                    <strong style={{ color: '#f43f5e' }}>모든 거리가 같다</strong>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: 6 }}>
+            <div className={styles.problemCardListWrapper}>
+                <div className={styles.problemCard}>
+                    <div className={styles.problemCardIcon}>📏</div>
+                    <strong className={styles.problemCardStrong}>모든 거리가 같다</strong>
+                    <p className={styles.problemCardDesc}>
                         "고양이-강아지" 거리 = "고양이-자동차" 거리<br />
                         의미의 유사성을 표현할 수 없음
                     </p>
                 </div>
-                <div style={demoStyles.problemCard}>
-                    <div style={{ fontSize: '2rem', marginBottom: 8 }}>💾</div>
-                    <strong style={{ color: '#f43f5e' }}>차원이 너무 크다</strong>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: 6 }}>
+                <div className={styles.problemCard}>
+                    <div className={styles.problemCardIcon}>💾</div>
+                    <strong className={styles.problemCardStrong}>차원이 너무 크다</strong>
+                    <p className={styles.problemCardDesc}>
                         단어 10만 개 = 10만 차원 벡터<br />
                         99.999%가 0인 낭비
                     </p>
                 </div>
             </div>
-            <div style={demoStyles.solutionBox}>
-                <span style={{ fontSize: '1.5rem' }}>💡</span>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                    해결책: <strong style={{ color: '#7c5cfc' }}>임베딩(Embedding)</strong><br />
+            <div className={styles.solutionBox}>
+                <span className={styles.solutionIcon}>💡</span>
+                <p className={styles.solutionText}>
+                    해결책: <strong className={styles.solutionHighlight}>임베딩(Embedding)</strong><br />
                     의미를 담은 <strong>짧은</strong> 숫자 벡터로 바꾸자!
                 </p>
             </div>
@@ -98,43 +99,43 @@ function EmbeddingDemo() {
     const simPct = Math.round(sim * 100);
 
     return (
-        <div style={demoStyles.container}>
-            <p style={demoStyles.instruction}>
+        <div className={styles.demoContainer}>
+            <p className={styles.instruction}>
                 🔍 두 단어를 골라 유사도를 비교해보세요!
             </p>
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 16 }}>
-                <div style={demoStyles.compareBox}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>원-핫</span>
-                    <code style={{ fontSize: '0.7rem', color: '#f43f5e' }}>[1,0,0,0]</code>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>거리 항상 √2</span>
+            <div className={styles.compareRow}>
+                <div className={styles.compareBox}>
+                    <span className={styles.compareLabel}>원-핫</span>
+                    <code className={styles.compareCodeOnehot}>[1,0,0,0]</code>
+                    <span className={styles.compareSubtext}>거리 항상 √2</span>
                 </div>
-                <div style={{ fontSize: '1.5rem', alignSelf: 'center' }}>→</div>
-                <div style={{ ...demoStyles.compareBox, border: '1px solid rgba(124, 92, 252, 0.3)' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>임베딩</span>
-                    <code style={{ fontSize: '0.7rem', color: '#10b981' }}>[0.82, -0.31, 0.45]</code>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>의미를 담은 거리</span>
+                <div className={styles.compareArrow}>→</div>
+                <div className={styles.compareBoxEmbedding}>
+                    <span className={styles.compareLabel}>임베딩</span>
+                    <code className={styles.compareCodeEmbedding}>[0.82, -0.31, 0.45]</code>
+                    <span className={styles.compareSubtext}>의미를 담은 거리</span>
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div className={styles.wordSelectRow}>
                 <div>
-                    <label style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>단어 A</label>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                    <label className={styles.wordSelectLabel}>단어 A</label>
+                    <div className={styles.wordSelectBtnGroup}>
                         {Object.keys(embeddings).map((w) => (
                             <button key={w} onClick={() => setWordA(w)}
-                                style={{ ...demoStyles.miniBtn, ...(wordA === w ? demoStyles.miniBtnActive : {}) }}>
+                                className={`${styles.miniBtn} ${wordA === w ? styles.miniBtnActive : ''}`}>
                                 {w}
                             </button>
                         ))}
                     </div>
                 </div>
                 <div>
-                    <label style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>단어 B</label>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                    <label className={styles.wordSelectLabel}>단어 B</label>
+                    <div className={styles.wordSelectBtnGroup}>
                         {Object.keys(embeddings).map((w) => (
                             <button key={w} onClick={() => setWordB(w)}
-                                style={{ ...demoStyles.miniBtn, ...(wordB === w ? demoStyles.miniBtnActive : {}) }}>
+                                className={`${styles.miniBtn} ${wordB === w ? styles.miniBtnActive : ''}`}>
                                 {w}
                             </button>
                         ))}
@@ -142,27 +143,26 @@ function EmbeddingDemo() {
                 </div>
             </div>
 
-            <div style={demoStyles.embCompare}>
-                <div style={demoStyles.embCol}>
-                    <span style={demoStyles.embWord}>{wordA}</span>
-                    <code style={demoStyles.embVec}>[{embeddings[wordA].join(', ')}]</code>
+            <div className={styles.embCompare}>
+                <div className={styles.embCol}>
+                    <span className={styles.embWord}>{wordA}</span>
+                    <code className={styles.embVec}>[{embeddings[wordA].join(', ')}]</code>
                 </div>
-                <div style={demoStyles.simCircle}>
-                    <div style={{
-                        ...demoStyles.simValue,
+                <div className={styles.simCircle}>
+                    <div className={styles.simValue} style={{
                         color: simPct > 80 ? '#10b981' : simPct > 50 ? '#fbbf24' : '#f43f5e',
                     }}>
                         {simPct}%
                     </div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>유사도</span>
+                    <span className={styles.simSubtext}>유사도</span>
                 </div>
-                <div style={demoStyles.embCol}>
-                    <span style={demoStyles.embWord}>{wordB}</span>
-                    <code style={demoStyles.embVec}>[{embeddings[wordB].join(', ')}]</code>
+                <div className={styles.embCol}>
+                    <span className={styles.embWord}>{wordB}</span>
+                    <code className={styles.embVec}>[{embeddings[wordB].join(', ')}]</code>
                 </div>
             </div>
 
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 10 }}>
+            <p className={styles.simComment}>
                 {simPct > 80
                     ? '🧲 아주 비슷한 의미! → 가까운 거리에 놓여요'
                     : simPct > 0
@@ -239,17 +239,17 @@ function SimilarityDemo() {
     }, []);
 
     return (
-        <div style={demoStyles.container}>
-            <p style={demoStyles.instruction}>
+        <div className={styles.demoContainer}>
+            <p className={styles.instruction}>
                 👀 비슷한 의미를 가진 단어들이 자연스럽게 모여요!
             </p>
             <canvas
                 ref={canvasRef}
                 width={400}
                 height={400}
-                style={{ width: '100%', maxWidth: 400, height: 'auto', borderRadius: 12, background: 'rgba(15, 10, 40, 0.6)', margin: '0 auto', display: 'block' }}
+                className={styles.canvas}
             />
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 10 }}>
+            <p className={styles.simComment}>
                 이걸 <strong>3D로 확장</strong>하면? → 바로 <strong>임베딩 은하수</strong>! 🌌
             </p>
         </div>
@@ -267,18 +267,18 @@ function RealWorldDemo() {
     ];
 
     return (
-        <div style={demoStyles.container}>
-            <p style={demoStyles.instruction}>
+        <div className={styles.demoContainer}>
+            <p className={styles.instruction}>
                 실제 AI 모델들은 어떤 크기의 임베딩을 사용할까요?
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className={styles.modelColGroup}>
                 {models.map((m) => (
-                    <div key={m.name} style={demoStyles.modelRow}>
-                        <div style={{ minWidth: 80 }}>
+                    <div key={m.name} className={styles.modelRow}>
+                        <div className={styles.modelNameCol}>
                             <span style={{ fontWeight: 700, color: m.color, fontSize: '0.9rem' }}>{m.name}</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginLeft: 6 }}>{m.year}</span>
+                            <span className={styles.modelYear}>{m.year}</span>
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div className={styles.modelBarCol}>
                             <div style={{
                                 height: 20, borderRadius: 4,
                                 background: `${m.color}20`,
@@ -292,13 +292,13 @@ function RealWorldDemo() {
                                 </span>
                             </div>
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', maxWidth: 200 }}>{m.desc}</div>
+                        <div className={styles.modelDesc}>{m.desc}</div>
                     </div>
                 ))}
             </div>
-            <div style={demoStyles.funFact}>
+            <div className={styles.funFact}>
                 <strong>💡 핵심 포인트</strong><br />
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                <span className={styles.funFactText}>
                     원-핫은 단어 수만큼 차원이 필요하지만 (10만+),<br />
                     임베딩은 고정된 작은 차원 (300~12,288)으로 의미를 표현합니다!
                 </span>
@@ -325,15 +325,15 @@ export default function Week4IntroPage() {
             case 'realworld': return <RealWorldDemo />;
             case 'galaxy':
                 return (
-                    <div style={{ ...demoStyles.container, textAlign: 'center' }}>
-                        <div style={{ fontSize: '5rem', marginBottom: 16 }} className="animate-float">📐</div>
-                        <p style={demoStyles.welcomeText}>
+                    <div className={styles.galaxyDemoContainer}>
+                        <div className={styles.galaxyIcon + ' animate-float'}>📐</div>
+                        <p className={styles.welcomeText}>
                             지금까지 배운 것을 <strong>직접 체험</strong>할 시간!<br /><br />
-                            먼저 <strong style={{ color: '#7c5cfc' }}>코사인 유사도</strong>를 2D → 3D → 300D로 실습하고,<br />
-                            <strong style={{ color: '#10b981' }}>실제 AI 임베딩</strong>으로 벡터 연산을 해본 뒤,<br />
-                            <strong style={{ color: '#fbbf24' }}>3D 은하수</strong>에서 단어 별을 만들어봐요!
+                            먼저 <strong className={styles.galaxyHighlightPurple}>코사인 유사도</strong>를 2D → 3D → 300D로 실습하고,<br />
+                            <strong className={styles.galaxyHighlightGreen}>실제 AI 임베딩</strong>으로 벡터 연산을 해본 뒤,<br />
+                            <strong className={styles.galaxyHighlightYellow}>3D 은하수</strong>에서 단어 별을 만들어봐요!
                         </p>
-                        <button className="btn-nova" style={{ marginTop: 24, padding: '14px 40px', fontSize: '1.1rem' }} onClick={goToLab}>
+                        <button className={`btn-nova ${styles.galaxyBtn}`} onClick={goToLab}>
                             <span>📐 코사인 유사도 실습 시작!</span>
                         </button>
                     </div>
@@ -343,85 +343,38 @@ export default function Week4IntroPage() {
     };
 
     return (
-        <div style={pageStyles.container}>
-            <div style={pageStyles.progressBar}>
+        <div className={styles.container}>
+            <div className={styles.progressBar}>
                 {STEPS.map((s, i) => (
-                    <div key={s.id} style={{
-                        ...pageStyles.progressDot,
+                    <div key={s.id} className={styles.progressDot} style={{
                         background: i <= currentStep ? 'var(--accent-nova)' : 'rgba(124, 92, 252, 0.15)',
                         transform: i === currentStep ? 'scale(1.3)' : 'scale(1)',
                     }} onClick={() => setCurrentStep(i)} />
                 ))}
-                <div style={{ ...pageStyles.progressFill, width: `${(currentStep / (STEPS.length - 1)) * 100}%` }} />
+                <div className={styles.progressFill} style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }} />
             </div>
 
-            <div style={pageStyles.header}>
-                <span style={pageStyles.weekBadge}>4주차</span>
-                <div style={{ fontSize: '3rem' }}>{step.emoji}</div>
-                <h1 style={pageStyles.title}><span className="text-gradient">{step.title}</span></h1>
-                <p style={pageStyles.subtitle}>{step.subtitle}</p>
+            <div className={styles.header}>
+                <span className={styles.weekBadge}>4주차</span>
+                <div className={styles.stepEmoji}>{step.emoji}</div>
+                <h1 className={styles.title}><span className="text-gradient">{step.title}</span></h1>
+                <p className={styles.subtitle}>{step.subtitle}</p>
             </div>
 
-            <div style={pageStyles.content}>{renderStepContent()}</div>
+            <div className={styles.content}>{renderStepContent()}</div>
 
-            <div style={pageStyles.navBar}>
-                <button className="btn-nova" style={{ ...pageStyles.navBtn, opacity: currentStep === 0 ? 0.3 : 1 }}
+            <div className={styles.navBar}>
+                <button className={`btn-nova ${styles.navBtn}`} style={{ opacity: currentStep === 0 ? 0.3 : 1 }}
                     onClick={prevStep} disabled={currentStep === 0}>
                     <span>← 이전</span>
                 </button>
-                <span style={pageStyles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
+                <span className={styles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
                 {currentStep < STEPS.length - 1 ? (
-                    <button className="btn-nova" style={pageStyles.navBtn} onClick={nextStep}><span>다음 →</span></button>
+                    <button className={`btn-nova ${styles.navBtn}`} onClick={nextStep}><span>다음 →</span></button>
                 ) : (
-                    <button className="btn-nova" style={pageStyles.navBtn} onClick={goToLab}><span>🚀 실습 시작</span></button>
+                    <button className={`btn-nova ${styles.navBtn}`} onClick={goToLab}><span>🚀 실습 시작</span></button>
                 )}
             </div>
         </div>
     );
 }
-
-const pageStyles = {
-    container: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 20px', maxWidth: 680, margin: '0 auto' },
-    progressBar: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 32, position: 'relative', width: '100%', maxWidth: 300, justifyContent: 'center' },
-    progressDot: { width: 12, height: 12, borderRadius: '50%', cursor: 'pointer', transition: 'all 0.3s', zIndex: 1 },
-    progressFill: { position: 'absolute', left: 6, top: '50%', height: 3, background: 'var(--accent-nova)', borderRadius: 2, transform: 'translateY(-50%)', transition: 'width 0.3s', zIndex: 0 },
-    header: { textAlign: 'center', marginBottom: 24 },
-    weekBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700, background: 'rgba(124, 92, 252, 0.15)', color: '#7c5cfc', marginBottom: 12, letterSpacing: '0.05em' },
-    title: { fontSize: '1.6rem', fontWeight: 800, marginTop: 8, marginBottom: 6 },
-    subtitle: { fontSize: '0.95rem', color: 'var(--text-secondary)' },
-    content: { flex: 1, width: '100%', marginBottom: 24 },
-    navBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '16px 0', borderTop: '1px solid var(--border-subtle)' },
-    navBtn: { padding: '10px 24px', fontSize: '0.9rem' },
-    stepCount: { fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 600 },
-};
-
-const demoStyles = {
-    container: { padding: 20 },
-    instruction: { fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 16, textAlign: 'center' },
-    welcomeText: { fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.8 },
-    problemCard: {
-        flex: 1, minWidth: 200, padding: 20, borderRadius: 12,
-        background: 'rgba(244, 63, 94, 0.06)', border: '1px solid rgba(244, 63, 94, 0.15)',
-        textAlign: 'center',
-    },
-    solutionBox: {
-        marginTop: 20, padding: 16, borderRadius: 12,
-        background: 'rgba(124, 92, 252, 0.08)', border: '1px solid rgba(124, 92, 252, 0.2)',
-        display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center',
-    },
-    compareBox: {
-        padding: 12, borderRadius: 10, textAlign: 'center',
-        border: '1px solid rgba(244, 63, 94, 0.2)', background: 'rgba(15, 10, 40, 0.6)',
-        display: 'flex', flexDirection: 'column', gap: 4,
-    },
-    embCompare: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' },
-    embCol: { textAlign: 'center', padding: 16, borderRadius: 12, background: 'rgba(15, 10, 40, 0.6)', border: '1px solid rgba(124, 92, 252, 0.12)', minWidth: 120 },
-    embWord: { fontSize: '1rem', fontWeight: 700, display: 'block', marginBottom: 6 },
-    embVec: { fontSize: '0.75rem', color: 'var(--text-dim)' },
-    simCircle: { width: 80, height: 80, borderRadius: '50%', background: 'rgba(124, 92, 252, 0.1)', border: '2px solid rgba(124, 92, 252, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
-    simValue: { fontSize: '1.3rem', fontWeight: 800 },
-    miniBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(124, 92, 252, 0.15)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' },
-    miniBtnActive: { background: 'var(--accent-nova)', color: '#fff', border: '1px solid var(--accent-nova)' },
-    modelRow: { display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(15, 10, 40, 0.4)' },
-    funFact: { marginTop: 16, padding: 14, borderRadius: 10, background: 'rgba(124, 92, 252, 0.06)', border: '1px solid rgba(124, 92, 252, 0.15)', textAlign: 'center', lineHeight: 1.7 },
-};

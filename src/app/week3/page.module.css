@@ -1,0 +1,768 @@
+/* ── Layout ── */
+.pageContainer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.backBtn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-top: 4px;
+}
+
+.weekTitle {
+    font-size: 0.85rem;
+    color: #f59e0b;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.moduleTitle {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.headerDesc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* ── Tabs ── */
+.tabBar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.tabBtn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tabBtnActive {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.contentArea {
+    margin-bottom: 24px;
+}
+
+.tabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+/* ── Tip box ── */
+.tipBox {
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ── Tab 1: Vector Builder ── */
+.whySpan {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    display: block;
+    margin-top: 4px;
+}
+
+.addRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.addInput {
+    flex: 1;
+    font-size: 0.85rem;
+}
+
+.addBtn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.wordGrid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.wordChip {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    background: rgba(245, 158, 11, 0.06);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.wordChipActive {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.removeBtn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(244, 63, 94, 0.2);
+    color: #f43f5e;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.vectorPanel {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.5);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.vectorHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.vectorHeaderWord {
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.vectorHeaderDim {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.vectorHeaderDimNote {
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 2px;
+}
+
+.vectorGrid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.vectorCell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.cellValue {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-family: monospace;
+    border: 1px solid;
+    transition: all 0.3s;
+}
+
+.cellLabel {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    max-width: 40px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statsRow {
+    display: flex;
+    gap: 10px;
+}
+
+.statBox {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(124, 92, 252, 0.05);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.statLabel {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.statLabelNote {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.statValue {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+/* ── Tab 2: Distance Comparison ── */
+.distSelectRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.distSelectCol {
+    flex: 1;
+    min-width: 150px;
+}
+
+.distSelectLabel {
+    font-size: 0.8rem;
+}
+
+.wordSelectGrid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.selectBtn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.selectBtnActiveA {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid #f59e0b;
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.selectBtnActiveB {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.distanceResult {
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.5);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.distPair {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.distPairWordA {
+    font-weight: 700;
+    color: #f59e0b;
+    font-size: 1.1rem;
+}
+
+.distPairArrow {
+    color: var(--text-dim);
+}
+
+.distPairWordB {
+    font-weight: 700;
+    color: #3b82f6;
+    font-size: 1.1rem;
+}
+
+.distValue {
+    text-align: center;
+}
+
+.distValueLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.distValueNumber {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #f43f5e;
+    font-family: monospace;
+}
+
+.distValueNote {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    display: block;
+    margin-top: 4px;
+}
+
+.distFullWidth {
+    width: 100%;
+}
+
+.distGroupBoxSame {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.distGroupBoxDiff {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(244, 63, 94, 0.08);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.distGroupTitleSame {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+.distGroupTitleDiff {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f43f5e;
+}
+
+.distGroupDesc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.distTable {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(15, 10, 40, 0.3);
+    border: 1px solid rgba(124, 92, 252, 0.1);
+}
+
+.distTableLabel {
+    font-size: 0.78rem;
+}
+
+.distTableScroll {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.th {
+    padding: 6px 8px;
+    color: var(--text-dim);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(124, 92, 252, 0.1);
+}
+
+.td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(124, 92, 252, 0.05);
+    font-family: monospace;
+}
+
+.tdHeader {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(124, 92, 252, 0.05);
+    font-family: monospace;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.tdSame {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.tdDiff {
+    color: #f43f5e;
+    font-weight: 400;
+}
+
+.distTableFooter {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* ── Tab 3: Memory Calculator ── */
+.sliderGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sliderLabel {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 80px;
+}
+
+.sliderInput {
+    flex: 1;
+}
+
+.sliderVal {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f59e0b;
+    min-width: 60px;
+    text-align: right;
+    font-family: monospace;
+}
+
+.memCardsRow {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.memCard {
+    flex: 1;
+    min-width: 140px;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid;
+    background: rgba(15, 10, 40, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.memCardRed {
+    border-color: rgba(244, 63, 94, 0.3);
+}
+
+.memCardGreen {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.memCardPurple {
+    border-color: rgba(124, 92, 252, 0.3);
+}
+
+.memCardLabel {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.memCardValueRed {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f43f5e;
+}
+
+.memCardValueGreen {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.memCardValuePurple {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #7c5cfc;
+}
+
+.memCardSub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+
+.realModelsPadding {
+    padding: 14px;
+}
+
+.realModelsLabel {
+    font-size: 0.78rem;
+}
+
+.realModelsCol {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.modelRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(15, 10, 40, 0.3);
+}
+
+.modelName {
+    font-weight: 700;
+    min-width: 70px;
+    font-size: 0.82rem;
+}
+
+.modelDetail {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.modelOneHot {
+    font-size: 0.72rem;
+    color: #f43f5e;
+}
+
+.modelArrow {
+    color: var(--text-dim);
+}
+
+.modelEmb {
+    font-size: 0.72rem;
+    color: #10b981;
+}
+
+/* ── Tab 4: Encoding Comparison ── */
+.methodBtnRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.methodBtn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.encCardPadding {
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.encMethodDesc {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+}
+
+.encVectorCol {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.encVectorRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(15, 10, 40, 0.4);
+}
+
+.encWordLabel {
+    font-weight: 600;
+    min-width: 60px;
+    font-size: 0.85rem;
+}
+
+.encArrow {
+    color: var(--text-dim);
+}
+
+.encCode {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.prosConsRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.prosBox {
+    flex: 1;
+    min-width: 180px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.prosTitle {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #10b981;
+}
+
+.consBox {
+    flex: 1;
+    min-width: 180px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(244, 63, 94, 0.06);
+    border: 1px solid rgba(244, 63, 94, 0.15);
+}
+
+.consTitle {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #f43f5e;
+}
+
+.prosConsList {
+    padding-left: 16px;
+    margin-top: 6px;
+}
+
+.prosConsItem {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.embHighlight {
+    color: #7c5cfc;
+}
+
+/* ── Theory Card & Footer ── */
+.theoryCard {
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.theoryBody {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.theoryParagraph {
+    margin-bottom: 10px;
+}
+
+.theoryCode {
+    color: #f59e0b;
+    font-size: 0.8rem;
+}
+
+.footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.footerBtn {
+    padding: 12px 32px;
+    font-size: 1rem;
+}
+
+.statValueGold {
+    color: #f59e0b;
+}

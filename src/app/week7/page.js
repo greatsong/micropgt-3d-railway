@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import s from './page.module.css';
 
 // ── 데이터셋 ──
 const DATASETS = [
@@ -546,51 +547,50 @@ export default function Week7Page() {
     };
 
     return (
-        <div style={styles.container}>
+        <div className={s.container}>
             {/* ── 좌측 컨트롤 ── */}
-            <div style={styles.leftPanel}>
+            <div className={s.leftPanel}>
                 <Breadcrumb
                     items={[{ label: '7주차 인트로', href: '/week7/intro' }]}
                     current="역전파 훈련소"
                 />
-                <div style={styles.header}>
-                    <h2 style={styles.weekTitle}>7주차</h2>
-                    <h1 style={styles.moduleTitle}>
+                <div className={s.header}>
+                    <h2 className={s.weekTitle}>7주차</h2>
+                    <h1 className={s.moduleTitle}>
                         <span className="text-gradient">🔄 역전파 훈련소</span>
                     </h1>
-                    <p style={styles.description}>
+                    <p className={s.description}>
                         신경망을 직접 구성하고 훈련시켜보세요!<br />
-                        AND/OR은 퍼셉트론<span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>(가장 간단한 신경망, 뉴런 하나로 이루어진 모델)</span>, XOR은 은닉층이 필요!
+                        AND/OR은 퍼셉트론<span className={s.perceptronNote}>(가장 간단한 신경망, 뉴런 하나로 이루어진 모델)</span>, XOR은 은닉층이 필요!
                     </p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 4 }}>
+                    <p className={s.subNote}>
                         순전파(Forward)로 예측하고, 역전파(Backward)로 &quot;어디서 틀렸는지&quot;를 역추적합니다. 이 과정을 반복하면 AI가 점점 정확해집니다.
                     </p>
                 </div>
 
                 {/* 데이터셋 + 구조 표시 */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">📊 데이터셋 선택</label>
-                    <div style={styles.btnRow}>
+                    <div className={s.btnRow}>
                         {DATASETS.map((ds, idx) => (
                             <button
                                 key={idx}
                                 className={idx === datasetIdx ? 'btn-nova' : 'btn-ghost'}
-                                style={styles.dsBtn}
                                 onClick={() => handleDatasetChange(idx)}
                             >
                                 {ds.emoji} {ds.name}
                             </button>
                         ))}
                     </div>
-                    <div style={styles.archBanner}>
+                    <div className={s.archBanner}>
                         {isSimple ? (
                             <>
-                                <span style={{ fontSize: '1.1rem' }}>🧩</span>
+                                <span className={s.archEmoji}>🧩</span>
                                 <span>퍼셉트론 (은닉층 없음) — 2개 가중치 + 1개 편향</span>
                             </>
                         ) : (
                             <>
-                                <span style={{ fontSize: '1.1rem' }}>🧠</span>
+                                <span className={s.archEmoji}>🧠</span>
                                 <span>2-레이어 (은닉층 3개) — XOR은 비선형이라 은닉층 필수!</span>
                             </>
                         )}
@@ -598,34 +598,33 @@ export default function Week7Page() {
                 </div>
 
                 {/* 학습률 */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">🎚️ 학습률</label>
-                    <div style={styles.sliderRow}>
-                        <span style={styles.sliderLabel}>0.01</span>
-                        <input type="range" className="slider-cosmic" min={0.01} max={1.0} step={0.01}
-                            value={lr} onChange={(e) => setLr(parseFloat(e.target.value))} style={{ flex: 1 }} />
-                        <span style={styles.sliderLabel}>1.00</span>
+                    <div className={s.sliderRow}>
+                        <span className={s.sliderLabel}>0.01</span>
+                        <input type="range" className={`slider-cosmic ${s.flex1}`} min={0.01} max={1.0} step={0.01}
+                            value={lr} onChange={(e) => setLr(parseFloat(e.target.value))} />
+                        <span className={s.sliderLabel}>1.00</span>
                     </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <span style={{ color: lr > 3 ? '#f43f5e' : '#10b981', fontWeight: 800, fontFamily: 'monospace', fontSize: '1.1rem' }}>
+                    <div className={s.textCenter}>
+                        <span className={s.lrDisplay} style={{ color: lr > 3 ? '#f43f5e' : '#10b981' }}>
                             {lr.toFixed(2)}
                         </span>
                     </div>
                 </div>
 
                 {/* 학습 컨트롤 */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">🎮 학습 제어</label>
-                    <div style={styles.btnRow}>
-                        <button className="btn-nova" onClick={handleStepOnce} disabled={isTraining || isDetailRunning} style={{ flex: 1 }}>
+                    <div className={s.btnRow}>
+                        <button className={`btn-nova ${s.flex1}`} onClick={handleStepOnce} disabled={isTraining || isDetailRunning}>
                             ▶ 1스텝
                         </button>
                         <button
-                            className="btn-nova"
+                            className={`btn-nova ${s.flex1}`}
                             onClick={handleStepDetailed}
                             disabled={isTraining || isDetailRunning}
                             style={{
-                                flex: 1,
                                 background: isDetailRunning ? 'rgba(251,191,36,0.3)' : 'rgba(251,191,36,0.15)',
                                 border: '1px solid rgba(251,191,36,0.4)',
                                 color: '#fbbf24',
@@ -634,85 +633,85 @@ export default function Week7Page() {
                             🔍 1스텝 상세
                         </button>
                     </div>
-                    <div style={styles.btnRow}>
+                    <div className={s.btnRow}>
                         <button
-                            className={isTraining ? 'btn-ghost' : 'btn-nova'}
+                            className={`${isTraining ? 'btn-ghost' : 'btn-nova'} ${s.flex1}`}
                             onClick={handleToggleTrain}
                             disabled={isDetailRunning}
-                            style={{ flex: 1, background: isTraining ? 'rgba(244,63,94,0.2)' : undefined }}
+                            style={isTraining ? { background: 'rgba(244,63,94,0.2)' } : undefined}
                         >
                             {isTraining ? '⏸ 멈춤' : '⏩ 자동'}
                         </button>
-                        <button className="btn-ghost" onClick={handleReset} style={{ flex: 1 }}>
+                        <button className={`btn-ghost ${s.flex1}`} onClick={handleReset}>
                             🔄 리셋
                         </button>
                     </div>
 
                     {/* 상세 모드 단계 표시 */}
                     {detailPhase !== PHASE_IDLE && (
-                        <div style={styles.phaseBanner}>
-                            <div style={styles.phaseSteps}>
+                        <div className={s.phaseBanner}>
+                            <div className={s.phaseSteps}>
                                 <PhaseStep label="Forward(순전파)" active={detailPhase === PHASE_FORWARD} done={[PHASE_LOSS, PHASE_BACKWARD, PHASE_UPDATE].includes(detailPhase)} color="#60a5fa" />
-                                <span style={styles.phaseArrow}> {'>'} </span>
+                                <span className={s.phaseArrow}> {'>'} </span>
                                 <PhaseStep label="Loss(오차)" active={detailPhase === PHASE_LOSS} done={[PHASE_BACKWARD, PHASE_UPDATE].includes(detailPhase)} color="#fbbf24" />
-                                <span style={styles.phaseArrow}> {'>'} </span>
+                                <span className={s.phaseArrow}> {'>'} </span>
                                 <PhaseStep label="Backward(역전파)" active={detailPhase === PHASE_BACKWARD} done={[PHASE_UPDATE].includes(detailPhase)} color="#fb923c" />
-                                <span style={styles.phaseArrow}> {'>'} </span>
+                                <span className={s.phaseArrow}> {'>'} </span>
                                 <PhaseStep label="Update(갱신)" active={detailPhase === PHASE_UPDATE} done={false} color="#10b981" />
                             </div>
-                            <div style={styles.phaseDescription}>{phaseStatusLabel[detailPhase]}</div>
+                            <div className={s.phaseDescription}>{phaseStatusLabel[detailPhase]}</div>
                         </div>
                     )}
 
-                    <div style={styles.statsRow}>
-                        <div style={styles.statBox}>
-                            <span style={styles.statLabel}>Epoch<span style={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 400 }}> (전체 데이터를 한 번 다 본 횟수)</span></span>
-                            <span style={styles.statValue}>{epoch}</span>
+                    <div className={s.statsRow}>
+                        <div className={s.statBox}>
+                            <span className={s.statLabel}>Epoch<span className={s.statSubNote}> (전체 데이터를 한 번 다 본 횟수)</span></span>
+                            <span className={s.statValue}>{epoch}</span>
                         </div>
-                        <div style={styles.statBox}>
-                            <span style={styles.statLabel}>Loss<span style={{ fontSize: '0.6rem', color: 'var(--text-dim)', fontWeight: 400 }}> (오차: 얼마나 틀렸는지)</span></span>
-                            <span style={{ ...styles.statValue, color: isConverged ? '#10b981' : lastLoss > 0.1 ? '#f43f5e' : '#fbbf24' }}>
+                        <div className={s.statBox}>
+                            <span className={s.statLabel}>Loss<span className={s.statSubNote}> (오차: 얼마나 틀렸는지)</span></span>
+                            <span className={s.statValue} style={{ color: isConverged ? '#10b981' : lastLoss > 0.1 ? '#f43f5e' : '#fbbf24' }}>
                                 {lastLoss !== null ? lastLoss.toFixed(6) : '—'}
                             </span>
                         </div>
-                        <div style={styles.statBox}>
-                            <span style={styles.statLabel}>상태</span>
-                            <span style={{ fontSize: '1.1rem' }}>
+                        <div className={s.statBox}>
+                            <span className={s.statLabel}>상태</span>
+                            <span className={s.statusEmoji}>
                                 {isConverged ? '🎉' : epoch === 0 ? '⏳' : isTraining ? '🏃' : isDetailRunning ? '🔍' : '⏸️'}
                             </span>
                         </div>
                     </div>
                     {isConverged && (
-                        <div style={styles.successBanner}>🎉 수렴 완료! {dataset.name} 학습 성공!</div>
+                        <div className={s.successBanner}>🎉 수렴 완료! {dataset.name} 학습 성공!</div>
                     )}
                 </div>
 
                 {/* 수동 가중치 편집 */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">🔧 수동 가중치 조절</label>
                     {isSimple ? (
-                        <div style={styles.weightSliders}>
+                        <div className={s.weightSliders}>
                             <WeightSlider label="W₁" value={simpleW.w[0]} onChange={(v) => updateSimpleWeight(0, v)} />
                             <WeightSlider label="W₂" value={simpleW.w[1]} onChange={(v) => updateSimpleWeight(1, v)} />
                             <WeightSlider label="b" value={simpleW.b} onChange={(v) => updateSimpleBias(v)} />
-                            <p style={styles.hint}>
+                            <p className={s.hint}>
                                 💡 AND: W₁, W₂ ≈ 큰 양수, b ≈ 큰 음수<br />
                                 💡 OR: W₁, W₂ ≈ 큰 양수, b ≈ 작은 음수
                             </p>
                         </div>
                     ) : (
-                        <div style={styles.weightSliders}>
-                            <span style={styles.weightGroup}>입력→은닉 (W_IH)</span>
+                        <div className={s.weightSliders}>
+                            <span className={s.weightGroup}>입력→은닉 (W_IH)</span>
                             {[0, 1].map((i) => [0, 1, 2].map((j) => (
                                 <WeightSlider key={`ih${i}${j}`} label={`X${i + 1}→H${j + 1}`}
                                     value={deepW.wIH[i][j]} onChange={(v) => updateDeepWeightIH(i, j, v)} />
                             )))}
-                            <span style={styles.weightGroup}>은닉 편향 (b_H)</span>
+                            <span className={s.weightGroup}>은닉 편향 (b_H)</span>
                             {[0, 1, 2].map((j) => (
                                 <WeightSlider key={`bh${j}`} label={`bH${j + 1}`}
                                     value={deepW.bH[j]} onChange={(v) => updateDeepBiasH(j, v)} />
                             ))}
-                            <span style={styles.weightGroup}>은닉→출력 (W_HO)</span>
+                            <span className={s.weightGroup}>은닉→출력 (W_HO)</span>
                             {[0, 1, 2].map((j) => (
                                 <WeightSlider key={`ho${j}`} label={`H${j + 1}→Y`}
                                     value={deepW.wHO[j]} onChange={(v) => updateDeepWeightHO(j, v)} />
@@ -723,15 +722,15 @@ export default function Week7Page() {
                 </div>
 
                 {/* ── Theory Section with Chain Rule ── */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">🤖 딥러닝(Deep Learning)의 학습 원리</label>
-                    <div style={{ ...styles.description, fontSize: '0.85rem' }}>
-                        <p style={{ marginBottom: 10 }}>
+                    <div className={s.descriptionSm}>
+                        <p className={s.chainRuleMb}>
                             <strong>1. 모든 신경망의 기초 (Backpropagation)</strong><br />
                             GPT, 알파고, 자율주행 차 등 모든 현대 인공지능은 <strong>역전파(Backpropagation)</strong> 알고리즘을 통해 학습합니다.
                             &quot;정답과 예측의 오차(Loss)를 줄이는 방향으로 가중치를 수정한다&quot;는 원리는 모두 동일합니다.
                         </p>
-                        <p style={{ marginBottom: 10 }}>
+                        <p className={s.chainRuleMb}>
                             <strong>2. 규모의 확장 (Scale)</strong><br />
                             여러분이 지금 만든 신경망은 뉴런이 몇 개 없지만, 최신 LLM은 수천억 개의 뉴런(파라미터)을 가집니다.
                             하지만 그 거대한 모델을 학습시키는 방법도 결국은 이 <strong>기울기(Gradient)를 따라가는 것</strong>입니다.
@@ -740,67 +739,67 @@ export default function Week7Page() {
                 </div>
 
                 {/* ── Chain Rule 상세 설명 섹션 ── */}
-                <div className="glass-card" style={styles.card}>
+                <div className={`glass-card ${s.card}`}>
                     <label className="label-cosmic">📐 체인룰 (Chain Rule) 이해하기</label>
-                    <div style={{ ...styles.description, fontSize: '0.85rem' }}>
-                        <p style={{ marginBottom: 10 }}>
+                    <div className={s.descriptionSm}>
+                        <p className={s.chainRuleMb}>
                             역전파의 핵심은 <strong>체인룰(연쇄 법칙)</strong>입니다.
                             합성함수의 미분을 &quot;체인(사슬)&quot;처럼 연결해서 구합니다.
                         </p>
 
                         {/* 쉬운 예시 */}
-                        <div style={styles.chainRuleBox}>
-                            <div style={styles.chainRuleTitle}>쉬운 예시: 빵 가격 계산</div>
-                            <p style={{ marginBottom: 6, lineHeight: 1.7 }}>
+                        <div className={s.chainRuleBox}>
+                            <div className={s.chainRuleTitle}>쉬운 예시: 빵 가격 계산</div>
+                            <p className={s.chainRuleParaSpaced}>
                                 밀가루 가격이 올라가면 빵 가격은 얼마나 오를까?
                             </p>
-                            <div style={styles.chainRuleFormula}>
+                            <div className={s.chainRuleFormula}>
                                 밀가루 → 반죽 → 빵 가격
                             </div>
-                            <div style={styles.chainRuleFormula}>
-                                <span style={{ color: '#fbbf24' }}>∂(빵가격)/∂(밀가루)</span> = <span style={{ color: '#60a5fa' }}>∂(빵가격)/∂(반죽)</span> x <span style={{ color: '#fb923c' }}>∂(반죽)/∂(밀가루)</span>
+                            <div className={s.chainRuleFormula}>
+                                <span className={s.colorGold}>∂(빵가격)/∂(밀가루)</span> = <span className={s.colorBlue}>∂(빵가격)/∂(반죽)</span> x <span className={s.colorOrange}>∂(반죽)/∂(밀가루)</span>
                             </div>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 6 }}>
+                            <p className={s.chainRuleNote}>
                                 각 단계의 변화율을 곱하면 전체 변화율을 알 수 있습니다!
                             </p>
                         </div>
 
                         {/* 신경망에서의 예시 */}
-                        <div style={styles.chainRuleBox}>
-                            <div style={styles.chainRuleTitle}>신경망에서의 체인룰</div>
-                            <div style={styles.chainRuleFormula}>
+                        <div className={s.chainRuleBox}>
+                            <div className={s.chainRuleTitle}>신경망에서의 체인룰</div>
+                            <div className={s.chainRuleFormula}>
                                 y = sigmoid(w * x + b)
                             </div>
-                            <div style={styles.chainRuleFormula}>
+                            <div className={s.chainRuleFormula}>
                                 Loss = 1/2 * (y - target)^2
                             </div>
-                            <div style={{ ...styles.chainRuleFormula, marginTop: 8 }}>
-                                <span style={{ color: '#fbbf24' }}>∂L/∂w</span> = <span style={{ color: '#f43f5e' }}>∂L/∂y</span> x <span style={{ color: '#60a5fa' }}>∂y/∂z</span> x <span style={{ color: '#fb923c' }}>∂z/∂w</span>
+                            <div className={s.chainRuleFormulaSpaced}>
+                                <span className={s.colorGold}>∂L/∂w</span> = <span className={s.colorRed}>∂L/∂y</span> x <span className={s.colorBlue}>∂y/∂z</span> x <span className={s.colorOrange}>∂z/∂w</span>
                             </div>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 4, textAlign: 'left' }}>
+                            <p className={s.chainRuleSmallNote}>
                                 ∂L/∂w 는 &quot;손실(L)이 가중치(w)를 살짝 바꿨을 때 얼마나 변하는지&quot;를 나타냅니다. 미적분을 모르셔도 괜찮아요 — 핵심은 &quot;어느 방향으로 가중치를 바꿔야 오차가 줄어드는지&quot;를 알려준다는 것입니다.
                             </p>
-                            <div style={styles.chainRuleDetail}>
-                                <div><span style={{ color: '#f43f5e' }}>∂L/∂y</span> = (y - target) <span style={{ color: 'var(--text-dim)' }}>... Loss의 미분</span></div>
-                                <div><span style={{ color: '#60a5fa' }}>∂y/∂z</span> = y(1 - y) <span style={{ color: 'var(--text-dim)' }}>... sigmoid의 미분</span></div>
-                                <div><span style={{ color: '#fb923c' }}>∂z/∂w</span> = x <span style={{ color: 'var(--text-dim)' }}>... z = wx + b이므로</span></div>
+                            <div className={s.chainRuleDetail}>
+                                <div><span className={s.colorRed}>∂L/∂y</span> = (y - target) <span className={s.colorTextDim}>... Loss의 미분</span></div>
+                                <div><span className={s.colorBlue}>∂y/∂z</span> = y(1 - y) <span className={s.colorTextDim}>... sigmoid의 미분</span></div>
+                                <div><span className={s.colorOrange}>∂z/∂w</span> = x <span className={s.colorTextDim}>... z = wx + b이므로</span></div>
                             </div>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 8 }}>
+                            <p className={s.chainRuleMultiNote}>
                                 이 세 값을 곱하면 &quot;가중치 w를 얼마나 바꿔야 하는지&quot;를 알 수 있습니다.
                                 위의 &quot;1스텝 상세&quot; 버튼을 눌러 실제 그래디언트 값을 확인해보세요!
                             </p>
                         </div>
 
                         {/* 다층에서의 체인룰 */}
-                        <div style={styles.chainRuleBox}>
-                            <div style={styles.chainRuleTitle}>다층 네트워크 (XOR)</div>
-                            <p style={{ lineHeight: 1.7, fontSize: '0.8rem' }}>
+                        <div className={s.chainRuleBox}>
+                            <div className={s.chainRuleTitle}>다층 네트워크 (XOR)</div>
+                            <p className={s.chainRuleMultiP}>
                                 은닉층이 있으면 체인이 더 길어집니다:
                             </p>
-                            <div style={styles.chainRuleFormula}>
-                                <span style={{ color: '#fbbf24' }}>∂L/∂w_ih</span> = <span style={{ color: '#f43f5e' }}>∂L/∂y</span> x <span style={{ color: '#10b981' }}>∂y/∂h</span> x <span style={{ color: '#60a5fa' }}>∂h/∂z_h</span> x <span style={{ color: '#fb923c' }}>∂z_h/∂w_ih</span>
+                            <div className={s.chainRuleFormula}>
+                                <span className={s.colorGold}>∂L/∂w_ih</span> = <span className={s.colorRed}>∂L/∂y</span> x <span className={s.colorGreen}>∂y/∂h</span> x <span className={s.colorBlue}>∂h/∂z_h</span> x <span className={s.colorOrange}>∂z_h/∂w_ih</span>
                             </div>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 6 }}>
+                            <p className={s.chainRuleNote}>
                                 출력에서 입력 방향으로 체인을 따라가며 그래디언트를 전파합니다.
                                 이것이 &quot;역(Back)전파(Propagation)&quot;라 부르는 이유입니다!
                             </p>
@@ -809,43 +808,28 @@ export default function Week7Page() {
                 </div>
 
                 {/* 한 걸음 더: 체인 룰(Chain Rule)이란? */}
-                <div style={{
-                    borderRadius: 12,
-                    border: '1px solid rgba(124, 92, 252, 0.2)',
-                    overflow: 'hidden',
-                    marginTop: 4,
-                }}>
+                <div className={s.deepDiveWrapper}>
                     <button
                         onClick={() => setShowDeepDive(!showDeepDive)}
-                        style={{
-                            width: '100%', padding: '12px 16px',
-                            background: 'rgba(124, 92, 252, 0.08)', border: 'none',
-                            color: '#a78bfa', fontSize: '0.9rem', fontWeight: 600,
-                            cursor: 'pointer', textAlign: 'left',
-                            display: 'flex', alignItems: 'center', gap: 8,
-                        }}
+                        className={s.deepDiveToggle}
                     >
                         {showDeepDive ? '▼' : '▶'} 한 걸음 더: 체인 룰(Chain Rule)이란?
                     </button>
                     {showDeepDive && (
-                        <div style={{
-                            padding: 16, background: 'rgba(124, 92, 252, 0.04)',
-                            fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.7,
-                            textAlign: 'left',
-                        }}>
-                            <p style={{ marginBottom: 8 }}>
-                                <strong style={{ color: '#fbbf24' }}>체인 룰(Chain Rule)</strong>은
+                        <div className={s.deepDiveContent}>
+                            <p className={s.deepDiveMb}>
+                                <strong className={s.colorGold}>체인 룰(Chain Rule)</strong>은
                                 역전파(Backpropagation)의 수학적 기초입니다.
                                 마치 사슬(Chain)을 따라 메시지를 전달하는 것처럼 —
                                 각 연결 고리가 메시지를 조금씩 변형하면서 전달합니다.
                             </p>
-                            <p style={{ marginBottom: 8 }}>
-                                <strong style={{ color: '#34d399' }}>수학적 표현</strong> —
+                            <p className={s.deepDiveMb}>
+                                <strong className={s.colorMint}>수학적 표현</strong> —
                                 합성함수 f(g(x))의 미분 = f&apos;(g(x)) &times; g&apos;(x).
                                 즉, 바깥 함수의 미분과 안쪽 함수의 미분을 곱하면 됩니다.
                             </p>
                             <p>
-                                <strong style={{ color: '#f87171' }}>왜 중요한가?</strong> —
+                                <strong className={s.colorRedLight}>왜 중요한가?</strong> —
                                 체인 룰 덕분에 딥러닝이 가능합니다.
                                 층이 아무리 깊어도, 각 가중치가 최종 출력에 미치는 영향을
                                 체인 룰을 통해 정확히 계산할 수 있기 때문입니다.
@@ -856,26 +840,21 @@ export default function Week7Page() {
                 </div>
 
                 {/* 네비게이션 */}
-                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                    <button onClick={() => router.push('/week7/intro')} style={{
-                        padding: '10px 24px', borderRadius: 10,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.05)',
-                        color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
-                    }}>← 인트로로</button>
-                    <button className="btn-nova" onClick={() => router.push('/week8/intro')} style={{ padding: '10px 24px', flex: 1 }}>
+                <div className={s.navRow}>
+                    <button onClick={() => router.push('/week7/intro')} className={s.navBack}>← 인트로로</button>
+                    <button className={`btn-nova ${s.navNext}`} onClick={() => router.push('/week8/intro')}>
                         <span>〰️ 8주차: 시퀀스와 포지션 →</span>
                     </button>
                 </div>
             </div>
 
             {/* ── 우측 시각화 ── */}
-            <div style={styles.rightPanel}>
+            <div className={s.rightPanel}>
                 {/* 신경망 구조 */}
-                <div style={styles.vizCard}>
-                    <div style={styles.vizHeader}>
-                        <span style={styles.vizTitle}>🧠 신경망 구조</span>
-                        <span style={styles.vizSub}>
+                <div className={s.vizCard}>
+                    <div className={s.vizHeader}>
+                        <span className={s.vizTitle}>🧠 신경망 구조</span>
+                        <span className={s.vizSub}>
                             {detailPhase !== PHASE_IDLE
                                 ? phaseStatusLabel[detailPhase]
                                 : showBackprop
@@ -884,22 +863,22 @@ export default function Week7Page() {
                         </span>
                     </div>
                     <canvas ref={canvasRef} width={480} height={isSimple ? 200 : 320}
-                        style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)' }} />
+                        className={s.networkCanvas} />
                 </div>
 
                 {/* 예측 결과 */}
-                <div style={styles.vizCard}>
-                    <div style={styles.vizHeader}>
-                        <span style={styles.vizTitle}>📋 예측 결과</span>
+                <div className={s.vizCard}>
+                    <div className={s.vizHeader}>
+                        <span className={s.vizTitle}>📋 예측 결과</span>
                     </div>
-                    <table style={styles.table}>
+                    <table className={s.table}>
                         <thead>
                             <tr>
-                                <th style={styles.th}>X1</th>
-                                <th style={styles.th}>X2</th>
-                                <th style={styles.th}>정답</th>
-                                <th style={styles.th}>예측</th>
-                                <th style={styles.th}>✓</th>
+                                <th className={s.th}>X1</th>
+                                <th className={s.th}>X2</th>
+                                <th className={s.th}>정답</th>
+                                <th className={s.th}>예측</th>
+                                <th className={s.th}>✓</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -909,13 +888,13 @@ export default function Week7Page() {
                                 const correct = pred && Math.abs(pred.output - target) < 0.3;
                                 return (
                                     <tr key={idx}>
-                                        <td style={styles.td}>{inp[0]}</td>
-                                        <td style={styles.td}>{inp[1]}</td>
-                                        <td style={{ ...styles.td, fontWeight: 700 }}>{target}</td>
-                                        <td style={{ ...styles.td, fontFamily: 'monospace', color: correct ? '#10b981' : '#f43f5e' }}>
+                                        <td className={s.td}>{inp[0]}</td>
+                                        <td className={s.td}>{inp[1]}</td>
+                                        <td className={s.tdBold}>{target}</td>
+                                        <td className={s.tdMono} style={{ color: correct ? '#10b981' : '#f43f5e' }}>
                                             {pred ? pred.output.toFixed(3) : '—'}
                                         </td>
-                                        <td style={styles.td}>{correct ? '✅' : '❌'}</td>
+                                        <td className={s.td}>{correct ? '✅' : '❌'}</td>
                                     </tr>
                                 );
                             })}
@@ -924,19 +903,19 @@ export default function Week7Page() {
                 </div>
 
                 {/* Loss 그래프 */}
-                <div style={styles.vizCard}>
-                    <div style={styles.vizHeader}>
-                        <span style={styles.vizTitle}>📉 Loss 그래프</span>
-                        <span style={styles.vizSub}>{lossHistory.length}스텝</span>
+                <div className={s.vizCard}>
+                    <div className={s.vizHeader}>
+                        <span className={s.vizTitle}>📉 Loss 그래프</span>
+                        <span className={s.vizSub}>{lossHistory.length}스텝</span>
                     </div>
                     <LossChart history={lossHistory} />
                 </div>
 
                 {/* 결정 경계 */}
-                <div style={styles.vizCard}>
-                    <div style={styles.vizHeader}>
-                        <span style={styles.vizTitle}>🗺️ 결정 경계<span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 400 }}> (직선/곡선으로 데이터를 두 그룹으로 나누는 경계선)</span></span>
-                        <span style={styles.vizSub}>신경망이 보는 세상</span>
+                <div className={s.vizCard}>
+                    <div className={s.vizHeader}>
+                        <span className={s.vizTitle}>🗺️ 결정 경계<span className={s.vizTitleDim}> (직선/곡선으로 데이터를 두 그룹으로 나누는 경계선)</span></span>
+                        <span className={s.vizSub}>신경망이 보는 세상</span>
                     </div>
                     <DecisionBoundary weights={weights} dataset={dataset} forwardFn={forwardFn} />
                 </div>
@@ -948,16 +927,14 @@ export default function Week7Page() {
 // ── Phase Step 인디케이터 ──
 function PhaseStep({ label, active, done, color }) {
     return (
-        <span style={{
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            background: active ? `${color}33` : done ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-            color: active ? color : done ? '#10b981' : 'var(--text-dim)',
-            border: active ? `1px solid ${color}` : '1px solid transparent',
-            transition: 'all 0.3s ease',
-        }}>
+        <span
+            className={s.phaseStep}
+            style={{
+                background: active ? `${color}33` : done ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                color: active ? color : done ? '#10b981' : 'var(--text-dim)',
+                border: active ? `1px solid ${color}` : '1px solid transparent',
+            }}
+        >
             {done ? '✓ ' : ''}{label}
         </span>
     );
@@ -966,11 +943,11 @@ function PhaseStep({ label, active, done, color }) {
 // ── 가중치 슬라이더 ──
 function WeightSlider({ label, value, onChange }) {
     return (
-        <div style={styles.wRow}>
-            <span style={styles.wLabel}>{label}</span>
-            <input type="range" className="slider-cosmic" min={-5} max={5} step={0.05}
-                value={value} onChange={(e) => onChange(e.target.value)} style={{ flex: 1 }} />
-            <span style={{ ...styles.wVal, color: value > 0 ? '#60a5fa' : value < 0 ? '#f43f5e' : '#888' }}>
+        <div className={s.wRow}>
+            <span className={s.wLabel}>{label}</span>
+            <input type="range" className={`slider-cosmic ${s.flex1}`} min={-5} max={5} step={0.05}
+                value={value} onChange={(e) => onChange(e.target.value)} />
+            <span className={s.wVal} style={{ color: value > 0 ? '#60a5fa' : value < 0 ? '#f43f5e' : '#888' }}>
                 {value.toFixed(2)}
             </span>
         </div>
@@ -1028,7 +1005,7 @@ function LossChart({ history }) {
         ctx.fillStyle = 'rgba(124,92,252,0.1)'; ctx.fill();
         ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.fillStyle = '#fbbf24'; ctx.fill();
     }, [history]);
-    return <canvas ref={canvasRef} width={480} height={140} style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-sm)' }} />;
+    return <canvas ref={canvasRef} width={480} height={140} className={s.lossCanvas} />;
 }
 
 // ── 결정 경계 ──
@@ -1076,99 +1053,5 @@ function DecisionBoundary({ weights, dataset, forwardFn }) {
         ctx.fillText('X1 →', S / 2, S - 5);
         ctx.save(); ctx.translate(10, S / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('X2 →', 0, 0); ctx.restore();
     }, [weights, dataset, forwardFn]);
-    return <canvas ref={canvasRef} style={{ width: '100%', maxWidth: 250, height: 'auto', borderRadius: 'var(--radius-sm)', margin: '0 auto', display: 'block' }} />;
+    return <canvas ref={canvasRef} className={s.boundaryCanvas} />;
 }
-
-// ── 스타일 ──
-const styles = {
-    container: { display: 'flex', height: '100vh', overflow: 'hidden' },
-    leftPanel: {
-        width: 380, minWidth: 380, height: '100%', overflowY: 'auto', padding: 24,
-        display: 'flex', flexDirection: 'column', gap: 14, borderRight: '1px solid var(--border-subtle)',
-    },
-    header: { marginBottom: 4 },
-    weekTitle: { fontSize: '0.85rem', color: 'var(--accent-pulsar)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 },
-    moduleTitle: { fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 },
-    description: { fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 },
-    card: { padding: 16, display: 'flex', flexDirection: 'column', gap: 10 },
-    btnRow: { display: 'flex', gap: 6 },
-    dsBtn: { flex: 1, fontSize: '0.78rem', padding: '8px 4px' },
-    archBanner: {
-        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-        background: 'rgba(124,92,252,0.08)', borderRadius: 'var(--radius-sm)',
-        fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600,
-    },
-    sliderRow: { display: 'flex', alignItems: 'center', gap: 8 },
-    sliderLabel: { fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'monospace' },
-    statsRow: { display: 'flex', gap: 8, marginTop: 4 },
-    statBox: {
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 4px',
-        background: 'rgba(124,92,252,0.05)', borderRadius: 'var(--radius-sm)',
-    },
-    statLabel: { fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: 2 },
-    statValue: { fontSize: '0.95rem', fontWeight: 800, fontFamily: 'monospace', color: 'var(--text-primary)' },
-    successBanner: {
-        padding: '10px 16px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)',
-        borderRadius: 'var(--radius-sm)', color: '#10b981', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center',
-    },
-    hint: { fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.6 },
-    weightSliders: { display: 'flex', flexDirection: 'column', gap: 6 },
-    weightGroup: { fontSize: '0.72rem', color: 'var(--accent-pulsar)', fontWeight: 700, marginTop: 4 },
-    wRow: { display: 'flex', alignItems: 'center', gap: 6 },
-    wLabel: { fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', fontFamily: 'monospace', width: 50, textAlign: 'right' },
-    wVal: { fontSize: '0.78rem', fontWeight: 700, fontFamily: 'monospace', width: 40, textAlign: 'right' },
-    rightPanel: { flex: 1, height: '100%', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 },
-    vizCard: { padding: 20, background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' },
-    vizHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    vizTitle: { fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' },
-    vizSub: { fontSize: '0.75rem', color: 'var(--text-dim)' },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    th: { padding: '6px 8px', fontSize: '0.75rem', color: 'var(--text-dim)', borderBottom: '1px solid var(--border-subtle)', textAlign: 'center' },
-    td: { padding: '6px 8px', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' },
-    // Phase indicator styles
-    phaseBanner: {
-        padding: '10px 12px',
-        background: 'rgba(124,92,252,0.06)',
-        borderRadius: 'var(--radius-sm)',
-        border: '1px solid rgba(124,92,252,0.2)',
-    },
-    phaseSteps: {
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 6,
-        flexWrap: 'wrap',
-    },
-    phaseArrow: { fontSize: '0.7rem', color: 'var(--text-dim)' },
-    phaseDescription: {
-        textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600,
-    },
-    // Chain Rule styles
-    chainRuleBox: {
-        padding: '12px 14px',
-        background: 'rgba(124,92,252,0.06)',
-        borderRadius: 'var(--radius-sm)',
-        border: '1px solid rgba(124,92,252,0.15)',
-        marginBottom: 10,
-        fontSize: '0.82rem',
-        lineHeight: 1.6,
-    },
-    chainRuleTitle: {
-        fontWeight: 800, fontSize: '0.82rem', color: 'var(--accent-pulsar)', marginBottom: 6,
-    },
-    chainRuleFormula: {
-        fontFamily: '"JetBrains Mono", monospace',
-        fontSize: '0.8rem',
-        color: 'var(--text-primary)',
-        textAlign: 'center',
-        padding: '4px 0',
-        fontWeight: 600,
-    },
-    chainRuleDetail: {
-        marginTop: 8,
-        paddingLeft: 8,
-        borderLeft: '2px solid rgba(124,92,252,0.3)',
-        fontSize: '0.78rem',
-        fontFamily: '"JetBrains Mono", monospace',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-    },
-};

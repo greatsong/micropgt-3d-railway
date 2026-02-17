@@ -1,0 +1,557 @@
+/* ── Loading (dynamic import) ── */
+.loadingStyle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+}
+
+.loadingBox {
+  padding: 24px 48px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* ── simStyles ── */
+.simPanel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.simHint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.simSelectLabel {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.simResultBox {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(124, 92, 252, 0.06);
+  border: 1px solid rgba(124, 92, 252, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.simResultRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.simInterpretation {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 4px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(124, 92, 252, 0.1);
+}
+
+.simFunFact {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Main layout ── */
+.container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.containerMobile {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
+}
+
+.mobileCanvasWrap {
+  width: 100%;
+  height: 300px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.leftPanel {
+  width: 380px;
+  min-width: 380px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.leftPanelMobile {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: none;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.header {
+  margin-bottom: 4px;
+}
+
+.weekTitle {
+  font-size: 0.85rem;
+  color: var(--accent-pulsar);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.moduleTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.embeddingHint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.statusCard {
+  padding: 14px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusText {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.inputCard {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputHint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.registerBtn {
+  margin-top: 4px;
+  width: 100%;
+}
+
+.sliderCard {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.myWordBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(251, 191, 36, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.myWordBadgeStar {
+  font-size: 1.4rem;
+}
+
+.myWordBadgeText {
+  font-weight: 700;
+  color: var(--accent-laser-gold);
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.axisLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+
+.sliderValue {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-star-cyan);
+  min-width: 40px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.studentList {
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.studentScroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.studentItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(124, 92, 252, 0.05);
+}
+
+.studentDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.studentNameText {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.studentWord {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+.emptyText {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 20px;
+}
+
+.card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theoryDescription {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.theoryDim {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.theoryP {
+  margin-bottom: 10px;
+}
+
+.canvasWrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvasOverlay {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.canvasOverlayBadgeSm {
+  font-size: 0.75rem;
+}
+
+.canvasOverlayBadge {
+  font-size: 0.8rem;
+}
+
+/* ── CosineSimilarityPanel ── */
+.cosineDesc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.selectPairRow {
+  display: flex;
+  gap: 10px;
+}
+
+.selectPairCol {
+  flex: 1;
+}
+
+.selectCosmic {
+  font-size: 0.85rem;
+  padding: 8px 10px;
+}
+
+.textDim {
+  color: var(--text-dim);
+}
+
+.simValueHigh {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #10b981;
+}
+
+.simValueMid {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #fbbf24;
+}
+
+.simValueLow {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #f43f5e;
+}
+
+.angleValue {
+  font-weight: 700;
+  color: #7c5cfc;
+}
+
+.distValue {
+  font-weight: 700;
+  color: #22d3ee;
+}
+
+.funFactDesc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin: 6px 0;
+}
+
+.funFactBtn {
+  padding: 8px 20px;
+  font-size: 0.82rem;
+}
+
+/* ── Navigation ── */
+.navRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+}
+
+.navBackBtn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.navNextBtn {
+  padding: 10px 24px;
+  flex: 1;
+}
+
+/* ── Extracted static inline styles (from __REMOVED__ component) ── */
+.loadingHint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.gloveSource {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.gloveDesc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.presetBtnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.toggleCenter {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.customInputRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.selectSmall {
+  font-size: 0.75rem;
+  padding: 5px 6px;
+}
+
+.operatorMinus {
+  font-weight: 800;
+  color: #f43f5e;
+  font-size: 1.1rem;
+}
+
+.operatorPlus {
+  font-weight: 800;
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.formulaDisplay {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(124, 92, 252, 0.06);
+  border: 1px solid rgba(124, 92, 252, 0.12);
+  text-align: center;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.formulaMinusBold {
+  color: #f43f5e;
+  font-weight: 800;
+}
+
+.formulaPlusBold {
+  color: #10b981;
+  font-weight: 800;
+}
+
+.formulaEquals {
+  color: #fbbf24;
+}
+
+.resultBox {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  text-align: center;
+}
+
+.resultLabel {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.resultWord {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.resultMeta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+
+.resultFormula {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.rankSection {
+  margin-top: 8px;
+}
+
+.rankLabel {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.rankList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sourceAttrib {
+  margin-top: 8px;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  text-align: center;
+  opacity: 0.7;
+}

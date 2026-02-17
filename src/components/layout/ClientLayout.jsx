@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import QuizOverlay from '@/components/quiz/QuizOverlay';
 import useIsMobile from '@/lib/useIsMobile';
 import { getSocket } from '@/lib/socket';
+import s from './ClientLayout.module.css';
 
 function getInitialTheme() {
     if (typeof window === 'undefined') return 'dark';
@@ -74,17 +75,17 @@ export default function ClientLayout({ children }) {
     }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
+        <div className={s.root}>
             {!isHidden && <Sidebar />}
 
             {/* Socket 재연결 배너 */}
             {socketStatus === 'reconnecting' && (
-                <div style={bannerStyles.reconnecting}>
-                    <span className="animate-spin" style={{ display: 'inline-block' }}>⟳</span> 서버 재연결 중...
+                <div className={s.bannerReconnecting}>
+                    <span className={`animate-spin ${s.spinIcon}`}>⟳</span> 서버 재연결 중...
                 </div>
             )}
             {socketStatus === 'disconnected' && (
-                <div style={bannerStyles.disconnected}>
+                <div className={s.bannerDisconnected}>
                     서버와 연결이 끊어졌습니다. 네트워크를 확인해주세요.
                 </div>
             )}
@@ -92,41 +93,21 @@ export default function ClientLayout({ children }) {
             {/* 테마 토글 버튼 */}
             <button
                 onClick={toggleTheme}
-                style={{
-                    position: 'fixed',
-                    top: 16,
-                    right: 16,
-                    zIndex: 200,
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bg-glass)',
-                    backdropFilter: 'blur(10px)',
-                    cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.3s',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                }}
+                className={s.themeToggle}
                 title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
                 {theme === 'dark' ? '☀️' : '🌙'}
             </button>
 
-            <div style={{
-                flex: 1,
-                paddingLeft: isHidden || isMobile ? 0 : 70,
-                width: '100%',
-                transition: 'padding-left 0.3s',
-            }}>
+            <div
+                className={s.contentArea}
+                style={{ paddingLeft: isHidden || isMobile ? 0 : 70 }}
+            >
                 <div
+                    className={s.transitionWrapper}
                     style={{
                         opacity: isTransitioning ? 0 : 1,
                         transform: isTransitioning ? 'translateY(12px)' : 'translateY(0)',
-                        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out',
                     }}
                 >
                     {displayChildren}
@@ -138,34 +119,3 @@ export default function ClientLayout({ children }) {
         </div>
     );
 }
-
-const bannerStyles = {
-    reconnecting: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 300,
-        padding: '8px 16px',
-        textAlign: 'center',
-        fontSize: '0.82rem',
-        fontWeight: 600,
-        color: '#92400e',
-        background: 'linear-gradient(90deg, rgba(251,191,36,0.9), rgba(245,158,11,0.9))',
-        backdropFilter: 'blur(8px)',
-    },
-    disconnected: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 300,
-        padding: '8px 16px',
-        textAlign: 'center',
-        fontSize: '0.82rem',
-        fontWeight: 600,
-        color: '#fff',
-        background: 'linear-gradient(90deg, rgba(239,68,68,0.9), rgba(220,38,38,0.9))',
-        backdropFilter: 'blur(8px)',
-    },
-};

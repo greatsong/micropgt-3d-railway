@@ -1,0 +1,775 @@
+/* ── Layout ── */
+.container {
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 20px;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.headerIcon {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.headerText {
+    font-weight: 700;
+}
+
+/* ── Tabs ── */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tabBtn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.activeTab {
+    background: rgba(167, 139, 250, 0.2);
+    color: #a78bfa;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.tabBtnSmall {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+/* ── Content ── */
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+.label {
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.labelSmall {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.desc {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.explanation {
+    margin-top: 16px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* ── Controls ── */
+.controlPanel {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.inputBtn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #a78bfa;
+    color: #000;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.resetBtn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+/* ── Viz ── */
+.vizArea {
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.seqBox {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.memoryBox {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+
+/* ── RNN helpers ── */
+.flexGap10 {
+    display: flex;
+    gap: 10px;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.mb20 {
+    margin-bottom: 20px;
+}
+
+.hintText {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.flexGap10End {
+    display: flex;
+    gap: 10px;
+    min-height: 60px;
+    align-items: flex-end;
+}
+
+.memoryPercent {
+    font-size: 0.6rem;
+    margin-top: 2px;
+}
+
+.emptyText {
+    color: var(--text-dim);
+}
+
+/* ── LSTM styles ── */
+.stateBox {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(15, 10, 40, 0.8);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    text-align: center;
+    min-width: 90px;
+}
+
+.stateLabel {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.gateChip {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid;
+    font-size: 0.78rem;
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.formulaBox {
+    margin-bottom: 20px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.06);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.formulaList {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+.symbolHighlight {
+    color: #fbbf24;
+}
+
+.gateSliders {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.gateSliderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.gateSliderName {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.gateSliderValue {
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.sliderFull {
+    width: 100%;
+}
+
+.gateSliderFooter {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.gateFormula {
+    font-size: 0.68rem;
+}
+
+.fullWidthCenter {
+    width: 100%;
+    text-align: center;
+}
+
+.cellStateFlow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.arrowText {
+    color: var(--text-dim);
+    font-size: 1.5rem;
+}
+
+.gateColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+}
+
+.plusText {
+    color: var(--text-dim);
+}
+
+.forgetGateChip {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(244, 63, 94, 0.133);
+    border: 1px solid rgba(244, 63, 94, 0.267);
+}
+
+.inputGateChip {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(16, 185, 129, 0.133);
+    border: 1px solid rgba(16, 185, 129, 0.267);
+}
+
+.cellSliderRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.cellSliderLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.cellSliderWidth {
+    width: 200px;
+}
+
+.cellSliderVal {
+    font-family: monospace;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+.stateValYellow {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.stateValGreen {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.stateValBlue {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #3b82f6;
+}
+
+.keyPointBox {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(167, 139, 250, 0.06);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ── PE Visualizer ── */
+.viewToggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.peLabel {
+    color: #fff;
+    margin-right: 10px;
+}
+
+.peVectorRow {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.peVectorCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 24px;
+}
+
+.peVectorBar {
+    width: 20px;
+    height: 40px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.dimLabel {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+}
+
+.valLabel {
+    font-size: 0.5rem;
+    color: var(--text-dim);
+}
+
+.heatmapWrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.heatmapCaption {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.heatmapGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.heatmapHeaderRow {
+    display: flex;
+    gap: 2px;
+    margin-left: 30px;
+}
+
+.heatmapHeaderCell {
+    width: 28px;
+    text-align: center;
+    font-size: 0.55rem;
+    color: var(--text-dim);
+}
+
+.heatmapRow {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.heatmapRowLabel {
+    width: 28px;
+    font-size: 0.65rem;
+    text-align: right;
+    padding-right: 4px;
+}
+
+.heatmapCell {
+    width: 28px;
+    height: 18px;
+    border-radius: 2px;
+}
+
+.heatmapLegend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.legendPositive {
+    font-size: 0.7rem;
+    color: #a78bfa;
+}
+
+.legendNegative {
+    font-size: 0.7rem;
+    color: #f43f5e;
+}
+
+/* ── Deep Dive Accordion ── */
+.deepDiveWrap {
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.deepDiveToggle {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveP {
+    margin-bottom: 10px;
+}
+
+.deepDiveList {
+    margin: 0;
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+.deepDiveLi {
+    margin-bottom: 8px;
+}
+
+.deepDiveHighlight {
+    color: #a78bfa;
+}
+
+/* ── Compare Section ── */
+.sentenceLenRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sentenceLenLabel {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+
+.sentenceLenValue {
+    font-family: monospace;
+    font-weight: 700;
+    color: #a78bfa;
+}
+
+.compareBlock {
+    margin-bottom: 20px;
+}
+
+.rnnTitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f43f5e;
+    margin-bottom: 8px;
+}
+
+.transformerTitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 8px;
+}
+
+.barRow {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    height: 80px;
+}
+
+.barCol {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.barColLabel {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.rnnBarPercent {
+    font-size: 0.55rem;
+    color: #f43f5e;
+}
+
+.transformerBarPercent {
+    font-size: 0.55rem;
+    color: #10b981;
+}
+
+.rnnWarning {
+    font-size: 0.75rem;
+    color: #f43f5e;
+    margin-top: 6px;
+}
+
+.transformerNote {
+    font-size: 0.75rem;
+    color: #10b981;
+    margin-top: 6px;
+}
+
+/* ── Compare Table ── */
+.compareTable {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    font-size: 0.82rem;
+}
+
+.compareHeaderRow {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    background: rgba(167, 139, 250, 0.08);
+}
+
+.compareHeaderCell {
+    padding: 8px 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.compareHeaderRnn {
+    padding: 8px 12px;
+    font-weight: 700;
+    color: #f43f5e;
+}
+
+.compareHeaderTrans {
+    padding: 8px 12px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.compareDataRow {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.compareFeatureCell {
+    padding: 8px 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.compareValueCell {
+    padding: 8px 12px;
+    color: var(--text-dim);
+}
+
+.conclusionBox {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.conclusionFootnote {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+/* ── Navigation ── */
+.navRow {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-bottom: 40px;
+}
+
+.navBackBtn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.navNextBtn {
+    padding: 10px 24px;
+}
+
+/* ── Misc helpers ── */
+.flexCol {
+    display: flex;
+    flex-direction: column;
+}
+
+.sliderFlex1 {
+    flex: 1;
+}
+
+.rnnBarRound {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s;
+}
+
+.transformerBar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 10px;
+    background: rgba(16, 185, 129, 0.6);
+}
+
+.gateSliderBox {
+    padding: 14px;
+    border-radius: 10px;
+}

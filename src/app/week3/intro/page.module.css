@@ -1,0 +1,520 @@
+/* ── pageStyles ── */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.progressBar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 32px;
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  justify-content: center;
+}
+
+.progressDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 1;
+}
+
+.progressFill {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  height: 3px;
+  background: #f59e0b;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  transition: width 0.3s;
+  z-index: 0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.weekBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.navBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+}
+
+.stepCount {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* ── demoStyles ── */
+
+.demoContainer {
+  padding: 20px;
+}
+
+.instruction {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.welcomeText {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.welcomeVisual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(15, 10, 40, 0.6);
+}
+
+.wordRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.wordBtn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.06);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wordBtnActive {
+  background: #f59e0b;
+  color: #000;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.vectorBox {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(15, 10, 40, 0.6);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  text-align: center;
+}
+
+.vectorLabel {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.vectorRow {
+  font-family: monospace;
+  font-size: 1.4rem;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  align-items: center;
+  color: var(--text-dim);
+}
+
+.vectorDigit {
+  transition: all 0.3s;
+  display: inline-block;
+}
+
+.vectorHint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.problemBox {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(15, 10, 40, 0.6);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  text-align: center;
+}
+
+.sparseViz {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.sparseCell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+/* ── Static inline styles converted to classes ── */
+
+/* WelcomeDemo: bridge box (지난 시간 복습) */
+.bridgeBox {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.bridgeBoxStrong {
+  color: #fbbf24;
+}
+
+.highlightYellow {
+  color: #fbbf24;
+}
+
+.highlightAmber {
+  color: #f59e0b;
+}
+
+.highlightRose {
+  color: #f43f5e;
+}
+
+.highlightPurple {
+  color: #7c5cfc;
+}
+
+.highlightPurpleLight {
+  color: #a78bfa;
+}
+
+.highlightGreen {
+  color: #10b981;
+}
+
+/* WelcomeDemo: cat emoji */
+.catEmoji {
+  font-size: 2.5rem;
+}
+
+/* WelcomeDemo: arrow */
+.arrowIcon {
+  font-size: 2rem;
+  color: var(--text-dim);
+}
+
+/* WelcomeDemo: question marks code */
+.questionCode {
+  font-size: 1.2rem;
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+/* WelcomeDemo: bottom hint text */
+.welcomeHint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* EncodingDemo: examples column */
+.encodingColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* EncodingDemo: example row (static parts) */
+.encodingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+}
+
+.encodingRowDefault {
+  background: rgba(15, 10, 40, 0.4);
+  border: 1px solid rgba(124, 92, 252, 0.08);
+}
+
+.encodingRowHighlight {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.encodingRowEmoji {
+  font-size: 1.5rem;
+}
+
+.encodingRowInput {
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.encodingRowArrow {
+  color: var(--text-dim);
+}
+
+.encodingRowCodeGreen {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.encodingRowCodeYellow {
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.encodingRowType {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+/* EncodingDemo: bottom text */
+.encodingBottomText {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* OneHotDemo: one-hot name box at bottom */
+.onehotNameBox {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(124, 92, 252, 0.06);
+  text-align: center;
+}
+
+.onehotNameText {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* ProblemDemo: slider row */
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sliderLabel {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* ProblemDemo: dimension text (dynamic color kept inline) */
+.dimensionText {
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+/* ProblemDemo: dimension description */
+.dimensionDesc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* ProblemDemo: sparse cell "..." overflow label */
+.sparseOverflow {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ProblemDemo: GPT vocab hint box */
+.vocabHintBox {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+}
+
+.vocabHintText {
+  font-size: 0.78rem;
+  color: #f43f5e;
+  font-weight: 600;
+}
+
+/* ProblemDemo: "한 걸음 더" accordion wrapper */
+.accordionWrapper {
+  margin-top: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 92, 252, 0.2);
+  overflow: hidden;
+  text-align: left;
+}
+
+.accordionButton {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(124, 92, 252, 0.08);
+  border: none;
+  color: #a78bfa;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.accordionContent {
+  display: none;
+  padding: 14px;
+  background: rgba(124, 92, 252, 0.04);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.accordionParagraph {
+  margin-bottom: 6px;
+}
+
+/* DistanceDemo: pair buttons row */
+.pairButtonRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+/* DistanceDemo: pair button (static parts; dynamic border/bg/color kept inline) */
+.pairButton {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* DistanceDemo: canvas */
+.distanceCanvas {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  border-radius: 12px;
+  background: rgba(15, 10, 40, 0.6);
+  margin: 0 auto;
+  display: block;
+}
+
+/* DistanceDemo: result box */
+.distanceResultBox {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  text-align: center;
+}
+
+.distanceResultText {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Lab step: centered container */
+.labContainer {
+  padding: 20px;
+  text-align: center;
+}
+
+/* Lab step: big emoji */
+.labEmoji {
+  font-size: 5rem;
+  margin-bottom: 16px;
+}
+
+/* Lab step: next-week hint */
+.labHintText {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* Lab step: CTA button */
+.labButton {
+  margin-top: 24px;
+  padding: 14px 40px;
+  font-size: 1.1rem;
+}
+
+/* Header emoji */
+.headerEmoji {
+  font-size: 3rem;
+}
+
+.sliderFlex {
+  flex: 1;
+}

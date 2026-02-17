@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import s from './page.module.css';
 
 /* ── Activation Graph (Canvas) ── */
 function ActivationGraph({ activation, z, y }) {
@@ -154,15 +155,15 @@ function ActivationGraph({ activation, z, y }) {
     }, [activation, z, y, activationFn, getYRange]);
 
     return (
-        <div style={styles.graphContainer}>
-            <h3 style={styles.label}>활성화 함수 그래프 ({activation.toUpperCase()})</h3>
+        <div className={s.graphContainer}>
+            <h3 className={s.label}>활성화 함수 그래프 ({activation.toUpperCase()})</h3>
             <canvas
                 ref={canvasRef}
-                style={styles.canvas}
+                className={s.canvas}
             />
-            <div style={styles.graphLegend}>
-                <span style={{ color: '#60a5fa' }}>--- {activation}(z) 곡선</span>
-                <span style={{ color: '#f87171' }}>● 현재 값 (z={z.toFixed(2)}, y={y.toFixed(4)})</span>
+            <div className={s.graphLegend}>
+                <span className={s.legendBlue}>--- {activation}(z) 곡선</span>
+                <span className={s.legendRed}>● 현재 값 (z={z.toFixed(2)}, y={y.toFixed(4)})</span>
             </div>
         </div>
     );
@@ -203,24 +204,24 @@ export default function NeuronLab() {
     const getStrokeColor = (w) => w > 0 ? '#60a5fa' : w < 0 ? '#f87171' : '#94a3b8';
 
     return (
-        <div style={styles.container}>
+        <div className={s.container}>
             <Breadcrumb
                 items={[{ label: '6주차 인트로', href: '/week6/intro' }]}
                 current="인공 뉴런 연구실"
             />
-            <div style={styles.header}>
-                <div style={styles.headerTitle}>
-                    <span style={{ fontSize: '1.5rem', marginRight: 8 }}>🧠</span>
-                    <span style={{ fontWeight: 700 }}>인공 뉴런 연구실 (Neuron Lab)</span>
+            <div className={s.header}>
+                <div className={s.headerTitle}>
+                    <span className={s.headerEmoji}>🧠</span>
+                    <span className={s.headerText}>인공 뉴런 연구실 (Neuron Lab)</span>
                 </div>
             </div>
 
-            <div style={styles.content}>
+            <div className={s.content}>
                 {/* 1. Visualization (Left) */}
-                <div style={styles.card}>
-                    <h3 style={styles.label}>뉴런 시각화 (Neuron Visualization)</h3>
-                    <div style={styles.diagramContainer}>
-                        <svg width="100%" height="400" viewBox="0 0 600 400" style={{ overflow: 'visible' }}>
+                <div className={s.card}>
+                    <h3 className={s.label}>뉴런 시각화 (Neuron Visualization)</h3>
+                    <div className={s.diagramContainer}>
+                        <svg width="100%" height="400" viewBox="0 0 600 400" className={s.svgOverflowVisible}>
                             {/* Synapses (Lines) */}
                             {/* x1 to Neuron */}
                             <line x1="100" y1="100" x2="350" y2="200"
@@ -284,31 +285,31 @@ export default function NeuronLab() {
                             </g>
                         </svg>
 
-                        <div style={styles.formulaBox}>
+                        <div className={s.formulaBox}>
                             <p>
-                                <span style={{ color: '#94a3b8' }}>z</span> =
-                                (<span style={{ color: '#fff' }}>{inputs.x1}</span> × <span style={{ color: getStrokeColor(weights.w1) }}>{weights.w1}</span>) +
-                                (<span style={{ color: '#fff' }}>{inputs.x2}</span> × <span style={{ color: getStrokeColor(weights.w2) }}>{weights.w2}</span>) +
-                                <span style={{ color: '#60a5fa' }}> {bias} </span>
+                                <span className={s.colorSlate}>z</span> =
+                                (<span className={s.colorWhite}>{inputs.x1}</span> × <span style={{ color: getStrokeColor(weights.w1) }}>{weights.w1}</span>) +
+                                (<span className={s.colorWhite}>{inputs.x2}</span> × <span style={{ color: getStrokeColor(weights.w2) }}>{weights.w2}</span>) +
+                                <span className={s.colorBlue}> {bias} </span>
                                 = <strong>{z.toFixed(2)}</strong>
                             </p>
-                            <p style={{ marginTop: 5 }}>
-                                <span style={{ color: '#22c55e' }}>y</span> = {activation}({z.toFixed(2)}) = <strong>{y.toFixed(4)}</strong>
+                            <p className={s.formulaSecondLine}>
+                                <span className={s.colorGreen}>y</span> = {activation}({z.toFixed(2)}) = <strong>{y.toFixed(4)}</strong>
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Activation Graph (Canvas) */}
-                <div style={styles.card}>
+                <div className={s.card}>
                     <ActivationGraph activation={activation} z={z} y={y} />
                 </div>
 
                 {/* 3. Controls */}
-                <div style={styles.controlsGrid}>
+                <div className={s.controlsGrid}>
                     {/* Inputs */}
-                    <div style={styles.card}>
-                        <h3 style={styles.label}>1. 입력값 (Inputs)</h3>
+                    <div className={s.card}>
+                        <h3 className={s.label}>1. 입력값 (Inputs)</h3>
                         <ControlRow label="x₁" value={inputs.x1} min={-1} max={1} step={0.1} color="#fff"
                             onChange={v => setInputs({ ...inputs, x1: v })} />
                         <ControlRow label="x₂" value={inputs.x2} min={-1} max={1} step={0.1} color="#fff"
@@ -316,9 +317,9 @@ export default function NeuronLab() {
                     </div>
 
                     {/* Weights */}
-                    <div style={styles.card}>
-                        <h3 style={styles.label}>2. 가중치 (Weights)</h3>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.4, marginTop: -10, marginBottom: 4 }}>가중치 = 각 입력의 중요도. 값이 클수록 해당 입력이 결과에 더 큰 영향을 줍니다.</p>
+                    <div className={s.card}>
+                        <h3 className={s.label}>2. 가중치 (Weights)</h3>
+                        <p className={s.controlHint}>가중치 = 각 입력의 중요도. 값이 클수록 해당 입력이 결과에 더 큰 영향을 줍니다.</p>
                         <ControlRow label="w₁" value={weights.w1} min={-3} max={3} step={0.1} color={getStrokeColor(weights.w1)}
                             onChange={v => setWeights({ ...weights, w1: v })} />
                         <ControlRow label="w₂" value={weights.w2} min={-3} max={3} step={0.1} color={getStrokeColor(weights.w2)}
@@ -326,23 +327,23 @@ export default function NeuronLab() {
                     </div>
 
                     {/* Bias & Activation */}
-                    <div style={styles.card}>
-                        <h3 style={styles.label}>3. 편향 및 활성화 함수</h3>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.4, marginTop: -10, marginBottom: 4 }}>편향(Bias) = 기본값 조정. 입력이 모두 0이어도 뉴런이 활성화될 수 있게 해주는 값입니다.</p>
+                    <div className={s.card}>
+                        <h3 className={s.label}>3. 편향 및 활성화 함수</h3>
+                        <p className={s.controlHint}>편향(Bias) = 기본값 조정. 입력이 모두 0이어도 뉴런이 활성화될 수 있게 해주는 값입니다.</p>
                         <ControlRow label="Bias (b)" value={bias} min={-3} max={3} step={0.1} color="#60a5fa"
                             onChange={v => setBias(v)} />
 
-                        <div style={{ marginTop: 20 }}>
-                            <label style={{ ...styles.label, display: 'block' }}>활성화 함수 (Activation)</label>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 8, marginTop: -8 }}>
+                        <div className={s.activationWrap}>
+                            <label className={s.labelBlock}>활성화 함수 (Activation)</label>
+                            <p className={s.activationHint}>
                                 왜 활성화 함수가 필요할까? 없으면 아무리 층을 쌓아도 결국 하나의 직선(선형 변환)과 같아서, 복잡한 패턴을 학습할 수 없습니다.
                             </p>
-                            <div style={styles.btnGroup}>
+                            <div className={s.btnGroup}>
                                 {['sigmoid', 'relu', 'tanh', 'step'].map(fn => (
                                     <button
                                         key={fn}
+                                        className={s.actBtn}
                                         style={{
-                                            ...styles.actBtn,
                                             background: activation === fn ? '#60a5fa' : 'rgba(255,255,255,0.1)',
                                             color: activation === fn ? '#000' : '#fff'
                                         }}
@@ -352,7 +353,7 @@ export default function NeuronLab() {
                                     </button>
                                 ))}
                             </div>
-                            <p style={styles.explain}>
+                            <p className={s.explain}>
                                 {activation === 'sigmoid' && 'Sigmoid: 0~1로 압축하는 S자 곡선. 확률 표현에 적합합니다.'}
                                 {activation === 'relu' && 'ReLU: 0보다 작으면 0, 크면 그대로 (가장 많이 사용). 심층 신경망의 기본 활성화 함수입니다.'}
                                 {activation === 'tanh' && 'Tanh: -1~1로 압축. 0을 중심으로 대칭이라 학습이 안정적입니다.'}
@@ -363,16 +364,16 @@ export default function NeuronLab() {
                 </div>
 
                 {/* 4. Theory Section */}
-                <div style={styles.card}>
-                    <h3 style={styles.label}>🤖 이것이 모이면 지능이 됩니다</h3>
-                    <div style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-                        <p style={{ marginBottom: 10 }}>
+                <div className={s.card}>
+                    <h3 className={s.label}>🤖 이것이 모이면 지능이 됩니다</h3>
+                    <div className={s.theoryBody}>
+                        <p className={s.theoryParagraph}>
                             <strong>1. 수천억 개의 뉴런 (Parameters)</strong><br />
                             여러분이 지금 만든 이 단순한 뉴런 하나가
                             GPT-4 같은 모델에는 <strong>수천억 개</strong>나 들어있습니다.
                             단순한 덧셈/곱셈도 엄청나게 많이 모이면 &quot;추론&quot;을 할 수 있게 됩니다! 🧠
                         </p>
-                        <p style={{ marginBottom: 10 }}>
+                        <p className={s.theoryParagraph}>
                             <strong>2. 비선형성의 마법 (ReLU)</strong><br />
                             단순히 더하기만 하면 아무리 층을 쌓아도 선형(Linear) 모델에 불과합니다.
                             중간에 <strong>ReLU</strong> 같은 비선형 함수를 섞어줘야 복잡한 문제를 풀 수 있습니다.
@@ -381,36 +382,36 @@ export default function NeuronLab() {
                 </div>
 
                 {/* 5. Why Non-linear? XOR Problem */}
-                <div style={styles.card}>
-                    <h3 style={styles.label}>❓ 왜 비선형 활성화 함수가 필요한가?</h3>
-                    <div style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.7 }}>
-                        <p style={{ marginBottom: 12 }}>
-                            <strong style={{ color: '#f87171' }}>문제: XOR은 선형으로 풀 수 없습니다</strong>
+                <div className={s.card}>
+                    <h3 className={s.label}>❓ 왜 비선형 활성화 함수가 필요한가?</h3>
+                    <div className={s.xorBody}>
+                        <p className={s.xorIntro}>
+                            <strong className={s.colorRed}>문제: XOR은 선형으로 풀 수 없습니다</strong>
                         </p>
-                        <div style={styles.xorTable}>
-                            <table style={styles.table}>
+                        <div className={s.xorTable}>
+                            <table className={s.table}>
                                 <thead>
                                     <tr>
-                                        <th style={styles.th}>x₁</th>
-                                        <th style={styles.th}>x₂</th>
-                                        <th style={styles.th}>AND</th>
-                                        <th style={styles.th}>OR</th>
-                                        <th style={{ ...styles.th, color: '#f87171' }}>XOR</th>
+                                        <th className={s.th}>x₁</th>
+                                        <th className={s.th}>x₂</th>
+                                        <th className={s.th}>AND</th>
+                                        <th className={s.th}>OR</th>
+                                        <th className={s.thRed}>XOR</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td style={styles.td}>0</td><td style={styles.td}>0</td><td style={styles.td}>0</td><td style={styles.td}>0</td><td style={{ ...styles.td, color: '#f87171' }}>0</td></tr>
-                                    <tr><td style={styles.td}>0</td><td style={styles.td}>1</td><td style={styles.td}>0</td><td style={styles.td}>1</td><td style={{ ...styles.td, color: '#f87171' }}>1</td></tr>
-                                    <tr><td style={styles.td}>1</td><td style={styles.td}>0</td><td style={styles.td}>0</td><td style={styles.td}>1</td><td style={{ ...styles.td, color: '#f87171' }}>1</td></tr>
-                                    <tr><td style={styles.td}>1</td><td style={styles.td}>1</td><td style={styles.td}>1</td><td style={styles.td}>1</td><td style={{ ...styles.td, color: '#f87171' }}>0</td></tr>
+                                    <tr><td className={s.td}>0</td><td className={s.td}>0</td><td className={s.td}>0</td><td className={s.td}>0</td><td className={s.tdRed}>0</td></tr>
+                                    <tr><td className={s.td}>0</td><td className={s.td}>1</td><td className={s.td}>0</td><td className={s.td}>1</td><td className={s.tdRed}>1</td></tr>
+                                    <tr><td className={s.td}>1</td><td className={s.td}>0</td><td className={s.td}>0</td><td className={s.td}>1</td><td className={s.tdRed}>1</td></tr>
+                                    <tr><td className={s.td}>1</td><td className={s.td}>1</td><td className={s.td}>1</td><td className={s.td}>1</td><td className={s.tdRed}>0</td></tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p style={{ marginBottom: 10, marginTop: 12 }}>
+                        <p className={s.xorExplain}>
                             AND와 OR는 직선 하나로 0과 1을 나눌 수 있습니다.
-                            하지만 <strong style={{ color: '#f87171' }}>XOR</strong>은 직선 하나로는 절대 분리할 수 없습니다!
+                            하지만 <strong className={s.colorRed}>XOR</strong>은 직선 하나로는 절대 분리할 수 없습니다!
                         </p>
-                        <div style={styles.xorVisual}>
+                        <div className={s.xorVisual}>
                             <svg width="160" height="160" viewBox="0 0 160 160">
                                 {/* grid background */}
                                 <rect width="160" height="160" fill="rgba(0,0,0,0.3)" rx="8" />
@@ -436,12 +437,12 @@ export default function NeuronLab() {
                                 <text x="85" y="155" textAnchor="middle" fill="#f87171" fontSize="9">직선 하나로는 불가!</text>
                             </svg>
                         </div>
-                        <p style={{ marginBottom: 10 }}>
-                            <strong style={{ color: '#60a5fa' }}>해결: 비선형 활성화 + 은닉층(Hidden Layer)</strong><br />
+                        <p className={s.xorSolution}>
+                            <strong className={s.colorBlue}>해결: 비선형 활성화 + 은닉층(Hidden Layer)</strong><br />
                             비선형 활성화 함수를 가진 뉴런을 여러 층으로 쌓으면,
                             공간을 &quot;구부려서&quot; XOR도 분류할 수 있게 됩니다.
                         </p>
-                        <div style={styles.keyInsight}>
+                        <div className={s.keyInsight}>
                             선형 함수를 아무리 합성해도 결과는 선형입니다: f(g(x)) = ax + b.<br />
                             비선형 함수가 있어야 곡선, 영역 분할 등 복잡한 패턴을 학습할 수 있습니다.
                         </div>
@@ -449,84 +450,84 @@ export default function NeuronLab() {
                 </div>
 
                 {/* 6. Biological vs Artificial Neuron */}
-                <div style={styles.card}>
-                    <h3 style={styles.label}>🔬 생물학적 뉴런 vs 인공 뉴런</h3>
-                    <div style={styles.comparisonGrid}>
+                <div className={s.card}>
+                    <h3 className={s.label}>🔬 생물학적 뉴런 vs 인공 뉴런</h3>
+                    <div className={s.comparisonGrid}>
                         {/* Biological Neuron */}
-                        <div style={styles.comparisonCard}>
-                            <div style={styles.comparisonHeader}>
-                                <span style={{ fontSize: '1.3rem' }}>🧬</span>
-                                <strong style={{ color: '#22c55e' }}>생물학적 뉴런</strong>
+                        <div className={s.comparisonCard}>
+                            <div className={s.comparisonHeader}>
+                                <span className={s.comparisonEmoji}>🧬</span>
+                                <strong className={s.colorGreen}>생물학적 뉴런</strong>
                             </div>
-                            <div style={styles.comparisonBody}>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>입력</span>
-                                    <span style={styles.comparisonValue}>수상돌기 (Dendrites)</span>
+                            <div className={s.comparisonBody}>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>입력</span>
+                                    <span className={s.comparisonValue}>수상돌기 (Dendrites)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>가중치</span>
-                                    <span style={styles.comparisonValue}>시냅스 강도 (Synapse Strength)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>가중치</span>
+                                    <span className={s.comparisonValue}>시냅스 강도 (Synapse Strength)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>합산</span>
-                                    <span style={styles.comparisonValue}>세포체 (Cell Body / Soma)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>합산</span>
+                                    <span className={s.comparisonValue}>세포체 (Cell Body / Soma)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>활성화</span>
-                                    <span style={styles.comparisonValue}>역치 전위 (Threshold Potential)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>활성화</span>
+                                    <span className={s.comparisonValue}>역치 전위 (Threshold Potential)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>출력</span>
-                                    <span style={styles.comparisonValue}>축삭돌기 (Axon)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>출력</span>
+                                    <span className={s.comparisonValue}>축삭돌기 (Axon)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>신호</span>
-                                    <span style={styles.comparisonValue}>전기 화학적 신호</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>신호</span>
+                                    <span className={s.comparisonValue}>전기 화학적 신호</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Artificial Neuron */}
-                        <div style={styles.comparisonCard}>
-                            <div style={styles.comparisonHeader}>
-                                <span style={{ fontSize: '1.3rem' }}>🤖</span>
-                                <strong style={{ color: '#60a5fa' }}>인공 뉴런</strong>
+                        <div className={s.comparisonCard}>
+                            <div className={s.comparisonHeader}>
+                                <span className={s.comparisonEmoji}>🤖</span>
+                                <strong className={s.colorBlue}>인공 뉴런</strong>
                             </div>
-                            <div style={styles.comparisonBody}>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>입력</span>
-                                    <span style={styles.comparisonValue}>입력값 x₁, x₂, ... (숫자)</span>
+                            <div className={s.comparisonBody}>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>입력</span>
+                                    <span className={s.comparisonValue}>입력값 x₁, x₂, ... (숫자)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>가중치</span>
-                                    <span style={styles.comparisonValue}>가중치 w₁, w₂, ... (학습)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>가중치</span>
+                                    <span className={s.comparisonValue}>가중치 w₁, w₂, ... (학습)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>합산</span>
-                                    <span style={styles.comparisonValue}>가중합 z = &Sigma;(x&middot;w) + b</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>합산</span>
+                                    <span className={s.comparisonValue}>가중합 z = &Sigma;(x&middot;w) + b</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>활성화</span>
-                                    <span style={styles.comparisonValue}>활성화 함수 (Sigmoid, ReLU...)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>활성화</span>
+                                    <span className={s.comparisonValue}>활성화 함수 (Sigmoid, ReLU...)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>출력</span>
-                                    <span style={styles.comparisonValue}>출력값 y (다음 층으로 전달)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>출력</span>
+                                    <span className={s.comparisonValue}>출력값 y (다음 층으로 전달)</span>
                                 </div>
-                                <div style={styles.comparisonRow}>
-                                    <span style={styles.comparisonLabel}>신호</span>
-                                    <span style={styles.comparisonValue}>부동소수점 숫자 (float)</span>
+                                <div className={s.comparisonRow}>
+                                    <span className={s.comparisonLabel}>신호</span>
+                                    <span className={s.comparisonValue}>부동소수점 숫자 (float)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div style={styles.comparisonNote}>
+                    <div className={s.comparisonNote}>
                         <p>
                             <strong>핵심 차이:</strong> 생물학적 뉴런은 &quot;발화(fire)&quot;하거나 안 하거나의 이진 방식에 가깝지만,
                             인공 뉴런은 <strong>연속적인 숫자</strong>를 출력합니다.
                             인공 뉴런의 Step 함수가 생물학적 뉴런의 역치 발화와 가장 유사합니다.
                         </p>
-                        <p style={{ marginTop: 8 }}>
+                        <p className={s.comparisonNoteSecond}>
                             <strong>공통점:</strong> 둘 다 여러 입력을 받아 하나의 출력을 만들며,
                             <strong> 연결 강도(가중치)</strong>를 조절하여 학습합니다.
                         </p>
@@ -534,42 +535,27 @@ export default function NeuronLab() {
                 </div>
 
                 {/* 한 걸음 더: XOR과 비선형성 */}
-                <div style={{
-                    borderRadius: 12,
-                    border: '1px solid rgba(124, 92, 252, 0.2)',
-                    overflow: 'hidden',
-                    marginTop: 20,
-                }}>
+                <div className={s.deepDiveWrap}>
                     <button
                         onClick={() => setShowDeepDive(!showDeepDive)}
-                        style={{
-                            width: '100%', padding: '12px 16px',
-                            background: 'rgba(124, 92, 252, 0.08)', border: 'none',
-                            color: '#a78bfa', fontSize: '0.9rem', fontWeight: 600,
-                            cursor: 'pointer', textAlign: 'left',
-                            display: 'flex', alignItems: 'center', gap: 8,
-                        }}
+                        className={s.deepDiveToggle}
                     >
                         {showDeepDive ? '▼' : '▶'} 한 걸음 더: 뉴런 하나로 풀 수 없는 문제 (XOR)
                     </button>
                     {showDeepDive && (
-                        <div style={{
-                            padding: 16, background: 'rgba(124, 92, 252, 0.04)',
-                            fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.7,
-                            textAlign: 'left',
-                        }}>
-                            <p style={{ marginBottom: 8 }}>
-                                <strong style={{ color: '#fbbf24' }}>XOR 문제</strong> —
+                        <div className={s.deepDiveContent}>
+                            <p className={s.deepDiveParagraph}>
+                                <strong className={s.colorYellow}>XOR 문제</strong> —
                                 입력이 (0,1) 또는 (1,0)이면 1, (0,0)이나 (1,1)이면 0을 출력해야 해요.
                                 이건 하나의 직선으로는 절대 나눌 수 없습니다!
                             </p>
-                            <p style={{ marginBottom: 8 }}>
-                                <strong style={{ color: '#34d399' }}>해결책: 층을 쌓기</strong> —
+                            <p className={s.deepDiveParagraph}>
+                                <strong className={s.colorTeal}>해결책: 층을 쌓기</strong> —
                                 뉴런 하나로는 불가능하지만, 뉴런을 여러 층으로 쌓으면(다층 퍼셉트론) 곡선 경계를 만들어 XOR을 풀 수 있어요.
                                 이것이 바로 &quot;딥러닝&quot;의 시작점입니다!
                             </p>
                             <p>
-                                <strong style={{ color: '#f87171' }}>핵심 포인트</strong> —
+                                <strong className={s.colorRed}>핵심 포인트</strong> —
                                 활성화 함수가 없으면 층을 아무리 쌓아도 직선밖에 못 그려요.
                                 비선형 활성화 함수 + 다층 구조 = 어떤 복잡한 패턴도 학습 가능!
                                 다음 주차(7주차)에서 역전파로 이 다층 신경망을 학습시키는 법을 배웁니다.
@@ -580,14 +566,9 @@ export default function NeuronLab() {
             </div>
 
             {/* 네비게이션 */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 30, paddingBottom: 40 }}>
-                <button onClick={() => router.push('/week6/intro')} style={{
-                    padding: '10px 24px', borderRadius: 10,
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.05)',
-                    color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
-                }}>← 인트로로</button>
-                <button className="btn-nova" onClick={() => router.push('/week7/intro')} style={{ padding: '10px 24px' }}>
+            <div className={s.navRow}>
+                <button onClick={() => router.push('/week6/intro')} className={s.navBack}>← 인트로로</button>
+                <button className={`btn-nova ${s.navForward}`} onClick={() => router.push('/week7/intro')}>
                     <span>🔄 7주차: 역전파 훈련소 →</span>
                 </button>
             </div>
@@ -597,10 +578,10 @@ export default function NeuronLab() {
 
 function ControlRow({ label, value, min, max, step, color, onChange }) {
     return (
-        <div style={{ marginBottom: 15 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ color: color, fontWeight: 'bold' }}>{label}</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{value.toFixed(1)}</span>
+        <div className={s.controlRow}>
+            <div className={s.controlRowHeader}>
+                <span className={s.controlRowLabel} style={{ color }}>{label}</span>
+                <span className={s.controlRowValue}>{value.toFixed(1)}</span>
             </div>
             <input
                 type="range"
@@ -609,213 +590,9 @@ function ControlRow({ label, value, min, max, step, color, onChange }) {
                 step={step}
                 value={value}
                 onChange={(e) => onChange(parseFloat(e.target.value))}
-                style={{ width: '100%', accentColor: color }}
+                className={s.controlRowInput}
+                style={{ accentColor: color }}
             />
         </div>
     );
 }
-
-const styles = {
-    container: {
-        minHeight: '100vh',
-        padding: '20px',
-        maxWidth: 1000,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: 30,
-        paddingBottom: 20,
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-    },
-    backBtn: {
-        background: 'none',
-        border: 'none',
-        color: 'var(--text-dim)',
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-        marginRight: 20,
-    },
-    headerTitle: {
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: '1.2rem',
-        color: '#fff',
-    },
-    content: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 20,
-    },
-    card: {
-        background: 'rgba(15, 10, 40, 0.6)',
-        borderRadius: 16,
-        padding: 24,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-    },
-    label: {
-        fontSize: '0.85rem',
-        color: 'var(--text-secondary)',
-        marginBottom: 16,
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-    },
-    diagramContainer: {
-        background: 'rgba(0,0,0,0.3)',
-        borderRadius: 12,
-        padding: 10,
-        border: '1px solid rgba(255,255,255,0.05)',
-        textAlign: 'center',
-    },
-    controlsGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: 20,
-    },
-    formulaBox: {
-        marginTop: 10,
-        padding: 15,
-        background: 'rgba(0,0,0,0.5)',
-        borderRadius: 8,
-        fontFamily: 'monospace',
-        fontSize: '1.1rem',
-        textAlign: 'center',
-        lineHeight: 1.6,
-        border: '1px solid rgba(255,255,255,0.05)',
-    },
-    btnGroup: {
-        display: 'flex',
-        gap: 8,
-        marginBottom: 10,
-    },
-    actBtn: {
-        flex: 1,
-        padding: '8px',
-        borderRadius: 6,
-        border: 'none',
-        cursor: 'pointer',
-        fontWeight: 600,
-        fontSize: '0.9rem',
-        transition: 'all 0.2s',
-    },
-    explain: {
-        fontSize: '0.85rem',
-        color: '#94a3b8',
-        lineHeight: 1.5,
-        background: 'rgba(255,255,255,0.05)',
-        padding: 10,
-        borderRadius: 6,
-    },
-    /* ── Activation Graph ── */
-    graphContainer: {
-        textAlign: 'center',
-    },
-    canvas: {
-        width: '100%',
-        height: 260,
-        background: 'rgba(0,0,0,0.35)',
-        borderRadius: 10,
-        border: '1px solid rgba(255,255,255,0.08)',
-        display: 'block',
-    },
-    graphLegend: {
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 24,
-        marginTop: 10,
-        fontSize: '0.8rem',
-    },
-    /* ── XOR Section ── */
-    xorTable: {
-        display: 'flex',
-        justifyContent: 'center',
-        marginBottom: 6,
-    },
-    table: {
-        borderCollapse: 'collapse',
-        fontSize: '0.85rem',
-    },
-    th: {
-        padding: '6px 14px',
-        borderBottom: '1px solid rgba(255,255,255,0.2)',
-        color: '#94a3b8',
-        fontWeight: 600,
-        textAlign: 'center',
-    },
-    td: {
-        padding: '5px 14px',
-        textAlign: 'center',
-        color: '#e2e8f0',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-    },
-    xorVisual: {
-        display: 'flex',
-        justifyContent: 'center',
-        margin: '10px 0',
-    },
-    keyInsight: {
-        marginTop: 10,
-        padding: '12px 16px',
-        background: 'rgba(96,165,250,0.1)',
-        border: '1px solid rgba(96,165,250,0.25)',
-        borderRadius: 8,
-        fontSize: '0.85rem',
-        color: '#93c5fd',
-        lineHeight: 1.6,
-    },
-    /* ── Comparison Section ── */
-    comparisonGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-        gap: 16,
-        marginBottom: 16,
-    },
-    comparisonCard: {
-        background: 'rgba(0,0,0,0.3)',
-        borderRadius: 12,
-        padding: 16,
-        border: '1px solid rgba(255,255,255,0.08)',
-    },
-    comparisonHeader: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 14,
-        paddingBottom: 10,
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        fontSize: '0.95rem',
-    },
-    comparisonBody: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-    },
-    comparisonRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: '0.82rem',
-    },
-    comparisonLabel: {
-        color: '#94a3b8',
-        fontWeight: 600,
-        minWidth: 50,
-    },
-    comparisonValue: {
-        color: '#e2e8f0',
-        textAlign: 'right',
-    },
-    comparisonNote: {
-        fontSize: '0.83rem',
-        color: '#94a3b8',
-        lineHeight: 1.6,
-        background: 'rgba(255,255,255,0.04)',
-        borderRadius: 8,
-        padding: '12px 16px',
-        border: '1px solid rgba(255,255,255,0.06)',
-    },
-};

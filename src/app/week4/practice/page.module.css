@@ -1,0 +1,614 @@
+/* ── 메인 레이아웃 ── */
+.container {
+    min-height: 100vh;
+    padding: 20px 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.backBtn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.pageTitle {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #7c5cfc, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.pageSubtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* ── 섹션 공통 ── */
+.section {
+    margin-bottom: 30px;
+    padding: 24px;
+    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sectionTitle {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #e2e8f0;
+}
+
+.desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+
+/* ── 결과 카드 ── */
+.resultCard {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.resultLabel {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+/* ── 정보 박스 ── */
+.infoBox {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(124, 92, 252, 0.06);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    font-size: 0.8rem;
+    line-height: 1.7;
+}
+
+/* ── 캔버스 영역 (2D & 3D) ── */
+.flexRow {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.canvas {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 10, 40, 0.6);
+    touch-action: none;
+}
+
+.sidePanel {
+    min-width: 200px;
+}
+
+/* ── Step 1 인라인 ── */
+.simPercent {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.insightBox {
+    composes: infoBox;
+    margin-top: 12px;
+}
+
+.insightTitle {
+    color: #7c5cfc;
+}
+
+.insightList {
+    margin: 6px 0 0;
+    padding-left: 16px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.whyBox {
+    composes: infoBox;
+    margin-top: 8px;
+    background: rgba(251, 191, 36, 0.06);
+    border-color: rgba(251, 191, 36, 0.15);
+}
+
+.whyBoxTitle {
+    color: #fbbf24;
+    font-size: 0.78rem;
+}
+
+.whyBoxText {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* ── Step 2 인라인 ── */
+.selectRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.selectCol {
+    flex: 1;
+}
+
+.selectLabel {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.selectInput {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    width: 100%;
+}
+
+.angleText {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.vecInfoBox {
+    composes: infoBox;
+    margin-top: 8px;
+}
+
+.vecInfoLabel {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.observeBox {
+    composes: infoBox;
+    margin-top: 8px;
+    background: rgba(52, 211, 153, 0.06);
+    border-color: rgba(52, 211, 153, 0.15);
+}
+
+.observeTitle {
+    color: #34d399;
+    font-size: 0.78rem;
+}
+
+.observeText {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* ── Step 3 인라인 ── */
+.loadingText {
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.dimRow {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.dimCard {
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.dimCardDone {
+    composes: dimCard;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.dimCardCurrent {
+    composes: dimCard;
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(124, 92, 252, 0.25);
+}
+
+.dimCardDoneLabel {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.dimCardCurrentLabel {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #7c5cfc;
+}
+
+.dimCardSub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+
+.dataSourceBox {
+    composes: infoBox;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.dataSourceTitle {
+    color: #fbbf24;
+    font-size: 0.82rem;
+}
+
+.dataSourceText {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.exampleBtnRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+    justify-content: center;
+}
+
+.exampleBtn {
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.exampleBtnActive {
+    composes: exampleBtn;
+    border: 1.5px solid #7c5cfc;
+    background: rgba(124, 92, 252, 0.15);
+    color: #a78bfa;
+    font-weight: 700;
+}
+
+.toggleBtnWrap {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.toggleBtn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    background: transparent;
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.toggleBtnActive {
+    composes: toggleBtn;
+    background: rgba(251, 191, 36, 0.15);
+}
+
+.customRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.customSelect {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+}
+
+.opMinus {
+    font-weight: 800;
+    color: #f43f5e;
+    font-size: 1.2rem;
+}
+
+.opPlus {
+    font-weight: 800;
+    color: #10b981;
+    font-size: 1.2rem;
+}
+
+.formulaBar {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    text-align: center;
+    font-size: 1rem;
+    color: #e2e8f0;
+}
+
+.formulaMinus {
+    color: #f43f5e;
+    font-weight: 800;
+}
+
+.formulaPlus {
+    color: #10b981;
+    font-weight: 800;
+}
+
+.formulaEquals {
+    color: #fbbf24;
+    font-weight: 800;
+}
+
+.bestMatchCard {
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1.5px solid rgba(16, 185, 129, 0.25);
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.bestMatchLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.bestMatchWord {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.bestMatchMeta {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+}
+
+.bestMatchFormula {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    color: #fbbf24;
+    font-weight: 700;
+}
+
+.rankingWrap {
+    margin-bottom: 12px;
+}
+
+.rankingTitle {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.rankingRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rankingFirst {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.rankingOther {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    background: rgba(124, 92, 252, 0.06);
+    color: var(--text-dim);
+    font-weight: 400;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.whyWorksBox {
+    composes: infoBox;
+    background: rgba(52, 211, 153, 0.06);
+    border-color: rgba(52, 211, 153, 0.15);
+}
+
+.whyWorksTitle {
+    color: #34d399;
+    font-size: 0.82rem;
+}
+
+.whyWorksText {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.biasBox {
+    composes: infoBox;
+    margin-top: 10px;
+    background: rgba(244, 63, 94, 0.06);
+    border-color: rgba(244, 63, 94, 0.2);
+}
+
+.biasTitle {
+    color: #f43f5e;
+    font-size: 0.82rem;
+}
+
+.biasText {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.deepDiveToggle {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.25);
+    color: #a78bfa;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.deepDiveHint {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.deepDiveContent {
+    padding: 16px;
+    margin-top: 4px;
+    border-radius: 10px;
+    background: rgba(124, 92, 252, 0.04);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.formulaBox {
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(15, 10, 40, 0.6);
+}
+
+.formulaCode {
+    color: #a78bfa;
+    font-size: 0.9rem;
+}
+
+.formulaList {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.exampleCalc {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.06);
+}
+
+.exampleCalcTitle {
+    color: #fbbf24;
+}
+
+.dataCredit {
+    margin-top: 10px;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-align: center;
+    opacity: 0.7;
+}
+
+/* ── 메인 페이지 하단 ── */
+.whyImportantBox {
+    composes: infoBox;
+    max-width: 700px;
+    margin: 0 auto 24px;
+    text-align: center;
+}
+
+.whyImportantTitle {
+    color: #fbbf24;
+    font-size: 0.88rem;
+}
+
+.whyImportantText {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.footerWrap {
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 40px;
+}
+
+.footerText {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.novaBtn {
+    padding: 14px 36px;
+    font-size: 1.05rem;
+}
+
+.deepDiveWrap {
+    margin-top: 12px;
+}
+
+/* ── 벡터 값 표시 ── */
+.vecValueMarginTop {
+    margin-top: 2px;
+}
+
+/* ── 시뮬레이션 값 표시 (동적 → 유지) ── */
+.angleBig {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.simBig {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.simBig3D {
+    font-size: 1.8rem;
+    font-weight: 800;
+}

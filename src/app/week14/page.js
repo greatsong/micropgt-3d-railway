@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import s from './page.module.css';
 
 const TRAINING_DATA = [
     // ── SFT (Supervised Fine-Tuning) 시나리오 3개 ──
@@ -316,46 +317,50 @@ export default function RLHFLab() {
     };
 
     return (
-        <div style={styles.container}>
+        <div className={s.container}>
             {/* Header */}
             <Breadcrumb
                 items={[{ label: '14주차 인트로', href: '/week14/intro' }]}
                 current="AI 조련소"
             />
-            <div style={styles.header}>
-                <div style={styles.headerTitle}>
-                    <span style={{ fontSize: '1.5rem', marginRight: 8 }}>🐕</span>
-                    <span style={{ fontWeight: 700 }}>AI 조련소 (RLHF Simulator)</span>
+            <div className={s.header}>
+                <div className={s.headerTitle}>
+                    <span className={s.headerEmoji}>🐕</span>
+                    <span className={s.headerText}>AI 조련소 (RLHF Simulator)</span>
                 </div>
-                <div style={styles.scoreBadge}>
+                <div className={s.scoreBadge}>
                     🏆 Alignment Score: {score}
-                    <span style={{ fontSize: '0.65rem', display: 'block', color: '#a78bfa', marginTop: 2 }}>Alignment = AI의 답변이 사람의 의도/가치관과 얼마나 잘 맞는지를 나타내는 점수</span>
+                    <span className={s.scoreBadgeDetail}>Alignment = AI의 답변이 사람의 의도/가치관과 얼마나 잘 맞는지를 나타내는 점수</span>
                 </div>
             </div>
 
             {/* 진행 바 */}
-            <div style={styles.progressContainer}>
-                <div style={styles.progressInfo}>
-                    <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+            <div className={s.progressContainer}>
+                <div className={s.progressInfo}>
+                    <span className={s.progressLabel}>
                         {isFinished ? '훈련 완료!' : `시나리오 ${step + 1} / ${totalSteps}`}
                     </span>
                     {currentStage && (
-                        <span style={{
-                            ...styles.stageBadge,
-                            background: `${STAGE_COLORS[currentStage]}22`,
-                            color: STAGE_COLORS[currentStage],
-                            border: `1px solid ${STAGE_COLORS[currentStage]}44`,
-                        }}>
+                        <span
+                            className={s.stageBadge}
+                            style={{
+                                background: `${STAGE_COLORS[currentStage]}22`,
+                                color: STAGE_COLORS[currentStage],
+                                borderColor: `${STAGE_COLORS[currentStage]}44`,
+                            }}
+                        >
                             {STAGE_LABELS[currentStage]} 단계
                         </span>
                     )}
                 </div>
-                <div style={styles.progressBarOuter}>
-                    <div style={{
-                        ...styles.progressBarInner,
-                        width: `${(step / totalSteps) * 100}%`,
-                        background: currentStage ? STAGE_COLORS[currentStage] : '#34d399',
-                    }} />
+                <div className={s.progressBarOuter}>
+                    <div
+                        className={s.progressBarInner}
+                        style={{
+                            width: `${(step / totalSteps) * 100}%`,
+                            background: currentStage ? STAGE_COLORS[currentStage] : '#34d399',
+                        }}
+                    />
                     {/* 단계 구분 마커 */}
                     {(() => {
                         const sftCount = TRAINING_DATA.filter(d => d.stage === 'sft').length;
@@ -363,15 +368,15 @@ export default function RLHFLab() {
                         const markers = [];
                         if (sftCount < totalSteps) {
                             markers.push(
-                                <div key="sft-rm" style={{ ...styles.progressMarker, left: `${(sftCount / totalSteps) * 100}%` }}>
-                                    <span style={styles.progressMarkerLabel}>RM</span>
+                                <div key="sft-rm" className={s.progressMarker} style={{ left: `${(sftCount / totalSteps) * 100}%` }}>
+                                    <span className={s.progressMarkerLabel}>RM</span>
                                 </div>
                             );
                         }
                         if (sftCount + rmCount < totalSteps) {
                             markers.push(
-                                <div key="rm-ppo" style={{ ...styles.progressMarker, left: `${((sftCount + rmCount) / totalSteps) * 100}%` }}>
-                                    <span style={styles.progressMarkerLabel}>PPO</span>
+                                <div key="rm-ppo" className={s.progressMarker} style={{ left: `${((sftCount + rmCount) / totalSteps) * 100}%` }}>
+                                    <span className={s.progressMarkerLabel}>PPO</span>
                                 </div>
                             );
                         }
@@ -380,84 +385,72 @@ export default function RLHFLab() {
                 </div>
             </div>
 
-            <div style={styles.content}>
+            <div className={s.content}>
                 {/* Chat History */}
-                <div style={styles.chatWindow}>
+                <div className={s.chatWindow}>
                     {history.map((msg, i) => (
-                        <div key={i} style={{
-                            ...styles.message,
+                        <div key={i} className={s.message} style={{
                             alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                             background: msg.role === 'user' ? '#4b5563' : (msg.isGood ? '#34d39922' : '#f43f5e22'),
                             border: `1px solid ${msg.role === 'ai' ? (msg.isGood ? '#34d399' : '#f43f5e') : 'transparent'}`
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div className={s.messageHeaderRow}>
                                 <strong>{msg.role === 'user' ? '👤 User' : '🤖 AI'}</strong>
                                 {msg.role === 'ai' && msg.stage && (
-                                    <span style={{
-                                        fontSize: '0.7rem',
-                                        padding: '1px 6px',
-                                        borderRadius: 8,
-                                        background: `${STAGE_COLORS[msg.stage]}22`,
-                                        color: STAGE_COLORS[msg.stage],
-                                    }}>
+                                    <span
+                                        className={s.messageStageBadge}
+                                        style={{
+                                            background: `${STAGE_COLORS[msg.stage]}22`,
+                                            color: STAGE_COLORS[msg.stage],
+                                        }}
+                                    >
                                         {STAGE_LABELS[msg.stage]}
                                     </span>
                                 )}
                             </div>
-                            <p style={{ margin: '4px 0 0' }}>{msg.text}</p>
+                            <p className={s.messageText}>{msg.text}</p>
                         </div>
                     ))}
 
                     {/* Current Prompt */}
                     {!isFinished && !showFeedback && (
-                        <div style={{ ...styles.message, alignSelf: 'flex-end', background: '#4b5563' }}>
+                        <div className={`${s.message} ${s.messageUser}`}>
                             <strong>👤 User</strong>
-                            <p style={{ margin: '4px 0 0' }}>{currentScenario.prompt}</p>
+                            <p className={s.messageText}>{currentScenario.prompt}</p>
                         </div>
                     )}
 
                     {/* Completion: 레이더 차트 + 성향 분석 */}
                     {isFinished && (
-                        <div style={styles.finishCard}>
-                            <h2 style={{ marginBottom: 8 }}>🎉 훈련 종료!</h2>
-                            <p style={{ marginBottom: 4 }}>당신의 피드백 덕분에 AI가 더 똑똑하고 안전해졌습니다.</p>
-                            <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#a78bfa', margin: '10px 0 20px' }}>
+                        <div className={s.finishCard}>
+                            <h2 className={s.finishTitle}>🎉 훈련 종료!</h2>
+                            <p className={s.finishSubtitle}>당신의 피드백 덕분에 AI가 더 똑똑하고 안전해졌습니다.</p>
+                            <p className={s.finishScore}>
                                 최종 정렬 점수: {score}점
                             </p>
 
                             {/* 레이더 차트 */}
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                            <div className={s.radarContainer}>
                                 <canvas
                                     ref={canvasRef}
                                     width={380}
                                     height={380}
-                                    style={{ maxWidth: '100%', borderRadius: 12, background: 'rgba(0,0,0,0.3)' }}
+                                    className={s.radarCanvas}
                                 />
                             </div>
 
                             {/* 성향 분석 텍스트 */}
-                            <div style={{
-                                background: 'rgba(139, 92, 246, 0.1)',
-                                border: '1px solid rgba(139, 92, 246, 0.3)',
-                                borderRadius: 12,
-                                padding: 16,
-                                textAlign: 'left',
-                                marginBottom: 20,
-                            }}>
-                                <h4 style={{ color: '#a78bfa', marginBottom: 8 }}>📊 당신이 훈련한 AI의 성향 분석</h4>
-                                <p style={{ whiteSpace: 'pre-line', color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.9rem' }}>
+                            <div className={s.analysisBox}>
+                                <h4 className={s.analysisTitle}>📊 당신이 훈련한 AI의 성향 분석</h4>
+                                <p className={s.analysisText}>
                                     {getPersonalityAnalysis()}
                                 </p>
                             </div>
 
                             {/* 카테고리별 점수 리스트 */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
+                            <div className={s.categoryScoreRow}>
                                 {Object.keys(CATEGORY_LABELS).map(cat => (
-                                    <div key={cat} style={{
-                                        padding: '4px 12px',
-                                        borderRadius: 20,
-                                        fontSize: '0.8rem',
-                                        fontWeight: 600,
+                                    <div key={cat} className={s.categoryScoreChip} style={{
                                         background: `${CATEGORY_COLORS[cat]}22`,
                                         color: CATEGORY_COLORS[cat],
                                         border: `1px solid ${CATEGORY_COLORS[cat]}44`,
@@ -477,37 +470,37 @@ export default function RLHFLab() {
 
                 {/* Selection Area */}
                 {!isFinished && (
-                    <div style={styles.controlPanel}>
+                    <div className={s.controlPanel}>
                         {!showFeedback ? (
                             <>
-                                <h3 style={styles.instruction}>
+                                <h3 className={s.instruction}>
                                     👇 더 나은(바람직한) 답변을 선택해주세요!
                                 </h3>
-                                <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        padding: '2px 8px',
-                                        borderRadius: 8,
-                                        background: `${STAGE_COLORS[currentStage]}22`,
-                                        color: STAGE_COLORS[currentStage],
-                                    }}>
+                                <div className={s.badgeRow}>
+                                    <span
+                                        className={s.categoryBadge}
+                                        style={{
+                                            background: `${STAGE_COLORS[currentStage]}22`,
+                                            color: STAGE_COLORS[currentStage],
+                                        }}
+                                    >
                                         {STAGE_LABELS[currentStage]} 단계
                                     </span>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        padding: '2px 8px',
-                                        borderRadius: 8,
-                                        background: `${CATEGORY_COLORS[currentScenario.category]}22`,
-                                        color: CATEGORY_COLORS[currentScenario.category],
-                                    }}>
+                                    <span
+                                        className={s.categoryBadge}
+                                        style={{
+                                            background: `${CATEGORY_COLORS[currentScenario.category]}22`,
+                                            color: CATEGORY_COLORS[currentScenario.category],
+                                        }}
+                                    >
                                         {CATEGORY_LABELS[currentScenario.category]}
                                     </span>
                                 </div>
-                                <div style={styles.optionsGrid}>
+                                <div className={s.optionsGrid}>
                                     {currentScenario.options.map((opt) => (
                                         <button
                                             key={opt.id}
-                                            style={styles.optionBtn}
+                                            className={s.optionBtn}
                                             onClick={() => handleSelect(opt)}
                                         >
                                             {opt.text}
@@ -516,8 +509,8 @@ export default function RLHFLab() {
                                 </div>
                             </>
                         ) : (
-                            <div style={styles.feedbackBox}>
-                                <p style={{ marginBottom: 16 }}>{currentScenario.feedback}</p>
+                            <div className={s.feedbackBox}>
+                                <p className={s.feedbackText}>{currentScenario.feedback}</p>
                                 <button className="btn-nova" onClick={nextStep}>
                                     {step < totalSteps - 1 ? '다음 시나리오로 →' : '결과 보기 →'}
                                 </button>
@@ -527,45 +520,39 @@ export default function RLHFLab() {
                 )}
 
                 {/* ── Theory Section ── */}
-                <div style={styles.controlPanel}>
-                    <h3 style={{ ...styles.instruction, textAlign: 'left', fontSize: '1.1rem', marginBottom: 10 }}>
+                <div className={s.controlPanel}>
+                    <h3 className={s.instructionTheory}>
                         🤖 똑똑하지만 위험한 친구, AI
                     </h3>
-                    <div style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-                        <p style={{ marginBottom: 10 }}>
+                    <div className={s.theoryContent}>
+                        <p className={s.theoryParagraph}>
                             <strong>1. 정렬 (Alignment) 문제</strong><br />
-                            <span style={{ fontSize: '0.82rem', color: '#a78bfa' }}>(Alignment = AI의 답변이 사람의 의도/가치관과 얼마나 잘 맞는지를 나타내는 점수)</span><br />
+                            <span className={s.theoryAlignmentNote}>(Alignment = AI의 답변이 사람의 의도/가치관과 얼마나 잘 맞는지를 나타내는 점수)</span><br />
                             인터넷 데이터로만 학습한 &quot;Base Model(기본 모델: RLHF 전의 순수 언어 모델)&quot;은 욕설, 편견, 가짜뉴스까지 그대로 따라합니다.
                             여러분이 방금 한 것처럼 <strong>&quot;인간의 가치관&quot;</strong>에 맞게 AI를 튜닝하는 과정이 필수적입니다.
                         </p>
-                        <p style={{ marginBottom: 10 }}>
+                        <p className={s.theoryParagraph}>
                             <strong>2. RLHF (인간 피드백 강화학습)</strong><br />
                             사람이 일일이 가르치기 힘드니까, 사람이 매긴 점수(Reward Model)를 보고 AI가 알아서 고치게 만드는 기술입니다.
                             ChatGPT가 뛰어난 이유가 바로 이 RLHF를 잘했기 때문입니다! 👍
                         </p>
-                        <p style={{ marginBottom: 10 }}>
+                        <p className={s.theoryParagraph}>
                             <strong>3. DPO (Direct Preference Optimization)</strong><br />
-                            <span style={{ fontSize: '0.82rem', color: '#34d399' }}>(DPO = RLHF를 더 간단하게 만든 최신 방법. 보상 모델 없이 직접 선호도로 학습)</span><br />
+                            <span className={s.theoryDpoNote}>(DPO = RLHF를 더 간단하게 만든 최신 방법. 보상 모델 없이 직접 선호도로 학습)</span><br />
                             RLHF의 진화 버전! 기존 RLHF는 Reward Model을 따로 학습해야 해서 복잡했는데,
                             DPO는 <strong>사람의 선호 데이터만으로 직접 모델을 최적화</strong>합니다.
                             &quot;좋은 답 vs 나쁜 답&quot; 쌍을 주면, 별도의 RM 없이도 좋은 답의 확률을 높이고 나쁜 답의 확률을 낮추는 방식입니다.
                             수식은 단순하지만 성능은 RLHF에 필적하며, Llama 2 이후 많은 모델이 DPO를 채택하고 있습니다.
                         </p>
-                        <div style={{
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                            borderRadius: 8,
-                            padding: 12,
-                            marginTop: 6,
-                        }}>
-                            <strong style={{ color: '#60a5fa' }}>💡 RLHF vs DPO 비교</strong>
-                            <div style={{ marginTop: 8, fontSize: '0.85rem' }}>
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <div style={{ flex: 1 }}>
+                        <div className={s.compareBox}>
+                            <strong className={s.compareTitle}>💡 RLHF vs DPO 비교</strong>
+                            <div className={s.compareContent}>
+                                <div className={s.compareColumns}>
+                                    <div className={s.compareColumn}>
                                         <strong>RLHF:</strong> 데이터 → RM 학습 → PPO 강화학습 (2단계)
-                                        <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>PPO(Proximal Policy Optimization) = 강화학습 알고리즘. AI가 한 번에 너무 많이 변하지 않도록 조금씩 개선하는 방식</div>
+                                        <div className={s.theoryPpoNote}>PPO(Proximal Policy Optimization) = 강화학습 알고리즘. AI가 한 번에 너무 많이 변하지 않도록 조금씩 개선하는 방식</div>
                                     </div>
-                                    <div style={{ flex: 1 }}>
+                                    <div className={s.compareColumn}>
                                         <strong>DPO:</strong> 선호 데이터 → 직접 최적화 (1단계)
                                     </div>
                                 </div>
@@ -576,35 +563,27 @@ export default function RLHFLab() {
                     {/* 한 걸음 더: 강화학습 */}
                     <div
                         onClick={() => setShowDeepDive(!showDeepDive)}
-                        style={{
-                            marginTop: 16,
-                            padding: '14px 18px',
-                            background: 'rgba(124, 92, 252, 0.08)',
-                            border: '1px solid rgba(124, 92, 252, 0.25)',
-                            borderRadius: 14,
-                            cursor: 'pointer',
-                            transition: 'all 0.3s',
-                        }}
+                        className={s.deepDive}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <h4 style={{ color: 'rgba(124, 92, 252, 1)', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>
+                        <div className={s.deepDiveHeader}>
+                            <h4 className={s.deepDiveTitle}>
                                 {showDeepDive ? '▼' : '▶'} 한 걸음 더: 강화학습(RL)은 어떤 원리일까?
                             </h4>
-                            <span style={{ fontSize: '0.72rem', color: 'rgba(124, 92, 252, 0.7)', fontWeight: 600 }}>
+                            <span className={s.deepDiveToggle}>
                                 {showDeepDive ? '접기' : '펼치기'}
                             </span>
                         </div>
                         {showDeepDive && (
-                            <div style={{ marginTop: 12, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.8 }} onClick={e => e.stopPropagation()}>
-                                <p style={{ marginBottom: 10 }}>
-                                    <strong style={{ color: 'rgba(124, 92, 252, 1)' }}>게임 비유:</strong> 좋은 행동 → 보상(+점수), 나쁜 행동 → 벌점(-점수).
+                            <div className={s.deepDiveContent} onClick={e => e.stopPropagation()}>
+                                <p className={s.deepDiveParagraph}>
+                                    <strong className={s.deepDiveHighlight}>게임 비유:</strong> 좋은 행동 → 보상(+점수), 나쁜 행동 → 벌점(-점수).
                                     AI는 총 보상을 최대화하는 방향으로 학습합니다.
                                 </p>
-                                <p style={{ marginBottom: 10 }}>
-                                    <strong style={{ color: 'rgba(124, 92, 252, 1)' }}>RLHF에서는</strong> &quot;사람이 선호하는 답변&quot;이 보상이 됩니다.
+                                <p className={s.deepDiveParagraph}>
+                                    <strong className={s.deepDiveHighlight}>RLHF에서는</strong> &quot;사람이 선호하는 답변&quot;이 보상이 됩니다.
                                     Reward Model이 사람 대신 점수를 매기고, PPO 알고리즘이 그 점수를 높이는 방향으로 모델을 업데이트합니다.
                                 </p>
-                                <p style={{ marginBottom: 0 }}>
+                                <p className={s.deepDiveParagraphLast}>
                                     이 과정 덕분에 ChatGPT가 <strong>유해한 답변을 피하고</strong> 도움이 되는 답변을 하게 됩니다.
                                     마치 강아지 훈련처럼, 좋은 행동에 간식(보상)을 주면 그 행동을 더 자주 하게 되는 원리입니다!
                                 </p>
@@ -616,153 +595,3 @@ export default function RLHFLab() {
         </div>
     );
 }
-
-const styles = {
-    container: {
-        minHeight: '100vh',
-        maxWidth: 800,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 20,
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: 10,
-        paddingBottom: 15,
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        justifyContent: 'space-between',
-    },
-    backBtn: {
-        background: 'none',
-        border: 'none',
-        color: 'var(--text-dim)',
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-    },
-    headerTitle: {
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: '1.2rem',
-        color: '#fff',
-    },
-    scoreBadge: {
-        background: 'rgba(139, 92, 246, 0.2)',
-        color: '#8b5cf6',
-        padding: '6px 12px',
-        borderRadius: 20,
-        fontWeight: 'bold',
-        fontSize: '0.9rem',
-    },
-    progressContainer: {
-        marginBottom: 16,
-    },
-    progressInfo: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    stageBadge: {
-        fontSize: '0.75rem',
-        padding: '2px 10px',
-        borderRadius: 10,
-        border: '1px solid',
-        fontWeight: 600,
-    },
-    progressBarOuter: {
-        position: 'relative',
-        height: 6,
-        background: 'rgba(255,255,255,0.08)',
-        borderRadius: 3,
-        overflow: 'visible',
-    },
-    progressBarInner: {
-        height: '100%',
-        borderRadius: 3,
-        transition: 'width 0.5s ease, background 0.3s ease',
-    },
-    progressMarker: {
-        position: 'absolute',
-        top: -3,
-        width: 2,
-        height: 12,
-        background: 'rgba(255,255,255,0.3)',
-        transform: 'translateX(-1px)',
-    },
-    progressMarkerLabel: {
-        position: 'absolute',
-        top: 14,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: '0.6rem',
-        color: 'rgba(255,255,255,0.4)',
-        whiteSpace: 'nowrap',
-    },
-    content: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 20,
-        overflow: 'hidden',
-    },
-    chatWindow: {
-        flex: 1,
-        background: 'rgba(0,0,0,0.2)',
-        borderRadius: 16,
-        padding: 20,
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        border: '1px solid rgba(255,255,255,0.05)',
-    },
-    message: {
-        maxWidth: '80%',
-        padding: '12px 16px',
-        borderRadius: 12,
-        color: '#fff',
-        border: '1px solid transparent',
-        animation: 'fadeIn 0.3s ease',
-        lineHeight: 1.5,
-    },
-    controlPanel: {
-        background: 'rgba(15, 10, 40, 0.8)',
-        borderRadius: 16,
-        padding: 20,
-        border: '1px solid rgba(139, 92, 246, 0.3)',
-    },
-    instruction: {
-        textAlign: 'center',
-        marginBottom: 16,
-        color: '#a78bfa',
-    },
-    optionsGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 12,
-    },
-    optionBtn: {
-        padding: 20,
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 12,
-        color: '#e2e8f0',
-        cursor: 'pointer',
-        textAlign: 'left',
-        lineHeight: 1.5,
-        transition: 'all 0.2s',
-        fontSize: '0.95rem',
-    },
-    feedbackBox: {
-        textAlign: 'center',
-    },
-    finishCard: {
-        textAlign: 'center',
-        padding: 30,
-        background: 'rgba(16, 185, 129, 0.1)',
-        borderRadius: 16,
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-    },
-};

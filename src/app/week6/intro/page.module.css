@@ -1,0 +1,398 @@
+/* ── pageStyles ── */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.progressBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.progressDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1;
+}
+
+.progressFill {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    height: 3px;
+    background: #60a5fa;
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: width 0.3s;
+    z-index: 0;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weekBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.stepCount {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ── ds (demo styles) ── */
+.dsContainer {
+    padding: 20px;
+}
+
+.dsContainerCenter {
+    padding: 20px;
+    text-align: center;
+}
+
+.dsText {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    text-align: center;
+}
+
+.dsInstruction {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.dsHint {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.dsHintMt {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 12px;
+}
+
+.compareCard {
+    flex: 1;
+    min-width: 140px;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    text-align: center;
+}
+
+.formulaFlow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    flex-wrap: wrap;
+}
+
+.flowItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(124, 92, 252, 0.06);
+}
+
+.funcBtn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+/* ── Inline-extracted reusable classes ── */
+.bridgeBox {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.bridgeStrong {
+    color: #fbbf24;
+}
+
+.colorRed {
+    color: #f43f5e;
+}
+
+.colorBlue {
+    color: #60a5fa;
+}
+
+.colorGold {
+    color: #fbbf24;
+}
+
+.compareFlex {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.compareEmoji {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.compareDesc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+.arrowLabel {
+    font-size: 1.5rem;
+    align-self: center;
+    color: var(--text-dim);
+}
+
+.sliderRow {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.sliderItem {
+    min-width: 140px;
+}
+
+.sliderLabel {
+    font-size: 0.78rem;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.sliderFull {
+    width: 100%;
+}
+
+.dimLabel {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+
+.weightSumCode {
+    color: #7c5cfc;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.weightSumResult {
+    font-weight: 800;
+    color: #fbbf24;
+    font-size: 1.1rem;
+}
+
+.sigmoidArrow {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+}
+
+.funcBtnRow {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.funcRangeLabel {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+}
+
+.canvasGraph {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    margin: 0 auto;
+    display: block;
+}
+
+.canvasSmall {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    margin: 0 auto;
+    display: block;
+}
+
+.canvasWide {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    margin: 0 auto;
+    display: block;
+}
+
+.rangeRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.rangeLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.sliderFlex {
+    flex: 1;
+}
+
+.outputDisplay {
+    text-align: center;
+    margin-top: 8px;
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.xorBtnRow {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.xorBtn {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+}
+
+.layerSliderRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.layerRangeLabel {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+
+.layerSlider {
+    width: 200px;
+}
+
+.layerInfo {
+    text-align: center;
+    margin-bottom: 12px;
+    font-weight: 700;
+    color: #60a5fa;
+}
+
+.emojiLarge {
+    font-size: 3rem;
+}
+
+.emojiHuge {
+    font-size: 5rem;
+    margin-bottom: 16px;
+}
+
+.labBtn {
+    margin-top: 24px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+}

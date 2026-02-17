@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './page.module.css';
 
 const STEPS = [
     {
@@ -75,13 +76,13 @@ const CODE_SNIPPETS = {
 
     def forward(self, idx):
         # idx: [Batch, Time] (단어 ID들)
-        
+
         # 각 단어 ID를 벡터로 변환
-        tok_emb = self.token_embedding(idx) 
-        
+        tok_emb = self.token_embedding(idx)
+
         # 위치(0, 1, 2...)정보를 벡터로 변환
         pos_emb = self.position_embedding(torch.arange(T, device=device))
-        
+
         # 두 벡터를 더해서 최종 입력 생성!
         return tok_emb + pos_emb`,
 
@@ -95,15 +96,15 @@ const CODE_SNIPPETS = {
         # 1. 어텐션 스코어 계산 (친밀도)
         # (B, T, C) @ (B, C, T) -> (B, T, T)
         wei = q @ k.transpose(-2, -1) * C**-0.5
-        
+
         # 2. 마스킹 (미래 정보 가리기)
         wei = wei.masked_fill(self.tril == 0, float('-inf'))
-        
+
         # 3. 확률로 변환 (Softmax)
         wei = F.softmax(wei, dim=-1)
 
         # 4. 가중합 (Value 모으기)
-        out = wei @ v 
+        out = wei @ v
         return out`,
 
     feedforward: `class FeedForward(nn.Module):
@@ -111,13 +112,13 @@ const CODE_SNIPPETS = {
         self.net = nn.Sequential(
             # 차원을 4배로 뻥튀기 (생각의 확장)
             nn.Linear(n_embd, 4 * n_embd),
-            
+
             # 활성화 함수 (ReLU/GELU) -> 비선형성
             nn.ReLU(),
-            
+
             # 다시 원래 차원으로 압축
             nn.Linear(4 * n_embd, n_embd),
-            
+
             # 드롭아웃 (과적합 방지)
             nn.Dropout(dropout),
         )
@@ -174,51 +175,51 @@ export default function AdvancedGPTPage() {
     const renderContent = () => {
         if (step.id === 'overview') {
             return (
-                <div style={ds.overviewContainer}>
-                    <div style={{ fontSize: '5rem', marginBottom: 20 }} className="animate-float">🧬</div>
-                    <p style={ds.text}>
-                        지금까지 배운 <strong style={{ color: '#7c5cfc' }}>임베딩, 어텐션, 정규화</strong>가<br />
+                <div className={styles.overviewContainer}>
+                    <div className={`${styles.emoji} animate-float`}>🧬</div>
+                    <p className={styles.text}>
+                        지금까지 배운 <strong className={styles.highlightPurple}>임베딩, 어텐션, 정규화</strong>가<br />
                         실제 코드에서는 어떻게 조립될까요?<br /><br />
                         OpenAI의 GPT 시리즈와 동일한 구조인<br />
-                        <strong style={{ color: '#10b981' }}>Transformer Decoder</strong>의<br />
+                        <strong className={styles.highlightGreen}>Transformer Decoder</strong>의<br />
                         핵심 코드를 단계별로 살펴봅니다.
                     </p>
-                    <div style={ds.diagramBox}>
-                        <div style={ds.diagramLayer}>Output (Next Token)</div>
-                        <div style={ds.arrow}>↑</div>
-                        <div style={{ ...ds.diagramLayer, background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981' }}>
+                    <div className={styles.diagramBox}>
+                        <div className={styles.diagramLayer}>Output (Next Token)</div>
+                        <div className={styles.arrow}>↑</div>
+                        <div className={styles.diagramLayerGreen}>
                             Softmax Classifier
                         </div>
-                        <div style={ds.arrow}>↑</div>
-                        <div style={{ ...ds.diagramLayer, height: 100, justifyContent: 'space-between', padding: 10, border: '2px dashed rgba(124, 92, 252, 0.4)' }}>
-                            <div style={{ fontSize: '0.8rem', color: '#7c5cfc' }}>x N Blocks</div>
-                            <div style={{ ...ds.diagramLayer, height: 30, fontSize: '0.8rem' }}>Feed Forward</div>
-                            <div style={{ ...ds.diagramLayer, height: 30, fontSize: '0.8rem' }}>Multi-Head Attention</div>
+                        <div className={styles.arrow}>↑</div>
+                        <div className={styles.diagramLayerBlocks}>
+                            <div className={styles.blocksLabel}>x N Blocks</div>
+                            <div className={styles.diagramLayerSmall}>Feed Forward</div>
+                            <div className={styles.diagramLayerSmall}>Multi-Head Attention</div>
                         </div>
-                        <div style={ds.arrow}>↑</div>
-                        <div style={{ ...ds.diagramLayer, background: 'rgba(251, 191, 36, 0.2)', border: '1px solid #fbbf24' }}>
+                        <div className={styles.arrow}>↑</div>
+                        <div className={styles.diagramLayerYellow}>
                             Embedding + Positional Enc
                         </div>
-                        <div style={ds.arrow}>↑</div>
-                        <div style={ds.diagramLayer}>Input (Tokens)</div>
+                        <div className={styles.arrow}>↑</div>
+                        <div className={styles.diagramLayer}>Input (Tokens)</div>
                     </div>
                 </div>
             );
         }
 
         return (
-            <div style={ds.codeContainer}>
-                <div style={ds.explanationBox}>
-                    <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: 12 }}>
+            <div>
+                <div className={styles.explanationBox}>
+                    <h3 className={styles.explanationTitle}>
                         {step.subtitle}
                     </h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', whiteSpace: 'pre-line' }}>
+                    <p className={styles.explanationText}>
                         {getExplanation(step.id)}
                     </p>
                 </div>
-                <div style={ds.codeBox}>
-                    <div style={ds.codeHeader}>Python (PyTorch)</div>
-                    <pre style={ds.codeBlock}>
+                <div className={styles.codeBox}>
+                    <div className={styles.codeHeader}>Python (PyTorch)</div>
+                    <pre className={styles.codeBlock}>
                         {CODE_SNIPPETS[step.id]}
                     </pre>
                 </div>
@@ -227,46 +228,46 @@ export default function AdvancedGPTPage() {
     };
 
     return (
-        <div style={pageStyles.container}>
-            <div style={pageStyles.progressBar}>
+        <div className={styles.container}>
+            <div className={styles.progressBar}>
                 {STEPS.map((s, i) => (
                     <div
                         key={s.id}
+                        className={styles.progressDot}
                         style={{
-                            ...pageStyles.progressDot,
                             background: i <= currentStep ? 'var(--accent-nova)' : 'rgba(124, 92, 252, 0.15)',
                             transform: i === currentStep ? 'scale(1.3)' : 'scale(1)',
                         }}
                         onClick={() => setCurrentStep(i)}
                     />
                 ))}
-                <div style={{
-                    ...pageStyles.progressFill,
-                    width: `${(currentStep / (STEPS.length - 1)) * 100}%`,
-                }} />
+                <div
+                    className={styles.progressFill}
+                    style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+                />
             </div>
 
-            <div style={pageStyles.header}>
-                <span style={pageStyles.weekBadge}>심화 과정</span>
-                <div style={{ fontSize: '3rem' }}>{step.emoji}</div>
-                <h1 style={pageStyles.title}>
+            <div className={styles.header}>
+                <span className={styles.weekBadge}>심화 과정</span>
+                <div className={styles.stepEmoji}>{step.emoji}</div>
+                <h1 className={styles.title}>
                     <span className="text-gradient">{step.title}</span>
                 </h1>
             </div>
 
-            <div style={pageStyles.content}>{renderContent()}</div>
+            <div className={styles.content}>{renderContent()}</div>
 
-            <div style={pageStyles.navBar}>
+            <div className={styles.navBar}>
                 <button
                     className="btn-nova"
-                    style={{ ...pageStyles.navBtn, opacity: currentStep === 0 ? 0.3 : 1 }}
+                    style={{ opacity: currentStep === 0 ? 0.3 : 1 }}
                     onClick={prevStep}
                     disabled={currentStep === 0}
                 >
                     <span>← 이전</span>
                 </button>
-                <span style={pageStyles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
-                <button className="btn-nova" style={pageStyles.navBtn} onClick={
+                <span className={styles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
+                <button className={`btn-nova ${styles.navBtn}`} onClick={
                     currentStep < STEPS.length - 1 ? nextStep : () => router.push('/hub')
                 }>
                     <span>{currentStep < STEPS.length - 1 ? '다음 →' : '완료 (허브로)'}</span>
@@ -287,31 +288,3 @@ function getExplanation(id) {
         default: return "";
     }
 }
-
-const pageStyles = {
-    container: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 20px', maxWidth: 680, margin: '0 auto' },
-    progressBar: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 32, position: 'relative', width: '100%', maxWidth: 300, justifyContent: 'center' },
-    progressDot: { width: 12, height: 12, borderRadius: '50%', cursor: 'pointer', transition: 'all 0.3s', zIndex: 1 },
-    progressFill: { position: 'absolute', left: 6, top: '50%', height: 3, background: 'var(--accent-nova)', borderRadius: 2, transform: 'translateY(-50%)', transition: 'width 0.3s', zIndex: 0 },
-    header: { textAlign: 'center', marginBottom: 24 },
-    weekBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700, background: 'rgba(255, 255, 255, 0.1)', color: '#fff', marginBottom: 12, letterSpacing: '0.05em' },
-    title: { fontSize: '1.6rem', fontWeight: 800, marginTop: 8, marginBottom: 6 },
-    content: { flex: 1, width: '100%', marginBottom: 24 },
-    navBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '16px 0', borderTop: '1px solid var(--border-subtle)' },
-    navBtn: { padding: '10px 24px', fontSize: '0.9rem' },
-    stepCount: { fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 600 },
-};
-
-const ds = {
-    overviewContainer: { textAlign: 'center', padding: 20 },
-    text: { fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.8 },
-    diagramBox: { marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, maxWidth: 300, margin: '32px auto 0' },
-    diagramLayer: { width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--border-subtle)', background: 'rgba(15, 10, 40, 0.5)', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    arrow: { color: 'var(--text-dim)', fontSize: '1.2rem' },
-
-    codeContainer: {},
-    explanationBox: { padding: 20, borderRadius: 12, background: 'rgba(124, 92, 252, 0.1)', border: '1px solid rgba(124, 92, 252, 0.2)', marginBottom: 20 },
-    codeBox: { borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-subtle)', background: '#1e1e1e' },
-    codeHeader: { padding: '8px 16px', background: '#2d2d2d', color: '#9ca3af', fontSize: '0.8rem', fontWeight: 600, borderBottom: '1px solid #333' },
-    codeBlock: { margin: 0, padding: 20, overflowX: 'auto', fontFamily: '"Fira Code", monospace', fontSize: '0.85rem', lineHeight: 1.6, color: '#e0e0e0' },
-};

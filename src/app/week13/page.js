@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import s from './page.module.css';
 
 const MODEL_PRESETS = [
     { name: 'GPT-2 Small', layers: 12, dModel: 768, heads: 12 },
@@ -130,24 +131,24 @@ export default function ArchitectureLab() {
     }
 
     return (
-        <div style={styles.container}>
+        <div className={s.container}>
             <Breadcrumb
                 items={[{ label: '13주차 인트로', href: '/week13/intro' }]}
                 current="GPT 아키텍처"
             />
-            <div style={styles.header}>
-                <div style={styles.headerTitle}>
-                    <span style={{ fontSize: '1.5rem', marginRight: 8 }}>🏗️</span>
-                    <span style={{ fontWeight: 700 }}>GPT 아키텍처 (Transformer Block)</span>
+            <div className={s.header}>
+                <div className={s.headerTitle}>
+                    <span className={s.headerEmoji}>🏗️</span>
+                    <span className={s.headerText}>GPT 아키텍처 (Transformer Block)</span>
                 </div>
             </div>
 
-            <div style={styles.content}>
+            <div className={s.content}>
                 {/* 1. Diagram (Left) */}
-                <div style={styles.card}>
-                    <h3 style={styles.label}>트랜스포머 블록 구조도</h3>
-                    <div style={styles.diagramContainer}>
-                        <svg width="300" height="620" viewBox="0 0 300 620" style={{ margin: '0 auto', overflow: 'visible' }}>
+                <div className={s.card}>
+                    <h3 className={s.label}>트랜스포머 블록 구조도</h3>
+                    <div className={s.diagramContainer}>
+                        <svg width="300" height="620" viewBox="0 0 300 620" className={s.svgCenter}>
                             <defs>
                                 <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
                                     <path d="M0,0 L0,6 L9,3 z" fill="#475569" />
@@ -214,33 +215,33 @@ export default function ArchitectureLab() {
                 </div>
 
                 {/* 2. Info Panel (Right) */}
-                <div style={{ ...styles.card, display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={styles.label}>상세 정보 (Details)</h3>
+                <div className={s.cardFlex}>
+                    <h3 className={s.label}>상세 정보 (Details)</h3>
 
-                    <div style={styles.infoBox}>
+                    <div className={s.infoBox}>
                         <h2 style={{ color: currentInfo.color || '#fff', marginBottom: 10 }}>{currentInfo.name}</h2>
 
-                        <div style={styles.tag}>{currentInfo.shape}</div>
+                        <div className={s.tag}>{currentInfo.shape}</div>
                         {currentInfo.shapeExplain && (
-                            <div style={{ fontSize: '0.78rem', color: '#60a5fa', marginBottom: 12, lineHeight: 1.5, background: 'rgba(96,165,250,0.08)', padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(96,165,250,0.15)' }}>
+                            <div className={s.shapeExplain}>
                                 {currentInfo.shapeExplain}
                             </div>
                         )}
 
-                        <p style={{ lineHeight: 1.8, fontSize: '1.05rem', color: '#e2e8f0' }}>
+                        <p className={s.infoDesc}>
                             {currentInfo.desc}
                         </p>
 
                         {/* 파라미터 수 계산 상세 */}
                         {selectedBlock && currentInfo.paramDetail && (
-                            <div style={styles.paramBox}>
-                                <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>
+                            <div className={s.paramBox}>
+                                <div className={s.paramLabel}>
                                     파라미터(Parameter) 수 계산
                                 </div>
-                                <div style={{ fontSize: '0.75rem', color: '#fbbf24', marginBottom: 8, lineHeight: 1.5, background: 'rgba(251,191,36,0.08)', padding: '6px 10px', borderRadius: 6 }}>
+                                <div className={s.paramExplain}>
                                     파라미터 = AI가 학습하는 모든 숫자(가중치와 편향). GPT-3는 1,750억 개의 파라미터를 가지고 있어요!
                                 </div>
-                                <pre style={styles.paramPre}>
+                                <pre className={s.paramPre}>
                                     {currentInfo.paramDetail}
                                 </pre>
                             </div>
@@ -248,33 +249,33 @@ export default function ArchitectureLab() {
 
                         {/* Shape 흐름 표시 */}
                         {selectedBlock && currentInfo.inputShape && (
-                            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <span style={styles.shapeTag}>{currentInfo.inputShape}</span>
-                                <span style={{ color: '#64748b', fontSize: '1.2rem' }}> → </span>
-                                <span style={{ ...styles.shapeTag, border: `1px solid ${currentInfo.color || '#fff'}`, color: currentInfo.color || '#fff' }}>
+                            <div className={s.shapeFlow}>
+                                <span className={s.shapeTag}>{currentInfo.inputShape}</span>
+                                <span className={s.shapeArrow}> → </span>
+                                <span className={s.shapeTag} style={{ border: `1px solid ${currentInfo.color || '#fff'}`, color: currentInfo.color || '#fff' }}>
                                     {currentInfo.outputShape}
                                 </span>
                             </div>
                         )}
 
                         {!selectedBlock && (
-                            <div style={{ marginTop: 30, padding: 20, background: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
+                            <div className={s.noSelection}>
                                 <p>왼쪽 다이어그램에서 블록을 클릭해보세요!</p>
                             </div>
                         )}
                     </div>
 
                     {/* ── Model Size Slider ── */}
-                    <div style={styles.sliderSection}>
-                        <h3 style={styles.label}>모델 크기 비교 (N개 블록 쌓기)</h3>
+                    <div className={s.sliderSection}>
+                        <h3 className={s.label}>모델 크기 비교 (N개 블록 쌓기)</h3>
 
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                        <div className={s.presetRow}>
                             {MODEL_PRESETS.map(p => (
                                 <button
                                     key={p.name}
                                     onClick={() => handlePreset(p)}
+                                    className={s.presetBtn}
                                     style={{
-                                        ...styles.presetBtn,
                                         background: numLayers === p.layers && dModel === p.dModel
                                             ? 'var(--accent, #6366f1)'
                                             : 'rgba(255,255,255,0.08)',
@@ -288,10 +289,10 @@ export default function ArchitectureLab() {
                             ))}
                         </div>
 
-                        <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8', marginBottom: 4 }}>
+                        <div className={s.sliderGroup}>
+                            <div className={s.sliderHeader}>
                                 <span>블록 수 (Layers)</span>
-                                <span style={{ color: '#e2e8f0', fontWeight: 700 }}>{numLayers}</span>
+                                <span className={s.sliderValue}>{numLayers}</span>
                             </div>
                             <input
                                 type="range"
@@ -299,18 +300,18 @@ export default function ArchitectureLab() {
                                 max="96"
                                 value={numLayers}
                                 onChange={e => setNumLayers(Number(e.target.value))}
-                                style={styles.slider}
+                                className={s.slider}
                             />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#475569' }}>
+                            <div className={s.sliderRange}>
                                 <span>1</span>
                                 <span>96</span>
                             </div>
                         </div>
 
-                        <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8', marginBottom: 4 }}>
+                        <div className={s.sliderGroup}>
+                            <div className={s.sliderHeader}>
                                 <span>은닉 크기(Hidden Size) (d_model)</span>
-                                <span style={{ color: '#e2e8f0', fontWeight: 700 }}>{dModel}</span>
+                                <span className={s.sliderValue}>{dModel}</span>
                             </div>
                             <input
                                 type="range"
@@ -324,49 +325,49 @@ export default function ArchitectureLab() {
                                     // 헤드 수 자동 조정 (headDim이 64가 되도록)
                                     setNumHeads(Math.max(1, Math.floor(val / 64)));
                                 }}
-                                style={styles.slider}
+                                className={s.slider}
                             />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#475569' }}>
+                            <div className={s.sliderRange}>
                                 <span>128</span>
                                 <span>12,288</span>
                             </div>
                         </div>
 
-                        <div style={styles.totalParamBox}>
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>추정 총 파라미터 수</div>
-                            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#e2e8f0', fontFamily: 'monospace' }}>
+                        <div className={s.totalParamBox}>
+                            <div className={s.totalParamLabel}>추정 총 파라미터 수</div>
+                            <div className={s.totalParamValue}>
                                 ~{formatParams(totalParams)}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: 4 }}>
+                            <div className={s.totalParamDetail}>
                                 ({totalParams.toLocaleString()} parameters)
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2 }}>
+                            <div className={s.totalParamExtra}>
                                 블록당: ~{formatParams(12 * dModel * dModel)} | Heads: {numHeads} | 헤드 차원(Head Dim): {headDim}
                             </div>
                         </div>
                     </div>
 
                     {/* ── Encoder-Decoder vs Decoder-only ── */}
-                    <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <h3 style={styles.label}>Encoder-Decoder vs Decoder-only</h3>
-                        <div style={{ fontSize: '0.8rem', color: '#a78bfa', marginBottom: 10, lineHeight: 1.5, background: 'rgba(167,139,250,0.08)', padding: '8px 12px', borderRadius: 8 }}>
+                    <div className={s.encoderDecoderSection}>
+                        <h3 className={s.label}>Encoder-Decoder vs Decoder-only</h3>
+                        <div className={s.encoderDecoderExplain}>
                             번역 모델처럼 입력(원문)과 출력(번역문)이 다른 경우 Encoder-Decoder를 사용. GPT는 Decoder만 사용하는 간단한 구조
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            <div style={styles.compareCard}>
-                                <div style={{ fontWeight: 700, color: '#60a5fa', marginBottom: 6, fontSize: '0.9rem' }}>
+                        <div className={s.compareGrid}>
+                            <div className={s.compareCard}>
+                                <div className={s.compareTitleBlue}>
                                     Encoder-Decoder
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                <p className={s.compareDesc}>
                                     T5, BART 등. 입력을 이해(Encoder)하고 출력을 생성(Decoder)하는 두 부분으로 나뉨.
                                     번역, 요약 등 입력→출력 변환 작업에 적합.
                                 </p>
                             </div>
-                            <div style={{ ...styles.compareCard, border: '1px solid rgba(244,114,182,0.3)' }}>
-                                <div style={{ fontWeight: 700, color: '#f472b6', marginBottom: 6, fontSize: '0.9rem' }}>
+                            <div className={s.compareCardPink}>
+                                <div className={s.compareTitlePink}>
                                     Decoder-only (GPT)
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                                <p className={s.compareDesc}>
                                     GPT 시리즈. Decoder만 쌓아서 "다음 토큰 예측"에 집중.
                                     단순하지만 스케일링 시 가장 강력한 구조로 증명됨.
                                 </p>
@@ -379,34 +380,26 @@ export default function ArchitectureLab() {
             {/* 한 걸음 더: 행렬 곱셈 */}
             <div
                 onClick={() => setShowDeepDive(!showDeepDive)}
-                style={{
-                    marginTop: 20,
-                    padding: '16px 20px',
-                    background: 'rgba(124, 92, 252, 0.08)',
-                    border: '1px solid rgba(124, 92, 252, 0.25)',
-                    borderRadius: 14,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                }}
+                className={s.deepDive}
             >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <h3 style={{ color: 'rgba(124, 92, 252, 1)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                <div className={s.deepDiveHeader}>
+                    <h3 className={s.deepDiveTitle}>
                         {showDeepDive ? '▼' : '▶'} 한 걸음 더: 행렬 곱셈이 AI에서 하는 역할
                     </h3>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(124, 92, 252, 0.7)', fontWeight: 600 }}>
+                    <span className={s.deepDiveToggle}>
                         {showDeepDive ? '접기' : '펼치기'}
                     </span>
                 </div>
                 {showDeepDive && (
-                    <div style={{ marginTop: 14, fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.8 }} onClick={e => e.stopPropagation()}>
-                        <p style={{ marginBottom: 10 }}>
-                            <strong style={{ color: 'rgba(124, 92, 252, 1)' }}>행렬 곱셈</strong> = 많은 뉴런의 가중치 합을 <strong>한 번에</strong> 계산하는 방법입니다.
+                    <div className={s.deepDiveContent} onClick={e => e.stopPropagation()}>
+                        <p className={s.deepDiveParagraph}>
+                            <strong className={s.deepDiveHighlight}>행렬 곱셈</strong> = 많은 뉴런의 가중치 합을 <strong>한 번에</strong> 계산하는 방법입니다.
                         </p>
-                        <p style={{ marginBottom: 10 }}>
+                        <p className={s.deepDiveParagraph}>
                             GPU가 빠른 이유가 바로 행렬 곱셈을 <strong>병렬로 처리</strong>하기 때문입니다.
                             CPU는 계산을 하나씩 순서대로 하지만, GPU는 수천 개의 코어가 동시에 행렬 곱셈을 수행합니다.
                         </p>
-                        <p style={{ marginBottom: 0 }}>
+                        <p className={s.deepDiveParagraphLast}>
                             AI의 모든 핵심 연산(<strong>임베딩 조회</strong>, <strong>어텐션 계산</strong>, <strong>FFN</strong>)이 결국 행렬 곱셈입니다.
                             그래서 AI 발전의 역사는 곧 &quot;더 큰 행렬 곱셈을 더 빠르게&quot;의 역사이기도 합니다.
                         </p>
@@ -415,14 +408,9 @@ export default function ArchitectureLab() {
             </div>
 
             {/* 네비게이션 */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 30, paddingBottom: 40 }}>
-                <button onClick={() => router.push('/week13/intro')} style={{
-                    padding: '10px 24px', borderRadius: 10,
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.05)',
-                    color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
-                }}>← 인트로로</button>
-                <button className="btn-nova" onClick={() => router.push('/week14/intro')} style={{ padding: '10px 24px' }}>
+            <div className={s.navRow}>
+                <button onClick={() => router.push('/week13/intro')} className={s.navBtnBack}>← 인트로로</button>
+                <button className={`btn-nova ${s.navBtnNext}`} onClick={() => router.push('/week14/intro')}>
                     <span>⚡ 14주차: 학습 최적화 →</span>
                 </button>
             </div>
@@ -435,7 +423,7 @@ function BlockNode({ y, data, selected, onClick, height = 40 }) {
         <g
             transform={`translate(150, ${y})`}
             onClick={() => onClick(data.id)}
-            style={{ cursor: 'pointer' }}
+            className={s.blockNodeCursor}
         >
             <rect
                 x="-80"
@@ -447,7 +435,7 @@ function BlockNode({ y, data, selected, onClick, height = 40 }) {
                 stroke={selected ? '#fff' : data.color}
                 strokeWidth={selected ? 3 : 2}
                 filter={selected ? 'url(#glow)' : ''}
-                style={{ transition: 'all 0.3s' }}
+                className={s.blockNodeTransition}
             />
             <text
                 x="0"
@@ -456,145 +444,10 @@ function BlockNode({ y, data, selected, onClick, height = 40 }) {
                 fill={selected ? '#000' : '#fff'}
                 fontWeight="bold"
                 fontSize="12"
-                style={{ pointerEvents: 'none' }}
+                className={s.blockNodePointerNone}
             >
                 {data.name}
             </text>
         </g>
     );
 }
-
-const styles = {
-    container: {
-        minHeight: '100vh',
-        padding: '20px',
-        maxWidth: 1100,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: 30,
-        paddingBottom: 20,
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-    },
-    backBtn: {
-        background: 'none',
-        border: 'none',
-        color: 'var(--text-dim)',
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-        marginRight: 20,
-    },
-    headerTitle: {
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: '1.2rem',
-        color: '#fff',
-    },
-    content: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1.2fr',
-        gap: 20,
-    },
-    card: {
-        background: 'rgba(15, 10, 40, 0.6)',
-        borderRadius: 16,
-        padding: 24,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        minHeight: 500,
-    },
-    label: {
-        fontSize: '0.85rem',
-        color: 'var(--text-secondary)',
-        marginBottom: 16,
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-    },
-    diagramContainer: {
-        background: 'rgba(0,0,0,0.3)',
-        borderRadius: 12,
-        padding: 20,
-        border: '1px solid rgba(255,255,255,0.05)',
-        textAlign: 'center',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    infoBox: {
-        padding: 20,
-    },
-    tag: {
-        display: 'inline-block',
-        padding: '4px 12px',
-        borderRadius: 20,
-        background: 'rgba(255,255,255,0.1)',
-        color: '#94a3b8',
-        fontSize: '0.9rem',
-        fontFamily: 'monospace',
-        marginBottom: 20,
-        border: '1px solid rgba(255,255,255,0.1)',
-    },
-    shapeTag: {
-        display: 'inline-block',
-        padding: '3px 10px',
-        borderRadius: 6,
-        background: 'rgba(255,255,255,0.05)',
-        color: '#64748b',
-        fontSize: '0.8rem',
-        fontFamily: 'monospace',
-        border: '1px solid rgba(255,255,255,0.1)',
-    },
-    paramBox: {
-        marginTop: 14,
-        padding: 12,
-        background: 'rgba(0,0,0,0.3)',
-        borderRadius: 8,
-        border: '1px solid rgba(255,255,255,0.08)',
-    },
-    paramPre: {
-        margin: 0,
-        fontSize: '0.78rem',
-        color: '#cbd5e1',
-        lineHeight: 1.6,
-        fontFamily: 'monospace',
-        whiteSpace: 'pre-wrap',
-    },
-    sliderSection: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-    },
-    presetBtn: {
-        padding: '4px 10px',
-        borderRadius: 6,
-        border: '1px solid rgba(255,255,255,0.15)',
-        cursor: 'pointer',
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        transition: 'all 0.2s',
-    },
-    slider: {
-        width: '100%',
-        accentColor: 'var(--accent, #6366f1)',
-        cursor: 'pointer',
-    },
-    totalParamBox: {
-        marginTop: 12,
-        padding: 14,
-        background: 'rgba(99, 102, 241, 0.1)',
-        borderRadius: 10,
-        border: '1px solid rgba(99, 102, 241, 0.2)',
-        textAlign: 'center',
-    },
-    compareCard: {
-        padding: 12,
-        background: 'rgba(0,0,0,0.2)',
-        borderRadius: 10,
-        border: '1px solid rgba(96,165,250,0.2)',
-    },
-};

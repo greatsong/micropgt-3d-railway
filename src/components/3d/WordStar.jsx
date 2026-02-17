@@ -4,6 +4,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
+import styles from './WordStar.module.css';
 
 export default function WordStar({ studentName, word, position, color, isMe }) {
     const meshRef = useRef();
@@ -52,33 +53,22 @@ export default function WordStar({ studentName, word, position, color, isMe }) {
                 <Html
                     position={[0, isMe ? 0.5 : 0.35, 0]}
                     center
-                    style={{ pointerEvents: 'none', userSelect: 'none' }}
+                    className={styles.htmlNoPointer}
                 >
-                    <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{
-                            fontSize: isMe ? '14px' : '11px',
-                            fontWeight: 700,
-                            color: color,
-                            textShadow: '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)',
-                        }}>
+                    <div className={styles.labelWrap}>
+                        <div
+                            className={styles.wordLabel}
+                            style={{
+                                fontSize: isMe ? '14px' : '11px',
+                                color,
+                            }}
+                        >
                             {word || '?'}
                         </div>
-                        <div style={{
-                            fontSize: '9px',
-                            color: '#a5a0c0',
-                            textShadow: '0 0 3px rgba(0,0,0,0.8)',
-                            marginTop: 1,
-                        }}>
+                        <div className={styles.studentName}>
                             {studentName}
                         </div>
-                        <div style={{
-                            fontSize: '8px',
-                            fontFamily: 'monospace',
-                            color: '#8888aa',
-                            textShadow: '0 0 3px rgba(0,0,0,0.8)',
-                            marginTop: 1,
-                            opacity: 0.7,
-                        }}>
+                        <div className={styles.coordLabel}>
                             ({position.x.toFixed(1)}, {position.y.toFixed(1)}, {position.z.toFixed(1)})
                         </div>
                     </div>
@@ -87,4 +77,3 @@ export default function WordStar({ studentName, word, position, color, isMe }) {
         </group>
     );
 }
-

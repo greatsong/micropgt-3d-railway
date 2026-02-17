@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import s from './page.module.css';
 
 // ── 코사인 유사도 계산 ──
 function cosSim(a, b) {
@@ -124,56 +125,57 @@ function Vector2DPanel() {
     const handlePointerUp = () => setDragging(null);
 
     return (
-        <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>📐 Step 1: 2D에서 코사인 유사도 체험</h2>
-            <p style={styles.desc}>
+        <div className={s.section}>
+            <h2 className={s.sectionTitle}>📐 Step 1: 2D에서 코사인 유사도 체험</h2>
+            <p className={s.desc}>
                 코사인 유사도는 <strong>두 화살표(벡터)가 얼마나 비슷한 방향</strong>을 가리키는지 측정합니다.<br />
                 화살표 끝을 <strong>드래그</strong>해서 방향을 바꿔보세요!
             </p>
 
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+            <div className={s.flexRow}>
                 <canvas
                     ref={canvasRef}
                     width={360} height={360}
-                    style={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15,10,40,0.6)', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+                    className={s.canvas}
+                    style={{ cursor: dragging ? 'grabbing' : 'grab' }}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onPointerLeave={handlePointerUp}
                 />
 
-                <div style={{ minWidth: 200 }}>
-                    <div style={styles.resultCard}>
-                        <div style={styles.resultLabel}>코사인 유사도</div>
-                        <div style={{
-                            fontSize: '2rem', fontWeight: 800,
-                            color: sim > 0.8 ? '#10b981' : sim > 0.3 ? '#fbbf24' : '#f43f5e',
-                        }}>
+                <div className={s.sidePanel}>
+                    <div className={s.resultCard}>
+                        <div className={s.resultLabel}>코사인 유사도</div>
+                        <div
+                            className={s.simBig}
+                            style={{ color: sim > 0.8 ? '#10b981' : sim > 0.3 ? '#fbbf24' : '#f43f5e' }}
+                        >
                             {sim.toFixed(3)}
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 4 }}>
+                        <div className={s.simPercent}>
                             ({Math.round(sim * 100)}% 유사)
                         </div>
                     </div>
-                    <div style={styles.resultCard}>
-                        <div style={styles.resultLabel}>두 벡터 사이 각도</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fbbf24' }}>
+                    <div className={s.resultCard}>
+                        <div className={s.resultLabel}>두 벡터 사이 각도</div>
+                        <div className={s.angleBig}>
                             {angleDeg.toFixed(1)}°
                         </div>
                     </div>
 
-                    <div style={{ ...styles.infoBox, marginTop: 12 }}>
-                        <strong style={{ color: '#7c5cfc' }}>💡 핵심 직관</strong>
-                        <ul style={{ margin: '6px 0 0', paddingLeft: 16, fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                    <div className={s.insightBox}>
+                        <strong className={s.insightTitle}>💡 핵심 직관</strong>
+                        <ul className={s.insightList}>
                             <li><strong>같은 방향 (0°)</strong> → 유사도 = 1 (완전 동일)</li>
                             <li><strong>직각 (90°)</strong> → 유사도 = 0 (무관)</li>
                             <li><strong>반대 방향 (180°)</strong> → 유사도 = -1 (정반대)</li>
                         </ul>
                     </div>
 
-                    <div style={{ ...styles.infoBox, marginTop: 8, background: 'rgba(251,191,36,0.06)', borderColor: 'rgba(251,191,36,0.15)' }}>
-                        <strong style={{ color: '#fbbf24', fontSize: '0.78rem' }}>🤔 왜 유클리드 거리 대신 코사인 유사도?</strong>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>
+                    <div className={s.whyBox}>
+                        <strong className={s.whyBoxTitle}>🤔 왜 유클리드 거리 대신 코사인 유사도?</strong>
+                        <p className={s.whyBoxText}>
                             유클리드 거리는 화살표의 <strong>길이</strong>에 영향을 받지만,
                             코사인 유사도는 <strong>방향</strong>만 봅니다.
                             AI에서는 &quot;의미가 비슷한가?&quot;가 중요하지,
@@ -275,57 +277,58 @@ function Vector3DPanel() {
     const handlePointerUp = () => setIsDragging(false);
 
     return (
-        <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>🧊 Step 2: 3D로 확장!</h2>
-            <p style={styles.desc}>
+        <div className={s.section}>
+            <h2 className={s.sectionTitle}>🧊 Step 2: 3D로 확장!</h2>
+            <p className={s.desc}>
                 2D에서는 숫자 2개로 벡터를 만들었죠? 3D에서는 <strong>숫자 3개</strong>로 표현합니다.<br />
                 차원이 늘어나도 코사인 유사도의 원리는 동일합니다! 화면을 드래그해서 3D로 돌려보세요.
             </p>
 
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+            <div className={s.flexRow}>
                 <canvas
                     ref={canvasRef}
                     width={360} height={360}
-                    style={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15,10,40,0.6)', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+                    className={s.canvas}
+                    style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onPointerLeave={handlePointerUp}
                 />
 
-                <div style={{ minWidth: 200 }}>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4 }}>단어 A</div>
-                            <select className="select-cosmic" style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%' }}
+                <div className={s.sidePanel}>
+                    <div className={s.selectRow}>
+                        <div className={s.selectCol}>
+                            <div className={s.selectLabel}>단어 A</div>
+                            <select className={`select-cosmic ${s.selectInput}`}
                                 value={selA} onChange={(e) => setSelA(+e.target.value)}>
                                 {WORDS_3D.map((w, i) => <option key={i} value={i}>{w.word}</option>)}
                             </select>
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4 }}>단어 B</div>
-                            <select className="select-cosmic" style={{ fontSize: '0.8rem', padding: '6px 8px', width: '100%' }}
+                        <div className={s.selectCol}>
+                            <div className={s.selectLabel}>단어 B</div>
+                            <select className={`select-cosmic ${s.selectInput}`}
                                 value={selB} onChange={(e) => setSelB(+e.target.value)}>
                                 {WORDS_3D.map((w, i) => <option key={i} value={i}>{w.word}</option>)}
                             </select>
                         </div>
                     </div>
 
-                    <div style={styles.resultCard}>
-                        <div style={styles.resultLabel}>코사인 유사도</div>
-                        <div style={{
-                            fontSize: '1.8rem', fontWeight: 800,
-                            color: sim > 0.8 ? '#10b981' : sim > 0.3 ? '#fbbf24' : '#f43f5e',
-                        }}>
+                    <div className={s.resultCard}>
+                        <div className={s.resultLabel}>코사인 유사도</div>
+                        <div
+                            className={s.simBig3D}
+                            style={{ color: sim > 0.8 ? '#10b981' : sim > 0.3 ? '#fbbf24' : '#f43f5e' }}
+                        >
                             {sim.toFixed(3)}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                        <div className={s.angleText}>
                             각도: {angleDeg.toFixed(1)}° | {Math.round(sim * 100)}% 유사
                         </div>
                     </div>
 
-                    <div style={{ ...styles.infoBox, marginTop: 8 }}>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4 }}>벡터 값:</div>
+                    <div className={s.vecInfoBox}>
+                        <div className={s.vecInfoLabel}>벡터 값:</div>
                         <div style={{ fontSize: '0.78rem', color: WORDS_3D[selA].color, fontWeight: 600 }}>
                             {WORDS_3D[selA].word}: [{WORDS_3D[selA].vec.join(', ')}]
                         </div>
@@ -334,9 +337,9 @@ function Vector3DPanel() {
                         </div>
                     </div>
 
-                    <div style={{ ...styles.infoBox, marginTop: 8, background: 'rgba(52,211,153,0.06)', borderColor: 'rgba(52,211,153,0.15)' }}>
-                        <strong style={{ color: '#34d399', fontSize: '0.78rem' }}>🔍 관찰해보세요!</strong>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>
+                    <div className={s.observeBox}>
+                        <strong className={s.observeTitle}>🔍 관찰해보세요!</strong>
+                        <p className={s.observeText}>
                             &quot;고양이&quot;와 &quot;강아지&quot;는 방향이 비슷하죠?<br />
                             &quot;피자&quot;와 &quot;햄버거&quot;도 비슷한 방향!<br />
                             하지만 &quot;기쁨&quot;과 &quot;슬픔&quot;은 거의 반대 방향입니다.
@@ -379,9 +382,9 @@ function VectorArithmeticFullPanel() {
     }, []);
 
     if (!gloveData) return (
-        <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>🧮 Step 3: 실제 AI 임베딩으로 벡터 연산</h2>
-            <p style={{ color: 'var(--text-dim)', textAlign: 'center' }}>임베딩 데이터 로딩 중...</p>
+        <div className={s.section}>
+            <h2 className={s.sectionTitle}>🧮 Step 3: 실제 AI 임베딩으로 벡터 연산</h2>
+            <p className={s.loadingText}>임베딩 데이터 로딩 중...</p>
         </div>
     );
 
@@ -414,29 +417,25 @@ function VectorArithmeticFullPanel() {
     const simAB = cosSim(vecA, vecB);
 
     return (
-        <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>🧮 Step 3: 실제 AI 임베딩으로 벡터 연산</h2>
-            <p style={styles.desc}>
+        <div className={s.section}>
+            <h2 className={s.sectionTitle}>🧮 Step 3: 실제 AI 임베딩으로 벡터 연산</h2>
+            <p className={s.desc}>
                 지금까지 2D, 3D로 연습했죠? 실제 AI는 <strong>300차원</strong> 벡터를 사용합니다.<br />
                 차원이 300개라 직접 보기는 어렵지만, 코사인 유사도의 원리는 똑같습니다!
             </p>
 
             {/* 차원 비교 */}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+            <div className={s.dimRow}>
                 {[
                     { dim: '2D', n: 2, desc: '평면 위 방향', done: true },
                     { dim: '3D', n: 3, desc: '공간 위 방향', done: true },
                     { dim: '300D', n: 300, desc: '실제 AI 임베딩', done: false },
                 ].map(d => (
-                    <div key={d.dim} style={{
-                        padding: '8px 16px', borderRadius: 8, textAlign: 'center',
-                        background: d.done ? 'rgba(16,185,129,0.08)' : 'rgba(124,92,252,0.1)',
-                        border: `1px solid ${d.done ? 'rgba(16,185,129,0.2)' : 'rgba(124,92,252,0.25)'}`,
-                    }}>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: d.done ? '#10b981' : '#7c5cfc' }}>
+                    <div key={d.dim} className={d.done ? s.dimCardDone : s.dimCardCurrent}>
+                        <div className={d.done ? s.dimCardDoneLabel : s.dimCardCurrentLabel}>
                             {d.done ? '✅' : '👉'} {d.dim}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                        <div className={s.dimCardSub}>
                             숫자 {d.n}개 = {d.desc}
                         </div>
                     </div>
@@ -444,9 +443,9 @@ function VectorArithmeticFullPanel() {
             </div>
 
             {/* 데이터 출처 */}
-            <div style={{ ...styles.infoBox, textAlign: 'center', marginBottom: 16 }}>
-                <strong style={{ color: '#fbbf24', fontSize: '0.82rem' }}>📊 사용 데이터</strong>
-                <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <div className={s.dataSourceBox}>
+                <strong className={s.dataSourceTitle}>📊 사용 데이터</strong>
+                <p className={s.dataSourceText}>
                     Stanford NLP의 <strong>GloVe</strong> 모델 — Wikipedia + Gigaword (60억 개 단어)에서 학습<br />
                     각 단어가 300개의 숫자로 표현됩니다. 51개 단어를 미리 추출했습니다.
                 </p>
@@ -454,15 +453,13 @@ function VectorArithmeticFullPanel() {
 
             {/* 추천 예시 */}
             {!customMode && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14, justifyContent: 'center' }}>
+                <div className={s.exampleBtnRow}>
                     {GLOVE_EXAMPLES.map((ex, i) => (
-                        <button key={i} onClick={() => setSelectedExample(i)} style={{
-                            padding: '5px 10px', borderRadius: 8, fontSize: '0.75rem', cursor: 'pointer',
-                            border: i === selectedExample ? '1.5px solid #7c5cfc' : '1px solid rgba(255,255,255,0.1)',
-                            background: i === selectedExample ? 'rgba(124,92,252,0.15)' : 'rgba(255,255,255,0.03)',
-                            color: i === selectedExample ? '#a78bfa' : 'var(--text-dim)',
-                            fontWeight: i === selectedExample ? 700 : 400,
-                        }}>
+                        <button
+                            key={i}
+                            onClick={() => setSelectedExample(i)}
+                            className={i === selectedExample ? s.exampleBtnActive : s.exampleBtn}
+                        >
                             {ex.emoji} {ex.label}
                         </button>
                     ))}
@@ -470,31 +467,29 @@ function VectorArithmeticFullPanel() {
             )}
 
             {/* 자유 모드 토글 */}
-            <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                <button onClick={() => setCustomMode(!customMode)} style={{
-                    padding: '6px 16px', borderRadius: 8, fontSize: '0.8rem', cursor: 'pointer',
-                    border: '1px solid rgba(251,191,36,0.3)',
-                    background: customMode ? 'rgba(251,191,36,0.15)' : 'transparent',
-                    color: '#fbbf24', fontWeight: 600,
-                }}>
+            <div className={s.toggleBtnWrap}>
+                <button
+                    onClick={() => setCustomMode(!customMode)}
+                    className={customMode ? s.toggleBtnActive : s.toggleBtn}
+                >
                     {customMode ? '📋 추천 예시로 돌아가기' : '✏️ 자유롭게 조합하기'}
                 </button>
             </div>
 
             {/* 자유 모드: 드롭다운 */}
             {customMode && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 14 }}>
-                    <select className="select-cosmic" style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                <div className={s.customRow}>
+                    <select className={`select-cosmic ${s.customSelect}`}
                         value={wordA} onChange={(e) => setWordA(e.target.value)}>
                         {allWords.map(w => <option key={w} value={w}>{labels[w]}({w})</option>)}
                     </select>
-                    <span style={{ fontWeight: 800, color: '#f43f5e', fontSize: '1.2rem' }}>−</span>
-                    <select className="select-cosmic" style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                    <span className={s.opMinus}>−</span>
+                    <select className={`select-cosmic ${s.customSelect}`}
                         value={wordB} onChange={(e) => setWordB(e.target.value)}>
                         {allWords.map(w => <option key={w} value={w}>{labels[w]}({w})</option>)}
                     </select>
-                    <span style={{ fontWeight: 800, color: '#10b981', fontSize: '1.2rem' }}>+</span>
-                    <select className="select-cosmic" style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                    <span className={s.opPlus}>+</span>
+                    <select className={`select-cosmic ${s.customSelect}`}
                         value={wordC} onChange={(e) => setWordC(e.target.value)}>
                         {allWords.map(w => <option key={w} value={w}>{labels[w]}({w})</option>)}
                     </select>
@@ -502,44 +497,30 @@ function VectorArithmeticFullPanel() {
             )}
 
             {/* 수식 표시 */}
-            <div style={{
-                padding: '12px 16px', borderRadius: 10, marginBottom: 12,
-                background: 'rgba(15,10,40,0.6)', border: '1px solid rgba(124, 92, 252, 0.2)',
-                textAlign: 'center', fontSize: '1rem', color: '#e2e8f0',
-            }}>
-                {lbl(curA)} <span style={{ color: '#f43f5e', fontWeight: 800 }}>−</span> {lbl(curB)} <span style={{ color: '#10b981', fontWeight: 800 }}>+</span> {lbl(curC)} <span style={{ color: '#fbbf24', fontWeight: 800 }}>=</span> ?
+            <div className={s.formulaBar}>
+                {lbl(curA)} <span className={s.formulaMinus}>−</span> {lbl(curB)} <span className={s.formulaPlus}>+</span> {lbl(curC)} <span className={s.formulaEquals}>=</span> ?
             </div>
 
             {/* 결과 */}
             {bestMatch && (
-                <div style={{
-                    padding: '16px 20px', borderRadius: 12,
-                    background: 'rgba(16, 185, 129, 0.08)', border: '1.5px solid rgba(16, 185, 129, 0.25)',
-                    textAlign: 'center', marginBottom: 12,
-                }}>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: 4 }}>300차원 코사인 유사도로 찾은 가장 가까운 단어</div>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#10b981' }}>{bestMatch.label || bestMatch.word}</span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginLeft: 8 }}>
+                <div className={s.bestMatchCard}>
+                    <div className={s.bestMatchLabel}>300차원 코사인 유사도로 찾은 가장 가까운 단어</div>
+                    <span className={s.bestMatchWord}>{bestMatch.label || bestMatch.word}</span>
+                    <span className={s.bestMatchMeta}>
                         ({bestMatch.word}, 유사도 {(bestMatch.sim * 100).toFixed(1)}%)
                     </span>
-                    <div style={{ marginTop: 8, fontSize: '0.95rem', color: '#fbbf24', fontWeight: 700 }}>
+                    <div className={s.bestMatchFormula}>
                         {lbl(curA)} − {lbl(curB)} + {lbl(curC)} ≈ <strong>{bestMatch.label || bestMatch.word}</strong>
                     </div>
                 </div>
             )}
 
             {/* Top 5 순위 */}
-            <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: 6 }}>Top 5 후보 단어:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div className={s.rankingWrap}>
+                <div className={s.rankingTitle}>Top 5 후보 단어:</div>
+                <div className={s.rankingRow}>
                     {rankings.slice(0, 5).map((r, i) => (
-                        <span key={r.word} style={{
-                            padding: '4px 10px', borderRadius: 6, fontSize: '0.78rem',
-                            background: i === 0 ? 'rgba(16,185,129,0.15)' : 'rgba(124,92,252,0.06)',
-                            color: i === 0 ? '#10b981' : 'var(--text-dim)',
-                            fontWeight: i === 0 ? 700 : 400,
-                            border: i === 0 ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.05)',
-                        }}>
+                        <span key={r.word} className={i === 0 ? s.rankingFirst : s.rankingOther}>
                             {i + 1}. {r.label || r.word} ({(r.sim * 100).toFixed(1)}%)
                         </span>
                     ))}
@@ -547,9 +528,9 @@ function VectorArithmeticFullPanel() {
             </div>
 
             {/* 왜 이게 작동하는지 설명 */}
-            <div style={{ ...styles.infoBox, background: 'rgba(52,211,153,0.06)', borderColor: 'rgba(52,211,153,0.15)' }}>
-                <strong style={{ color: '#34d399', fontSize: '0.82rem' }}>🤯 왜 벡터 빼기/더하기로 의미가 조합될까?</strong>
-                <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <div className={s.whyWorksBox}>
+                <strong className={s.whyWorksTitle}>🤯 왜 벡터 빼기/더하기로 의미가 조합될까?</strong>
+                <p className={s.whyWorksText}>
                     AI가 대량의 텍스트를 학습하면, <strong>&quot;왕&quot;과 &quot;여왕&quot;의 관계</strong>가
                     <strong>&quot;남자&quot;와 &quot;여자&quot;의 관계</strong>와 비슷한 방향의 차이로 저장됩니다.<br />
                     그래서 &quot;왕&quot;에서 &quot;남자 방향&quot;을 빼고 &quot;여자 방향&quot;을 더하면
@@ -559,9 +540,9 @@ function VectorArithmeticFullPanel() {
 
             {/* 편향 경고 */}
             {(curA === 'doctor' && curB === 'man' && curC === 'woman') && (
-                <div style={{ ...styles.infoBox, marginTop: 10, background: 'rgba(244,63,94,0.06)', borderColor: 'rgba(244,63,94,0.2)' }}>
-                    <strong style={{ color: '#f43f5e', fontSize: '0.82rem' }}>⚠️ AI 편향 (Bias) 발견!</strong>
-                    <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                <div className={s.biasBox}>
+                    <strong className={s.biasTitle}>⚠️ AI 편향 (Bias) 발견!</strong>
+                    <p className={s.biasText}>
                         &quot;의사 − 남자 + 여자 = 간호사&quot;? 이건 AI가 학습 데이터에서 흡수한 <strong>성별 편향</strong>입니다.<br />
                         AI 임베딩은 인터넷 텍스트의 편견까지 학습하므로, 이를 인식하고 보정하는 것이 중요합니다.
                         이것이 바로 14주차에서 배울 <strong>RLHF(인간 피드백 강화학습)</strong>가 필요한 이유 중 하나입니다!
@@ -570,34 +551,25 @@ function VectorArithmeticFullPanel() {
             )}
 
             {/* 한 걸음 더: 코사인 유사도 수식 */}
-            <div style={{ marginTop: 12 }}>
-                <button onClick={() => setShowDeepDive(!showDeepDive)} style={{
-                    width: '100%', padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                    background: 'rgba(124, 92, 252, 0.08)', border: '1px solid rgba(124, 92, 252, 0.25)',
-                    color: '#a78bfa', fontSize: '0.85rem', fontWeight: 600,
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
+            <div className={s.deepDiveWrap}>
+                <button onClick={() => setShowDeepDive(!showDeepDive)} className={s.deepDiveToggle}>
                     <span>{showDeepDive ? '▼' : '▶'} 한 걸음 더: 코사인 유사도 수식</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{showDeepDive ? '접기' : '펼치기'}</span>
+                    <span className={s.deepDiveHint}>{showDeepDive ? '접기' : '펼치기'}</span>
                 </button>
                 {showDeepDive && (
-                    <div onClick={(e) => e.stopPropagation()} style={{
-                        padding: 16, marginTop: 4, borderRadius: 10,
-                        background: 'rgba(124, 92, 252, 0.04)', border: '1px solid rgba(124, 92, 252, 0.15)',
-                        fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.8,
-                    }}>
-                        <div style={{ textAlign: 'center', marginBottom: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(15,10,40,0.6)' }}>
-                            <code style={{ color: '#a78bfa', fontSize: '0.9rem' }}>
+                    <div onClick={(e) => e.stopPropagation()} className={s.deepDiveContent}>
+                        <div className={s.formulaBox}>
+                            <code className={s.formulaCode}>
                                 cos(θ) = (A · B) / (|A| × |B|)
                             </code>
                         </div>
-                        <ul style={{ paddingLeft: 20, margin: 0 }}>
+                        <ul className={s.formulaList}>
                             <li><strong>A · B (내적)</strong> = 같은 위치의 숫자끼리 곱해서 전부 더한 값</li>
                             <li><strong>|A| (크기)</strong> = 벡터의 길이 = √(각 숫자를 제곱해서 더한 값)</li>
                             <li><strong>나누기</strong> = 크기의 영향을 제거하고 <strong>방향만</strong> 비교</li>
                         </ul>
-                        <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(251,191,36,0.06)' }}>
-                            <strong style={{ color: '#fbbf24' }}>계산 예시 (2D)</strong><br />
+                        <div className={s.exampleCalc}>
+                            <strong className={s.exampleCalcTitle}>계산 예시 (2D)</strong><br />
                             A = [3, 4], B = [4, 1]<br />
                             내적 = 3×4 + 4×1 = 16<br />
                             |A| = √(9+16) = 5, |B| = √(16+1) ≈ 4.12<br />
@@ -608,7 +580,7 @@ function VectorArithmeticFullPanel() {
             </div>
 
             {/* 출처 */}
-            <div style={{ marginTop: 10, fontSize: '0.65rem', color: 'var(--text-dim)', textAlign: 'center', opacity: 0.7 }}>
+            <div className={s.dataCredit}>
                 데이터: GloVe (Stanford NLP) — 60억 단어 학습, 300차원, 51개 단어 추출
             </div>
         </div>
@@ -620,24 +592,24 @@ export default function Week4Practice() {
     const router = useRouter();
 
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
+        <div className={s.container}>
+            <div className={s.header}>
                 <button
                     onClick={() => router.push('/week4/intro')}
-                    style={styles.backBtn}
+                    className={s.backBtn}
                 >
                     ← 개념 복습
                 </button>
-                <h1 style={styles.pageTitle}>📐 코사인 유사도 & 벡터 연산 실습</h1>
-                <p style={styles.pageSubtitle}>
+                <h1 className={s.pageTitle}>📐 코사인 유사도 & 벡터 연산 실습</h1>
+                <p className={s.pageSubtitle}>
                     &quot;비슷한 의미의 단어는 비슷한 방향을 가리킨다&quot; — 이 아이디어를 직접 체험해봅시다!
                 </p>
             </div>
 
             {/* 왜 이걸 배우는지 */}
-            <div style={{ ...styles.infoBox, maxWidth: 700, margin: '0 auto 24px', textAlign: 'center' }}>
-                <strong style={{ color: '#fbbf24', fontSize: '0.88rem' }}>🤔 왜 코사인 유사도가 중요한가요?</strong>
-                <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <div className={s.whyImportantBox}>
+                <strong className={s.whyImportantTitle}>🤔 왜 코사인 유사도가 중요한가요?</strong>
+                <p className={s.whyImportantText}>
                     AI가 &quot;고양이와 강아지는 비슷하고, 자동차와는 다르다&quot;를 <strong>숫자로</strong> 판단하는 방법이
                     바로 코사인 유사도입니다. 검색 엔진, 추천 시스템, 챗봇 등 모든 AI 서비스의 핵심 기술이에요!
                 </p>
@@ -648,14 +620,13 @@ export default function Week4Practice() {
             <VectorArithmeticFullPanel />
 
             {/* 다음 단계 */}
-            <div style={{ textAlign: 'center', marginTop: 30, marginBottom: 40 }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 12 }}>
+            <div className={s.footerWrap}>
+                <div className={s.footerText}>
                     코사인 유사도를 이해했다면, 이제 <strong>3D 은하수</strong>에서<br />
                     클래스 친구들과 함께 단어 별을 만들어 보세요!
                 </div>
                 <button
-                    className="btn-nova"
-                    style={{ padding: '14px 36px', fontSize: '1.05rem' }}
+                    className={`btn-nova ${s.novaBtn}`}
                     onClick={() => router.push('/week4')}
                 >
                     <span>🌌 3D 임베딩 은하수로 이동 →</span>
@@ -664,80 +635,3 @@ export default function Week4Practice() {
         </div>
     );
 }
-
-// ── 스타일 ──
-const styles = {
-    container: {
-        minHeight: '100vh',
-        padding: '20px 16px',
-        maxWidth: 900,
-        margin: '0 auto',
-    },
-    header: {
-        textAlign: 'center',
-        marginBottom: 30,
-    },
-    backBtn: {
-        background: 'transparent',
-        border: '1px solid rgba(255,255,255,0.1)',
-        color: 'var(--text-dim)',
-        padding: '6px 14px',
-        borderRadius: 8,
-        fontSize: '0.8rem',
-        cursor: 'pointer',
-        marginBottom: 16,
-    },
-    pageTitle: {
-        fontSize: '2rem',
-        fontWeight: 800,
-        background: 'linear-gradient(to right, #7c5cfc, #22d3ee)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        marginBottom: 8,
-    },
-    pageSubtitle: {
-        fontSize: '1rem',
-        color: 'var(--text-secondary)',
-        fontStyle: 'italic',
-    },
-    section: {
-        marginBottom: 30,
-        padding: 24,
-        borderRadius: 16,
-        background: 'rgba(30, 41, 59, 0.5)',
-        border: '1px solid rgba(255,255,255,0.08)',
-    },
-    sectionTitle: {
-        fontSize: '1.3rem',
-        fontWeight: 700,
-        marginBottom: 8,
-        color: '#e2e8f0',
-    },
-    desc: {
-        fontSize: '0.88rem',
-        color: 'var(--text-secondary)',
-        lineHeight: 1.7,
-        marginBottom: 16,
-    },
-    resultCard: {
-        padding: '12px 16px',
-        borderRadius: 10,
-        background: 'rgba(15,10,40,0.6)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    resultLabel: {
-        fontSize: '0.72rem',
-        color: 'var(--text-dim)',
-        marginBottom: 4,
-    },
-    infoBox: {
-        padding: '10px 14px',
-        borderRadius: 10,
-        background: 'rgba(124,92,252,0.06)',
-        border: '1px solid rgba(124,92,252,0.15)',
-        fontSize: '0.8rem',
-        lineHeight: 1.7,
-    },
-};

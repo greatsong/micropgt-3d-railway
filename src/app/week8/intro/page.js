@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './page.module.css';
 
 const STEPS = [
     {
@@ -52,32 +53,26 @@ function WordOrderDemo() {
     ];
 
     return (
-        <div style={ds.container}>
-            <p style={ds.instruction}>
+        <div className={styles.dsContainer}>
+            <p className={styles.dsInstruction}>
                 같은 단어인데, <strong>순서만 바꿔도</strong> 의미가 완전히 달라져요!
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+            <div className={styles.wordOrderExamples}>
                 {examples.map((ex, i) => (
-                    <div key={i} style={{
-                        padding: '14px 18px', borderRadius: 12,
+                    <div key={i} className={styles.wordOrderCard} style={{
                         background: i === 0
                             ? 'rgba(96, 165, 250, 0.1)' : 'rgba(248, 113, 113, 0.1)',
                         border: `1px solid ${i === 0 ? 'rgba(96, 165, 250, 0.25)' : 'rgba(248, 113, 113, 0.25)'}`,
                     }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                        <div className={styles.wordOrderWordRow}>
                             {(flipped ? [...ex.original].reverse() : ex.original).map((word, j) => (
-                                <span key={j} style={{
-                                    padding: '6px 14px', borderRadius: 8,
-                                    background: 'rgba(15, 10, 40, 0.6)',
-                                    color: '#fff', fontSize: '1rem', fontWeight: 600,
-                                    transition: 'all 0.5s',
-                                }}>
+                                <span key={j} className={styles.wordOrderWord}>
                                     {word}
                                 </span>
                             ))}
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+                        <div className={styles.wordOrderMeaning}>
                             {ex.meaning}
                         </div>
                     </div>
@@ -86,17 +81,13 @@ function WordOrderDemo() {
 
             <button
                 onClick={() => setFlipped(!flipped)}
-                style={{
-                    padding: '10px 24px', borderRadius: 10,
-                    background: 'rgba(167, 139, 250, 0.15)', border: '1px solid rgba(167, 139, 250, 0.3)',
-                    color: '#a78bfa', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem',
-                }}
+                className={styles.flipButton}
             >
                 {flipped ? '🔄 원래 순서로' : '🔀 단어 순서 뒤집기'}
             </button>
 
-            <div style={{ ...ds.bridgeBox, marginTop: 20 }}>
-                <strong style={{ color: '#fbbf24' }}>🔗 지난 시간 복습</strong><br/>
+            <div className={`${styles.dsBridgeBox} ${styles.mt20}`}>
+                <strong className={styles.bridgeBoxLink}>🔗 지난 시간 복습</strong><br/>
                 7주차에서 역전파로 신경망이 학습하는 원리를 배웠어요.
                 하지만 지금까지의 신경망은 입력을 한 번에 처리하고 끝!
                 <strong> 순서가 중요한 데이터</strong>는 어떻게 처리할까요?
@@ -135,62 +126,57 @@ function RNNDemo() {
     }, []);
 
     return (
-        <div style={ds.container}>
-            <p style={ds.instruction}>
+        <div className={styles.dsContainer}>
+            <p className={styles.dsInstruction}>
                 RNN은 단어를 <strong>하나씩 순서대로</strong> 읽으며, 이전 정보를 &quot;숨겨진 상태(hidden state)&quot;로 전달합니다.
             </p>
 
-            <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: 6, marginBottom: 20, flexWrap: 'wrap',
-            }}>
+            <div className={styles.rnnTokenRow}>
                 {tokens.map((token, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{
-                            padding: '10px 16px', borderRadius: 10,
-                            background: i <= activeIdx
-                                ? 'rgba(167, 139, 250, 0.3)' : 'rgba(15, 10, 40, 0.5)',
-                            border: `2px solid ${i === activeIdx ? '#a78bfa' : 'rgba(167, 139, 250, 0.15)'}`,
-                            color: i <= activeIdx ? '#fff' : 'var(--text-dim)',
-                            fontWeight: 600, fontSize: '0.95rem',
-                            transition: 'all 0.4s',
-                            transform: i === activeIdx ? 'scale(1.1)' : 'scale(1)',
-                        }}>
+                    <div key={i} className={styles.rnnTokenPair}>
+                        <div
+                            className={styles.rnnToken}
+                            style={{
+                                background: i <= activeIdx
+                                    ? 'rgba(167, 139, 250, 0.3)' : 'rgba(15, 10, 40, 0.5)',
+                                border: `2px solid ${i === activeIdx ? '#a78bfa' : 'rgba(167, 139, 250, 0.15)'}`,
+                                color: i <= activeIdx ? '#fff' : 'var(--text-dim)',
+                                transform: i === activeIdx ? 'scale(1.1)' : 'scale(1)',
+                            }}
+                        >
                             {token}
                         </div>
                         {i < tokens.length - 1 && (
-                            <span style={{
-                                color: i < activeIdx ? '#a78bfa' : 'var(--text-dim)',
-                                fontSize: '1.2rem', transition: 'color 0.4s',
-                            }}>→</span>
+                            <span
+                                className={styles.rnnArrow}
+                                style={{
+                                    color: i < activeIdx ? '#a78bfa' : 'var(--text-dim)',
+                                }}
+                            >→</span>
                         )}
                     </div>
                 ))}
             </div>
 
             {/* Hidden State 표시 */}
-            <div style={{
-                padding: 16, borderRadius: 12,
-                background: 'rgba(15, 10, 40, 0.5)',
-                border: '1px solid rgba(167, 139, 250, 0.15)',
-                marginBottom: 16, minHeight: 80,
-            }}>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: 8 }}>
+            <div className={styles.hiddenStateBox}>
+                <div className={styles.hiddenStateLabel}>
                     숨겨진 상태 (Hidden State):
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div className={styles.hiddenStateList}>
                     {hiddenStates.map((h, i) => (
-                        <div key={i} style={{
-                            padding: '6px 12px', borderRadius: 8,
-                            background: `rgba(167, 139, 250, ${0.15 + i * 0.1})`,
-                            border: '1px solid rgba(167, 139, 250, 0.3)',
-                            color: '#a78bfa', fontSize: '0.85rem', fontWeight: 600,
-                        }}>
+                        <div
+                            key={i}
+                            className={styles.hiddenStateItem}
+                            style={{
+                                background: `rgba(167, 139, 250, ${0.15 + i * 0.1})`,
+                            }}
+                        >
                             {h} ← &quot;{tokens.slice(0, i + 1).join(' ')}&quot;
                         </div>
                     ))}
                     {hiddenStates.length === 0 && (
-                        <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                        <span className={styles.hiddenStatePlaceholder}>
                             ▶ 실행 버튼을 눌러보세요!
                         </span>
                     )}
@@ -200,24 +186,22 @@ function RNNDemo() {
             <button
                 onClick={runAnimation}
                 disabled={isRunning}
+                className={styles.rnnRunButton}
                 style={{
-                    padding: '10px 24px', borderRadius: 10,
                     background: isRunning ? 'rgba(100,100,100,0.2)' : 'rgba(167, 139, 250, 0.15)',
-                    border: '1px solid rgba(167, 139, 250, 0.3)',
-                    color: '#a78bfa', cursor: isRunning ? 'default' : 'pointer',
-                    fontWeight: 600, fontSize: '0.9rem',
+                    cursor: isRunning ? 'default' : 'pointer',
                     opacity: isRunning ? 0.5 : 1,
                 }}
             >
                 {isRunning ? '처리 중...' : '▶ RNN 실행하기'}
             </button>
 
-            <div style={{ ...ds.hintBox, marginTop: 16 }}>
-                <div style={ds.hintItem}>
+            <div className={`${styles.dsHintBox} ${styles.mt16}`}>
+                <div className={styles.dsHintItem}>
                     <strong>핵심</strong><br/>
                     이전 출력(h)을 다음 입력에 되먹임 → &quot;기억&quot;
                 </div>
-                <div style={ds.hintItem}>
+                <div className={styles.dsHintItem}>
                     <strong>용어</strong><br/>
                     Hidden State = 지금까지 읽은 문맥 요약
                 </div>
@@ -285,39 +269,40 @@ function MemoryDemo() {
     useEffect(() => { draw(); }, [draw]);
 
     return (
-        <div style={ds.container}>
-            <p style={ds.instruction}>
+        <div className={styles.dsContainer}>
+            <p className={styles.dsInstruction}>
                 문장이 길어질수록, RNN은 <strong>앞쪽 단어를 점점 잊어버려요</strong>.<br/>
-                이것이 바로 <strong style={{ color: '#f87171' }}>기울기 소실(Vanishing Gradient)</strong> 문제입니다!
+                이것이 바로 <strong className={styles.gradientWarning}>기울기 소실(Vanishing Gradient)</strong> 문제입니다!
             </p>
 
             <canvas
                 ref={canvasRef}
                 width={480}
                 height={200}
-                style={{ width: '100%', maxWidth: 480, height: 200, marginBottom: 16 }}
+                className={styles.memoryCanvas}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 16 }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>문장 길이:</span>
+            <div className={styles.memorySliderRow}>
+                <span className={styles.memorySliderLabel}>문장 길이:</span>
                 <input
                     type="range" min={3} max={15} value={sentenceLen}
                     onChange={e => setSentenceLen(Number(e.target.value))}
-                    style={{ width: 180 }}
+                    className={styles.memorySlider}
                 />
-                <span style={{ fontSize: '0.9rem', color: '#a78bfa', fontWeight: 700, minWidth: 40 }}>
+                <span className={styles.memorySliderValue}>
                     {sentenceLen}단어
                 </span>
             </div>
 
-            <div style={{
-                padding: '12px 16px', borderRadius: 10,
-                background: sentenceLen >= 8
-                    ? 'rgba(248, 113, 113, 0.08)' : 'rgba(52, 211, 153, 0.08)',
-                border: `1px solid ${sentenceLen >= 8
-                    ? 'rgba(248, 113, 113, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`,
-                fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center',
-            }}>
+            <div
+                className={styles.memoryStatusBox}
+                style={{
+                    background: sentenceLen >= 8
+                        ? 'rgba(248, 113, 113, 0.08)' : 'rgba(52, 211, 153, 0.08)',
+                    border: `1px solid ${sentenceLen >= 8
+                        ? 'rgba(248, 113, 113, 0.2)' : 'rgba(52, 211, 153, 0.2)'}`,
+                }}
+            >
                 {sentenceLen < 8
                     ? '✅ 짧은 문장은 RNN도 잘 기억해요!'
                     : `⚠️ ${sentenceLen}단어 문장: 앞쪽 ${Math.max(1, sentenceLen - 5)}개 단어의 기억이 매우 약해졌어요!`
@@ -362,45 +347,42 @@ function LSTMDemo() {
     ];
 
     return (
-        <div style={ds.container}>
-            <p style={ds.instruction}>
+        <div className={styles.dsContainer}>
+            <p className={styles.dsInstruction}>
                 LSTM은 3개의 <strong>&quot;게이트(문)&quot;</strong>로 기억을 관리해요.<br/>
                 각 게이트를 클릭해서 역할을 알아보세요!
             </p>
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
+            <div className={styles.gateButtonRow}>
                 {gates.map(gate => (
                     <button
                         key={gate.id}
                         onClick={() => setActiveGate(activeGate === gate.id ? null : gate.id)}
+                        className={styles.gateButton}
                         style={{
-                            padding: '14px 18px', borderRadius: 14, cursor: 'pointer',
                             background: activeGate === gate.id
                                 ? `${gate.color}20` : 'rgba(15, 10, 40, 0.5)',
                             border: `2px solid ${activeGate === gate.id ? gate.color : 'rgba(255,255,255,0.08)'}`,
                             color: activeGate === gate.id ? gate.color : 'var(--text-secondary)',
-                            transition: 'all 0.3s',
-                            textAlign: 'center', minWidth: 130,
                             transform: activeGate === gate.id ? 'scale(1.05)' : 'scale(1)',
                         }}
                     >
-                        <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{gate.emoji}</div>
-                        <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{gate.name}</div>
-                        <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: 4 }}>{gate.desc}</div>
+                        <div className={styles.gateEmoji}>{gate.emoji}</div>
+                        <div className={styles.gateName}>{gate.name}</div>
+                        <div className={styles.gateDesc}>{gate.desc}</div>
                     </button>
                 ))}
             </div>
 
             {activeGate && (
-                <div style={{
-                    padding: '16px 20px', borderRadius: 12,
-                    background: `${gates.find(g => g.id === activeGate).color}08`,
-                    border: `1px solid ${gates.find(g => g.id === activeGate).color}30`,
-                    animation: 'fadeIn 0.3s ease',
-                }}>
-                    <div style={{
-                        fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7,
-                    }}>
+                <div
+                    className={styles.gateDetailBox}
+                    style={{
+                        background: `${gates.find(g => g.id === activeGate).color}08`,
+                        border: `1px solid ${gates.find(g => g.id === activeGate).color}30`,
+                    }}
+                >
+                    <div className={styles.gateDetailText}>
                         <strong style={{ color: gates.find(g => g.id === activeGate).color }}>
                             {gates.find(g => g.id === activeGate).nameEn}
                         </strong><br/>
@@ -410,24 +392,19 @@ function LSTMDemo() {
             )}
 
             {!activeGate && (
-                <div style={{
-                    padding: '14px 18px', borderRadius: 12,
-                    background: 'rgba(15, 10, 40, 0.4)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    textAlign: 'center',
-                }}>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                <div className={styles.gateEmptyBox}>
+                    <span className={styles.gateEmptyText}>
                         👆 게이트를 클릭해보세요!
                     </span>
                 </div>
             )}
 
-            <div style={{ ...ds.hintBox, marginTop: 16 }}>
-                <div style={ds.hintItem}>
+            <div className={`${styles.dsHintBox} ${styles.mt16}`}>
+                <div className={styles.dsHintItem}>
                     <strong>비유</strong><br/>
                     LSTM = 잠금장치가 달린 서랍장
                 </div>
-                <div style={ds.hintItem}>
+                <div className={styles.dsHintItem}>
                     <strong>효과</strong><br/>
                     긴 문장도 핵심 정보를 기억!
                 </div>
@@ -442,19 +419,19 @@ function TransformerDemo() {
     const tokens = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
 
     return (
-        <div style={ds.container}>
-            <p style={ds.instruction}>
+        <div className={styles.dsContainer}>
+            <p className={styles.dsInstruction}>
                 RNN과 Transformer, 무엇이 다를까요?<br/>
                 모드를 전환해서 비교해보세요!
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+            <div className={styles.modeToggleRow}>
                 {['rnn', 'transformer'].map(m => (
                     <button
                         key={m}
                         onClick={() => setMode(m)}
+                        className={styles.modeToggleBtn}
                         style={{
-                            padding: '8px 20px', borderRadius: 10,
                             background: mode === m
                                 ? (m === 'rnn' ? 'rgba(167,139,250,0.2)' : 'rgba(96,165,250,0.2)')
                                 : 'rgba(15,10,40,0.4)',
@@ -464,7 +441,6 @@ function TransformerDemo() {
                             color: mode === m
                                 ? (m === 'rnn' ? '#a78bfa' : '#60a5fa')
                                 : 'var(--text-dim)',
-                            cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem',
                         }}
                     >
                         {m === 'rnn' ? '〰️ RNN' : '⚡ Transformer'}
@@ -473,83 +449,76 @@ function TransformerDemo() {
             </div>
 
             {/* 처리 방식 시각화 */}
-            <div style={{
-                padding: 20, borderRadius: 14,
-                background: 'rgba(15, 10, 40, 0.5)',
-                border: `1px solid ${mode === 'rnn' ? 'rgba(167,139,250,0.2)' : 'rgba(96,165,250,0.2)'}`,
-                marginBottom: 16,
-            }}>
-                <div style={{
-                    fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: 12,
-                    textAlign: 'center', fontWeight: 600,
-                }}>
+            <div
+                className={styles.processingBox}
+                style={{
+                    border: `1px solid ${mode === 'rnn' ? 'rgba(167,139,250,0.2)' : 'rgba(96,165,250,0.2)'}`,
+                }}
+            >
+                <div className={styles.processingLabel}>
                     {mode === 'rnn' ? '순차 처리 (하나씩)' : '병렬 처리 (한꺼번에!)'}
                 </div>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: mode === 'rnn' ? 'row' : 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: mode === 'rnn' ? 4 : 8,
-                    flexWrap: 'wrap',
-                }}>
+                <div
+                    className={styles.processingTokenRow}
+                    style={{ gap: mode === 'rnn' ? 4 : 8 }}
+                >
                     {tokens.map((token, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <div style={{
-                                padding: '8px 12px', borderRadius: 8,
-                                background: mode === 'rnn'
-                                    ? `rgba(167,139,250,${0.1 + i * 0.05})`
-                                    : 'rgba(96,165,250,0.2)',
-                                border: `1px solid ${mode === 'rnn'
-                                    ? 'rgba(167,139,250,0.3)' : 'rgba(96,165,250,0.3)'}`,
-                                color: '#fff', fontSize: '0.85rem', fontWeight: 600,
-                            }}>
+                        <div key={i} className={styles.processingTokenPair}>
+                            <div
+                                className={styles.processingToken}
+                                style={{
+                                    background: mode === 'rnn'
+                                        ? `rgba(167,139,250,${0.1 + i * 0.05})`
+                                        : 'rgba(96,165,250,0.2)',
+                                    border: `1px solid ${mode === 'rnn'
+                                        ? 'rgba(167,139,250,0.3)' : 'rgba(96,165,250,0.3)'}`,
+                                }}
+                            >
                                 {token}
                             </div>
                             {mode === 'rnn' && i < tokens.length - 1 && (
-                                <span style={{ color: '#a78bfa', fontSize: '1rem' }}>→</span>
+                                <span className={styles.rnnArrowSmall}>→</span>
                             )}
                         </div>
                     ))}
                 </div>
 
                 {mode === 'transformer' && (
-                    <div style={{
-                        marginTop: 12, textAlign: 'center',
-                        fontSize: '0.82rem', color: '#60a5fa',
-                    }}>
+                    <div className={styles.attentionNote}>
                         ↕️ 모든 토큰이 서로를 동시에 참조! (Self-Attention)
                     </div>
                 )}
             </div>
 
             {/* 비교 테이블 */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <div style={{
-                    flex: 1, minWidth: 180, padding: 14, borderRadius: 12,
-                    background: mode === 'rnn' ? 'rgba(167,139,250,0.08)' : 'rgba(15,10,40,0.3)',
-                    border: `1px solid ${mode === 'rnn' ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
-                    transition: 'all 0.3s',
-                }}>
-                    <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 8, fontSize: '0.9rem' }}>
+            <div className={styles.comparisonRow}>
+                <div
+                    className={styles.comparisonCard}
+                    style={{
+                        background: mode === 'rnn' ? 'rgba(167,139,250,0.08)' : 'rgba(15,10,40,0.3)',
+                        border: `1px solid ${mode === 'rnn' ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
+                    }}
+                >
+                    <div className={styles.comparisonTitleRnn}>
                         〰️ RNN
                     </div>
-                    <ul style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', paddingLeft: 16, lineHeight: 1.7 }}>
+                    <ul className={styles.comparisonList}>
                         <li>순차 처리 (느림)</li>
                         <li>긴 문장 → 기억 소실</li>
                         <li>구조가 단순</li>
                     </ul>
                 </div>
-                <div style={{
-                    flex: 1, minWidth: 180, padding: 14, borderRadius: 12,
-                    background: mode === 'transformer' ? 'rgba(96,165,250,0.08)' : 'rgba(15,10,40,0.3)',
-                    border: `1px solid ${mode === 'transformer' ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
-                    transition: 'all 0.3s',
-                }}>
-                    <div style={{ fontWeight: 700, color: '#60a5fa', marginBottom: 8, fontSize: '0.9rem' }}>
+                <div
+                    className={styles.comparisonCard}
+                    style={{
+                        background: mode === 'transformer' ? 'rgba(96,165,250,0.08)' : 'rgba(15,10,40,0.3)',
+                        border: `1px solid ${mode === 'transformer' ? 'rgba(96,165,250,0.2)' : 'rgba(255,255,255,0.05)'}`,
+                    }}
+                >
+                    <div className={styles.comparisonTitleTransformer}>
                         ⚡ Transformer
                     </div>
-                    <ul style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', paddingLeft: 16, lineHeight: 1.7 }}>
+                    <ul className={styles.comparisonList}>
                         <li>병렬 처리 (빠름!)</li>
                         <li>어텐션으로 먼 정보도 참조</li>
                         <li>포지션 인코딩 필요</li>
@@ -557,13 +526,8 @@ function TransformerDemo() {
                 </div>
             </div>
 
-            <div style={{
-                marginTop: 16, padding: '10px 14px', borderRadius: 10,
-                background: 'rgba(251, 191, 36, 0.06)',
-                border: '1px solid rgba(251, 191, 36, 0.15)',
-                fontSize: '0.82rem', color: 'var(--text-dim)', textAlign: 'center',
-            }}>
-                💡 <strong style={{ color: '#fbbf24' }}>10주차 미리보기:</strong> Transformer의 핵심 &quot;어텐션(Attention)&quot;을 자세히 배워요!
+            <div className={styles.previewBanner}>
+                💡 <strong className={styles.previewHighlight}>10주차 미리보기:</strong> Transformer의 핵심 &quot;어텐션(Attention)&quot;을 자세히 배워요!
             </div>
         </div>
     );
@@ -588,16 +552,15 @@ export default function WeekIntroPage() {
             case 'transformer': return <TransformerDemo />;
             case 'lab':
                 return (
-                    <div style={{ ...ds.container, textAlign: 'center' }}>
-                        <div style={{ fontSize: '5rem', marginBottom: 16 }} className="animate-float">〰️</div>
-                        <p style={ds.text}>
+                    <div className={styles.labContainer}>
+                        <div className={`${styles.labEmoji} animate-float`}>〰️</div>
+                        <p className={styles.dsText}>
                             이제 <strong>RNN이 문맥을 기억하며</strong><br />
-                            <strong style={{ color: '#a78bfa' }}>텍스트를 생성하는 과정</strong>을<br />
+                            <strong className={styles.labHighlight}>텍스트를 생성하는 과정</strong>을<br />
                             직접 체험해봅니다!
                         </p>
                         <button
-                            className="btn-nova"
-                            style={{ marginTop: 24, padding: '14px 40px', fontSize: '1.1rem' }}
+                            className={`btn-nova ${styles.labButton}`}
                             onClick={goToLab}
                         >
                             <span>〰️ RNN 실험실로 출발!</span>
@@ -609,53 +572,54 @@ export default function WeekIntroPage() {
     };
 
     return (
-        <div style={pageStyles.container}>
-            <div style={pageStyles.progressBar}>
+        <div className={styles.container}>
+            <div className={styles.progressBar}>
                 {STEPS.map((s, i) => (
                     <div
                         key={s.id}
+                        className={styles.progressDot}
                         style={{
-                            ...pageStyles.progressDot,
                             background: i <= currentStep ? '#a78bfa' : 'rgba(167, 139, 250, 0.15)',
                             transform: i === currentStep ? 'scale(1.3)' : 'scale(1)',
                         }}
                         onClick={() => setCurrentStep(i)}
                     />
                 ))}
-                <div style={{
-                    ...pageStyles.progressFill,
-                    width: `${(currentStep / (STEPS.length - 1)) * 100}%`,
-                    background: '#a78bfa',
-                }} />
+                <div
+                    className={styles.progressFill}
+                    style={{
+                        width: `${(currentStep / (STEPS.length - 1)) * 100}%`,
+                    }}
+                />
             </div>
 
-            <div style={pageStyles.header}>
-                <span style={pageStyles.weekBadge}>8주차</span>
-                <div style={{ fontSize: '3rem' }}>{step.emoji}</div>
-                <h1 style={pageStyles.title}>
+            <div className={styles.header}>
+                <span className={styles.weekBadge}>8주차</span>
+                <div className={styles.emojiLarge}>{step.emoji}</div>
+                <h1 className={styles.title}>
                     <span className="text-gradient">{step.title}</span>
                 </h1>
-                <p style={pageStyles.subtitle}>{step.subtitle}</p>
+                <p className={styles.subtitle}>{step.subtitle}</p>
             </div>
 
-            <div style={pageStyles.content}>{renderStepContent()}</div>
+            <div className={styles.content}>{renderStepContent()}</div>
 
-            <div style={pageStyles.navBar}>
+            <div className={styles.navBar}>
                 <button
-                    className="btn-nova"
-                    style={{ ...pageStyles.navBtn, opacity: currentStep === 0 ? 0.3 : 1 }}
+                    className={`btn-nova ${styles.navBtn}`}
+                    style={{ opacity: currentStep === 0 ? 0.3 : 1 }}
                     onClick={prevStep}
                     disabled={currentStep === 0}
                 >
                     <span>← 이전</span>
                 </button>
-                <span style={pageStyles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
+                <span className={styles.stepCount}>{currentStep + 1} / {STEPS.length}</span>
                 {currentStep < STEPS.length - 1 ? (
-                    <button className="btn-nova" style={pageStyles.navBtn} onClick={nextStep}>
+                    <button className={`btn-nova ${styles.navBtn}`} onClick={nextStep}>
                         <span>다음 →</span>
                     </button>
                 ) : (
-                    <button className="btn-nova" style={pageStyles.navBtn} onClick={goToLab}>
+                    <button className={`btn-nova ${styles.navBtn}`} onClick={goToLab}>
                         <span>〰️ 실습 시작</span>
                     </button>
                 )}
@@ -663,32 +627,3 @@ export default function WeekIntroPage() {
         </div>
     );
 }
-
-const pageStyles = {
-    container: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 20px', maxWidth: 680, margin: '0 auto' },
-    progressBar: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 32, position: 'relative', width: '100%', maxWidth: 300, justifyContent: 'center' },
-    progressDot: { width: 12, height: 12, borderRadius: '50%', cursor: 'pointer', transition: 'all 0.3s', zIndex: 1 },
-    progressFill: { position: 'absolute', left: 6, top: '50%', height: 3, borderRadius: 2, transform: 'translateY(-50%)', transition: 'width 0.3s', zIndex: 0 },
-    header: { textAlign: 'center', marginBottom: 24 },
-    weekBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700, background: 'rgba(167, 139, 250, 0.15)', color: '#a78bfa', marginBottom: 12, letterSpacing: '0.05em' },
-    title: { fontSize: '1.6rem', fontWeight: 800, marginTop: 8, marginBottom: 6 },
-    subtitle: { fontSize: '0.95rem', color: 'var(--text-secondary)' },
-    content: { flex: 1, width: '100%', marginBottom: 24 },
-    navBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '16px 0', borderTop: '1px solid var(--border-subtle)' },
-    navBtn: { padding: '10px 24px', fontSize: '0.9rem' },
-    stepCount: { fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: 600 },
-};
-
-const ds = {
-    container: { padding: 20 },
-    text: { fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.8 },
-    instruction: { fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 16, textAlign: 'center', lineHeight: 1.6 },
-    hint: { fontSize: '0.82rem', color: 'var(--text-dim)', textAlign: 'center' },
-    bridgeBox: {
-        padding: '12px 16px', borderRadius: 12,
-        background: 'rgba(251, 191, 36, 0.08)', border: '1px solid rgba(251, 191, 36, 0.15)',
-        fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7, textAlign: 'left',
-    },
-    hintBox: { display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' },
-    hintItem: { textAlign: 'center', padding: '10px 14px', borderRadius: 10, background: 'rgba(15, 10, 40, 0.5)', border: '1px solid rgba(167, 139, 250, 0.1)', fontSize: '0.78rem', color: 'var(--text-dim)', flex: 1, minWidth: 120 },
-};

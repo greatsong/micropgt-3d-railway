@@ -1,0 +1,416 @@
+/* ── pageStyles ── */
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.progressBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.progressDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1;
+}
+
+.progressFill {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    height: 3px;
+    background: var(--accent-nova);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: width 0.3s;
+    z-index: 0;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weekBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(124, 92, 252, 0.15);
+    color: #7c5cfc;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.stepCount {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ── demoStyles ── */
+
+.demoContainer {
+    padding: 20px;
+}
+
+.instruction {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.welcomeText {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.problemCard {
+    flex: 1;
+    min-width: 200px;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(244, 63, 94, 0.06);
+    border: 1px solid rgba(244, 63, 94, 0.15);
+    text-align: center;
+}
+
+.solutionBox {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+}
+
+.compareBox {
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    background: rgba(15, 10, 40, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.compareBoxEmbedding {
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(124, 92, 252, 0.3);
+    background: rgba(15, 10, 40, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.embCompare {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.embCol {
+    text-align: center;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    min-width: 120px;
+}
+
+.embWord {
+    font-size: 1rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.embVec {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.simCircle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(124, 92, 252, 0.1);
+    border: 2px solid rgba(124, 92, 252, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.simValue {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.miniBtn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.miniBtnActive {
+    background: var(--accent-nova);
+    color: #fff;
+    border: 1px solid var(--accent-nova);
+}
+
+.modelRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(15, 10, 40, 0.4);
+}
+
+.funFact {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(124, 92, 252, 0.06);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    text-align: center;
+    line-height: 1.7;
+}
+
+/* ── Inline static styles extracted to classes ── */
+
+.problemCardListWrapper {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.problemCardIcon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.problemCardStrong {
+    color: #f43f5e;
+}
+
+.problemCardDesc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.solutionIcon {
+    font-size: 1.5rem;
+}
+
+.solutionText {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.solutionHighlight {
+    color: #7c5cfc;
+}
+
+.compareRow {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.compareLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.compareCodeOnehot {
+    font-size: 0.7rem;
+    color: #f43f5e;
+}
+
+.compareCodeEmbedding {
+    font-size: 0.7rem;
+    color: #10b981;
+}
+
+.compareSubtext {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.compareArrow {
+    font-size: 1.5rem;
+    align-self: center;
+}
+
+.wordSelectRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.wordSelectLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.wordSelectBtnGroup {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.simSubtext {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.simComment {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 10px;
+}
+
+.canvas {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.6);
+    margin: 0 auto;
+    display: block;
+}
+
+.modelColGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modelNameCol {
+    min-width: 80px;
+}
+
+.modelYear {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-left: 6px;
+}
+
+.modelBarCol {
+    flex: 1;
+}
+
+.modelDesc {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    max-width: 200px;
+}
+
+.funFactText {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.galaxyDemoContainer {
+    padding: 20px;
+    text-align: center;
+}
+
+.galaxyIcon {
+    font-size: 5rem;
+    margin-bottom: 16px;
+}
+
+.galaxyHighlightPurple {
+    color: #7c5cfc;
+}
+
+.galaxyHighlightGreen {
+    color: #10b981;
+}
+
+.galaxyHighlightYellow {
+    color: #fbbf24;
+}
+
+.galaxyBtn {
+    margin-top: 24px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+}
+
+.stepEmoji {
+    font-size: 3rem;
+}

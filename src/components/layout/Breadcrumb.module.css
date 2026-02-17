@@ -1,0 +1,32 @@
+.nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 8px 0;
+    font-size: 0.78rem;
+}
+
+.link {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.separator {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.arrow {
+    color: var(--text-dim);
+    opacity: 0.5;
+    margin: 0 4px;
+}
+
+.current {
+    color: var(--text-primary);
+    font-weight: 600;
+}

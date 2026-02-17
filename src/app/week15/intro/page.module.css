@@ -1,0 +1,100 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.content {
+    text-align: center;
+    max-width: 600px;
+}
+
+.badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: rgba(236, 72, 153, 0.125);
+    color: #ec4899;
+}
+
+.emoji {
+    font-size: 4rem;
+    margin: 20px 0;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+.card {
+    padding: 30px;
+    border-radius: 20px;
+    background: rgba(15, 10, 40, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 브리지 박스 */
+.bridgeBox {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: left;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.bridgeLabel {
+    color: #fbbf24;
+}
+
+/* 학습 목표 */
+.objectivesHeader {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.objectivesTitle {
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.description {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+
+.objectivesList {
+    color: var(--text-secondary);
+    padding-left: 20px;
+    line-height: 1.8;
+}
+
+.ctaText {
+    line-height: 1.6;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+}
+
+/* CTA 버튼 */
+.ctaButton {
+    margin-top: 30px;
+    padding: 12px 30px;
+}

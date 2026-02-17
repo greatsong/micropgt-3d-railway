@@ -8,6 +8,7 @@ import WordStar from './WordStar';
 import SpaceBackground from './SpaceBackground';
 import ConnectionBeam from './ConnectionBeam';
 import { useMemo, useState, useEffect } from 'react';
+import styles from './EmbeddingGalaxy.module.css';
 
 export default function EmbeddingGalaxy() {
     const stars = useGalaxyStore((s) => s.stars);
@@ -55,11 +56,7 @@ export default function EmbeddingGalaxy() {
     return (
         <Canvas
             camera={{ position: [0, 5, 15], fov: 60 }}
-            style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 'var(--radius-md)',
-            }}
+            className={styles.canvas}
             gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
             dpr={[1, 2]}
             frameloop={visible ? 'always' : 'never'}
@@ -160,15 +157,9 @@ function AxisLine({ dir, color }) {
             <Html
                 position={dir}
                 center
-                style={{ pointerEvents: 'none' }}
+                className={styles.htmlNoPointer}
             >
-                <span style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: color,
-                    opacity: 0.5,
-                    textShadow: '0 0 3px rgba(0,0,0,0.8)',
-                }}>
+                <span className={styles.axisLabel} style={{ color }}>
                     {label}
                 </span>
             </Html>

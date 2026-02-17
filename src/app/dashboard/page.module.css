@@ -1,0 +1,653 @@
+/* ── Dashboard Page CSS Module ── */
+
+.loginContainer {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loginCard {
+    width: 100%;
+    max-width: 440px;
+    padding: 44px 36px;
+    margin: 20px;
+}
+
+.loginHeader {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.loginEmoji {
+    font-size: 4rem;
+    margin-bottom: 12px;
+}
+
+.loginTitle {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.loginSubtext {
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.loginBtn {
+    width: 100%;
+}
+
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.containerMobile {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+}
+
+.topBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.topLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.topRight {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dashTitle {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.weekTabs {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+    background: rgba(124, 92, 252, 0.08);
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.weekTab {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.2s;
+}
+
+.weekTabActive {
+    background: var(--accent-nova);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.4);
+}
+
+.mainArea {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.mainAreaMobile {
+    flex-direction: column;
+}
+
+.canvasArea {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.canvasAreaMobile {
+    height: 350px;
+    flex: none;
+}
+
+.overlayBadge {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.overlayBadgeText {
+    font-size: 1rem;
+    padding: 8px 18px;
+}
+
+.sidebar {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border-left: 1px solid var(--border-subtle);
+    overflow-y: auto;
+}
+
+.sidebarMobile {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.sideSection {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sideSectionFlex {
+    flex: 1;
+    min-height: 0;
+}
+
+.studentGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.studentCard {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(124, 92, 252, 0.06);
+    border: 1px solid rgba(124, 92, 252, 0.1);
+}
+
+.cardDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cardName {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cardSchool {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.cardWord {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--accent-laser-gold);
+    font-weight: 600;
+}
+
+.resultRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(124, 92, 252, 0.05);
+}
+
+.resultName {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.notifScroll {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notifItem {
+    display: flex;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.78rem;
+}
+
+.notifTime {
+    color: var(--text-dim);
+    font-family: monospace;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.notifMsg {
+    color: var(--text-secondary);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 16px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+.emptyIcon {
+    font-size: 2rem;
+}
+
+.emptyIconSmall {
+    font-size: 1.5rem;
+}
+
+.quizTypeBtn {
+    flex: 1;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+}
+
+.quizTypeBtnActive {
+    background: rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.4);
+    color: #a78bfa;
+}
+
+.quizResultStat {
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(15, 10, 40, 0.4);
+    flex: 1;
+}
+
+.btnSmall {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+}
+
+.quizBtnRow {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.inputSmall {
+    font-size: 0.85rem;
+}
+
+.oxRow {
+    display: flex;
+    gap: 6px;
+}
+
+.choiceCol {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.choiceRow {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.choiceInput {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+}
+
+.timeLimitRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.timeLimitLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.quizSendBtn {
+    width: 100%;
+    padding: 10px;
+}
+
+.quizLiveQuestion {
+    font-size: 0.85rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.quizLiveRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.quizLiveCount {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.quizLiveCountHighlight {
+    color: #10b981;
+}
+
+.progressBarOuter {
+    width: 60px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.progressBarInner {
+    height: 100%;
+    border-radius: 3px;
+    background: #10b981;
+    transition: width 0.3s;
+}
+
+.quizActionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.quizRevealBtn {
+    flex: 1;
+    padding: 8px;
+}
+
+.quizCancelBtn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #f43f5e;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.quizResultQuestion {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.quizResultStatRow {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.quizResultStatValue {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.quizResultStatValueGreen {
+    color: #10b981;
+}
+
+.quizResultStatValueBlue {
+    color: #60a5fa;
+}
+
+.quizResultStatLabel {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.fastestBadge {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(251, 191, 36, 0.1);
+    font-size: 0.78rem;
+    color: #fbbf24;
+    text-align: center;
+}
+
+.tallyCol {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tallyRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.tallyRowCorrect {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.tallyRowWrong {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tallyAnswer {
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 30px;
+}
+
+.tallyAnswerCorrect {
+    color: #10b981;
+}
+
+.tallyAnswerWrong {
+    color: var(--text-dim);
+}
+
+.tallyBarOuter {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tallyBarInner {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.tallyBarCorrect {
+    background: #10b981;
+}
+
+.tallyBarWrong {
+    background: #64748b;
+}
+
+.tallyCount {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    min-width: 20px;
+}
+
+.quizCloseBtn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    color: #a78bfa;
+    font-size: 0.78rem;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* ── Attention Overview ── */
+
+.attentionEmpty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-void);
+}
+
+.attentionEmptyIcon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.attentionEmptyText {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+}
+
+.attentionGrid {
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    overflow-y: auto;
+    background: var(--bg-void);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    align-content: start;
+}
+
+.attentionCard {
+    padding: 16px;
+    background: var(--bg-glass);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.attentionCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.attentionStudentName {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fbbf24;
+}
+
+.attentionMeta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.attentionWaiting {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+/* ── Heatmap ── */
+
+.heatmapCell {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-family: monospace;
+    transition: all 0.3s ease;
+}
+
+/* ── DashLoadingUI ── */
+
+.loadingContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--bg-void);
+}
+
+.loadingEmoji {
+    font-size: 2rem;
+}
+
+.loadingText {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+/* ── Dynamic style helpers for result status ── */
+
+.resultEscaped {
+    font-size: 0.75rem;
+    color: #f43f5e;
+    font-family: monospace;
+}
+
+.resultSuccess {
+    font-size: 0.75rem;
+    color: #10b981;
+    font-family: monospace;
+}
+
+.attentionDot {
+    background: #fbbf24;
+}
+
+.cardHeaderRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

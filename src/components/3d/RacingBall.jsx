@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { lossFunction } from './LossSurface';
+import styles from './RacingBall.module.css';
 
 export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
     const meshRef = useRef();
@@ -68,24 +69,16 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
             <Html
                 position={[ballData.x, ballData.y + 0.6, ballData.z]}
                 center
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                className={styles.htmlNoPointer}
             >
-                <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                    <div style={{
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        color: isEscaped ? '#ff4444' : color,
-                        textShadow: '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)',
-                    }}>
+                <div className={styles.labelWrap}>
+                    <div
+                        className={styles.teamName}
+                        style={{ color: isEscaped ? '#ff4444' : color }}
+                    >
                         {emoji} {teamName || 'Unknown'}
                     </div>
-                    <div style={{
-                        fontSize: '10px',
-                        fontFamily: 'monospace',
-                        color: '#a5a0c0',
-                        textShadow: '0 0 3px rgba(0,0,0,0.8)',
-                        marginTop: 1,
-                    }}>
+                    <div className={styles.lossLabel}>
                         Loss: {ballData.loss?.toFixed(3) || '?'}
                     </div>
                 </div>

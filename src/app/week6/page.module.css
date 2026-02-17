@@ -1,0 +1,446 @@
+/* ── Layout ── */
+.container {
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.headerEmoji {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.headerText {
+    font-weight: 700;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Card ── */
+.card {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.labelBlock {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+}
+
+/* ── Diagram / SVG ── */
+.diagramContainer {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.svgOverflowVisible {
+    overflow: visible;
+}
+
+/* ── Formula ── */
+.formulaBox {
+    margin-top: 10px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    text-align: center;
+    line-height: 1.6;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.colorSlate {
+    color: #94a3b8;
+}
+
+.colorWhite {
+    color: #fff;
+}
+
+.colorBlue {
+    color: #60a5fa;
+}
+
+.colorGreen {
+    color: #22c55e;
+}
+
+.colorRed {
+    color: #f87171;
+}
+
+.formulaSecondLine {
+    margin-top: 5px;
+}
+
+/* ── Controls ── */
+.controlsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.controlHint {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    margin-top: -10px;
+    margin-bottom: 4px;
+}
+
+.activationWrap {
+    margin-top: 20px;
+}
+
+.activationHint {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 8px;
+    margin-top: -8px;
+}
+
+.btnGroup {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.actBtn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.explain {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 6px;
+}
+
+/* ── Activation Graph ── */
+.graphContainer {
+    text-align: center;
+}
+
+.canvas {
+    width: 100%;
+    height: 260px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: block;
+}
+
+.graphLegend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 10px;
+    font-size: 0.8rem;
+}
+
+.legendBlue {
+    color: #60a5fa;
+}
+
+.legendRed {
+    color: #f87171;
+}
+
+/* ── Theory ── */
+.theoryBody {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.theoryParagraph {
+    margin-bottom: 10px;
+}
+
+/* ── XOR Section ── */
+.xorBody {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.7;
+}
+
+.xorIntro {
+    margin-bottom: 12px;
+}
+
+.xorTable {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.table {
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.th {
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #94a3b8;
+    font-weight: 600;
+    text-align: center;
+}
+
+.thRed {
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f87171;
+    font-weight: 600;
+    text-align: center;
+}
+
+.td {
+    padding: 5px 14px;
+    text-align: center;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tdRed {
+    padding: 5px 14px;
+    text-align: center;
+    color: #f87171;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.xorExplain {
+    margin-bottom: 10px;
+    margin-top: 12px;
+}
+
+.xorVisual {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.xorSolution {
+    margin-bottom: 10px;
+}
+
+.keyInsight {
+    margin-top: 10px;
+    padding: 12px 16px;
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #93c5fd;
+    line-height: 1.6;
+}
+
+/* ── Comparison Section ── */
+.comparisonGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.comparisonCard {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.comparisonHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.95rem;
+}
+
+.comparisonEmoji {
+    font-size: 1.3rem;
+}
+
+.comparisonBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comparisonRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+}
+
+.comparisonLabel {
+    color: #94a3b8;
+    font-weight: 600;
+    min-width: 50px;
+}
+
+.comparisonValue {
+    color: #e2e8f0;
+    text-align: right;
+}
+
+.comparisonNote {
+    font-size: 0.83rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.comparisonNoteSecond {
+    margin-top: 8px;
+}
+
+/* ── Deep Dive Accordion ── */
+.deepDiveWrap {
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.deepDiveToggle {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveParagraph {
+    margin-bottom: 8px;
+}
+
+.colorYellow {
+    color: #fbbf24;
+}
+
+.colorTeal {
+    color: #34d399;
+}
+
+/* ── Navigation ── */
+.navRow {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-bottom: 40px;
+}
+
+.navBack {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.navForward {
+    padding: 10px 24px;
+}
+
+/* ── ControlRow Component ── */
+.controlRow {
+    margin-bottom: 15px;
+}
+
+.controlRowHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.controlRowLabel {
+    font-weight: bold;
+}
+
+.controlRowValue {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.controlRowInput {
+    width: 100%;
+}

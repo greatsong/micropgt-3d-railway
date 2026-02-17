@@ -1,0 +1,707 @@
+/* ─── Container & Layout ─── */
+
+.container {
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 20px;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.headerIcon {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.headerText {
+    font-weight: 700;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ─── Card ─── */
+
+.card {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ─── Textarea / Input ─── */
+
+.textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    font-family: monospace;
+}
+
+.helper {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+}
+
+/* ─── Arrow ─── */
+
+.arrowArea {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.arrowLine {
+    width: 2px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tokenCount {
+    position: absolute;
+    background: #7c5cfc;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ─── Token display ─── */
+
+.tokenContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 100px;
+    align-content: flex-start;
+}
+
+.token {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #fff;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+    cursor: default;
+    position: relative;
+}
+
+.tokenId {
+    font-size: 0.6rem;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+.tokenIdHint {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 8px;
+}
+
+.explanation {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* ─── Theory ─── */
+
+.theoryContent {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ─── BPE Section ─── */
+
+.bpeCard {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--border-active);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+    margin-top: 28px;
+}
+
+.bpeSectionLabel {
+    font-size: 0.9rem;
+    color: var(--accent-star-cyan);
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bpeLabelSub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.bpeWhyBox {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.06);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+.bpeTipBox {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    margin-bottom: 16px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+.codeGold {
+    color: var(--accent-laser-gold);
+}
+
+.bpeDescription {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.textCyan {
+    color: var(--accent-star-cyan);
+}
+
+.bigramExplanation {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+
+/* ─── Preset buttons ─── */
+
+.presetRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.presetBtn {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.presetBtnActive {
+    background: var(--accent-nova);
+    color: #fff;
+    border: 1px solid var(--accent-nova);
+}
+
+.presetDesc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+/* ─── Corpus preview ─── */
+
+.corpusPreview {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.corpusLabel {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.corpusLine {
+    font-size: 0.85rem;
+    color: var(--accent-pulsar);
+    font-family: monospace;
+}
+
+/* ─── BPE buttons ─── */
+
+.bpeBtnRow {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.bpeBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.bpeBtnNext {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, var(--accent-star-cyan), var(--accent-nova));
+}
+
+/* ─── BPE result ─── */
+
+.bpeResult {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stepNav {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stepDot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.stepLabel {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+}
+
+.mergedInfo {
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.mergedPairCode {
+    background: rgba(244, 114, 182, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--accent-nebula-pink);
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.mergedResultCode {
+    background: rgba(34, 211, 238, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--accent-star-cyan);
+    font-family: monospace;
+    font-weight: 700;
+}
+
+/* ─── BPE two-column layout ─── */
+
+.bpeTwoCol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.bpeCol {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.bpeColTitle {
+    font-size: 0.8rem;
+    color: var(--accent-pulsar);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+}
+
+.corpusState {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.corpusEntry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.corpusFreq {
+    font-size: 0.75rem;
+    color: var(--accent-laser-gold);
+    font-weight: 700;
+    min-width: 24px;
+}
+
+.corpusTokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.bpeToken {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #fff;
+    font-family: monospace;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Bigram table ─── */
+
+.bigramTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.thCell {
+    text-align: left;
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.tdCell {
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+}
+
+.tdCellBold {
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.topRow {
+    background: rgba(34, 211, 238, 0.08);
+}
+
+.bigramCode {
+    font-family: monospace;
+    color: var(--accent-pulsar);
+}
+
+.noBigramMsg {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+/* ─── Vocab ─── */
+
+.vocabSection {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.vocabList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.vocabItem {
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(124, 92, 252, 0.15);
+    border: 1px solid rgba(124, 92, 252, 0.25);
+    font-size: 0.75rem;
+    color: var(--accent-pulsar);
+    font-family: monospace;
+}
+
+/* ─── Merge log ─── */
+
+.mergeLogSection {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.mergeLogList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mergeLogEntry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+}
+
+.mergeLogIdx {
+    color: var(--accent-laser-gold);
+    font-weight: 700;
+    min-width: 24px;
+}
+
+.mergeLogFreq {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.textDim {
+    color: var(--text-dim);
+}
+
+/* ─── Comparison table ─── */
+
+.comparisonTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 8px 0;
+}
+
+.compTh {
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid rgba(124, 92, 252, 0.3);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.compThHighlight {
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid rgba(124, 92, 252, 0.3);
+    color: var(--accent-star-cyan);
+    font-weight: 700;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.compThSub {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.compTd {
+    text-align: center;
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.compTdHighlight {
+    text-align: center;
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--accent-star-cyan);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.compTdSub {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.highlightBox {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.textGold {
+    color: var(--accent-laser-gold);
+}
+
+/* ─── Deep dive section ─── */
+
+.deepDiveWrapper {
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.deepDiveBtn {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveContent p {
+    margin-bottom: 10px;
+}
+
+.deepDiveContent p:last-child {
+    margin-bottom: 0;
+}
+
+.deepDiveCostLabel {
+    color: #fbbf24;
+}
+
+.deepDiveContextLabel {
+    color: #34d399;
+}
+
+.deepDiveScaleLabel {
+    color: #f87171;
+}
+
+/* ─── Navigation ─── */
+
+.navRow {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-bottom: 40px;
+}
+
+.navBackBtn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.navNextBtn {
+    padding: 10px 24px;
+}

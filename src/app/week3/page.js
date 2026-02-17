@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import s from './page.module.css';
 
 // ── 탭 구성 ──
 const TABS = [
@@ -32,84 +33,80 @@ function VectorBuilder() {
     };
 
     return (
-        <div style={styles.tabContent}>
-            <p style={styles.desc}>
+        <div className={s.tabContent}>
+            <p className={s.desc}>
                 단어를 추가/삭제하며 원-핫 벡터가 어떻게 변하는지 관찰하세요!
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'block', marginTop: 4 }}>&apos;원-핫(One-Hot)&apos;이란 &apos;하나만 켜져 있다&apos;는 뜻입니다. 벡터에서 딱 하나의 위치만 1(켜짐)이고, 나머지는 모두 0(꺼짐)이에요.</span>
+                <span className={s.whySpan}>&apos;원-핫(One-Hot)&apos;이란 &apos;하나만 켜져 있다&apos;는 뜻입니다. 벡터에서 딱 하나의 위치만 1(켜짐)이고, 나머지는 모두 0(꺼짐)이에요.</span>
             </p>
 
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input className="input-cosmic" placeholder="새 단어 입력..." value={newWord}
+            <div className={s.addRow}>
+                <input className={`input-cosmic ${s.addInput}`} placeholder="새 단어 입력..." value={newWord}
                     onChange={(e) => setNewWord(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addWord()}
-                    maxLength={8} style={{ flex: 1, fontSize: '0.85rem' }} />
-                <button className="btn-nova" onClick={addWord} disabled={!newWord.trim()}
-                    style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+                    maxLength={8} />
+                <button className={`btn-nova ${s.addBtn}`} onClick={addWord} disabled={!newWord.trim()}>
                     <span>+ 추가</span>
                 </button>
             </div>
 
-            <div style={styles.wordGrid}>
+            <div className={s.wordGrid}>
                 {words.map((w, i) => (
-                    <div key={i} style={{
-                        ...styles.wordChip,
-                        ...(selected === i ? styles.wordChipActive : {}),
-                    }} onClick={() => setSelected(i)}>
+                    <div key={i} className={`${s.wordChip} ${selected === i ? s.wordChipActive : ''}`}
+                        onClick={() => setSelected(i)}>
                         <span>{w}</span>
                         {words.length > 2 && (
                             <button onClick={(e) => { e.stopPropagation(); removeWord(i); }}
-                                style={styles.removeBtn}>×</button>
+                                className={s.removeBtn}>×</button>
                         )}
                     </div>
                 ))}
             </div>
 
-            <div style={styles.vectorPanel}>
-                <div style={styles.vectorHeader}>
-                    <span style={{ fontWeight: 700, color: '#f59e0b' }}>&quot;{words[selected]}&quot;</span>
-                    <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>
+            <div className={s.vectorPanel}>
+                <div className={s.vectorHeader}>
+                    <span className={s.vectorHeaderWord}>&quot;{words[selected]}&quot;</span>
+                    <span className={s.vectorHeaderDim}>
                         의 원-핫 벡터 ({words.length}차원)
-                        <span style={{ fontSize: '0.7rem', display: 'block', marginTop: 2 }}>벡터(Vector) = 숫자를 나열한 목록. [0, 1, 0]은 3차원 벡터예요.</span>
+                        <span className={s.vectorHeaderDimNote}>벡터(Vector) = 숫자를 나열한 목록. [0, 1, 0]은 3차원 벡터예요.</span>
                     </span>
                 </div>
-                <div style={styles.vectorGrid}>
+                <div className={s.vectorGrid}>
                     {words.map((w, i) => (
-                        <div key={i} style={styles.vectorCell}>
-                            <div style={{
-                                ...styles.cellValue,
+                        <div key={i} className={s.vectorCell}>
+                            <div className={s.cellValue} style={{
                                 background: i === selected ? 'rgba(245, 158, 11, 0.3)' : 'rgba(107, 114, 128, 0.1)',
-                                border: `1px solid ${i === selected ? '#f59e0b' : 'rgba(107, 114, 128, 0.2)'}`,
+                                borderColor: i === selected ? '#f59e0b' : 'rgba(107, 114, 128, 0.2)',
                                 color: i === selected ? '#fbbf24' : '#6b7280',
                                 fontWeight: i === selected ? 800 : 400,
                                 transform: i === selected ? 'scale(1.15)' : 'scale(1)',
                             }}>
                                 {i === selected ? '1' : '0'}
                             </div>
-                            <span style={styles.cellLabel}>{w}</span>
+                            <span className={s.cellLabel}>{w}</span>
                         </div>
                     ))}
                 </div>
-                <div style={styles.statsRow}>
-                    <div style={styles.statBox}>
-                        <span style={styles.statLabel}>차원 수 <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 400 }}>(차원 = 벡터에 들어 있는 숫자의 개수. 단어가 5개면 5차원 벡터가 필요)</span></span>
-                        <span style={{ ...styles.statValue, color: words.length > 10 ? '#f43f5e' : '#10b981' }}>
+                <div className={s.statsRow}>
+                    <div className={s.statBox}>
+                        <span className={s.statLabel}>차원 수 <span className={s.statLabelNote}>(차원 = 벡터에 들어 있는 숫자의 개수. 단어가 5개면 5차원 벡터가 필요)</span></span>
+                        <span className={s.statValue} style={{ color: words.length > 10 ? '#f43f5e' : '#10b981' }}>
                             {words.length}
                         </span>
                     </div>
-                    <div style={styles.statBox}>
-                        <span style={styles.statLabel}>0의 비율</span>
-                        <span style={styles.statValue}>
+                    <div className={s.statBox}>
+                        <span className={s.statLabel}>0의 비율</span>
+                        <span className={s.statValue}>
                             {((1 - 1 / words.length) * 100).toFixed(1)}%
                         </span>
                     </div>
-                    <div style={styles.statBox}>
-                        <span style={styles.statLabel}>1의 개수</span>
-                        <span style={{ ...styles.statValue, color: '#f59e0b' }}>1</span>
+                    <div className={s.statBox}>
+                        <span className={s.statLabel}>1의 개수</span>
+                        <span className={`${s.statValue} ${s.statValueGold}`}>1</span>
                     </div>
                 </div>
             </div>
 
-            <div style={styles.tipBox}>
+            <div className={s.tipBox}>
                 💡 단어를 계속 추가해보세요! 벡터 차원이 커지면서 0이 많아지는 <strong>희소 벡터(Sparse Vector)</strong>가 됩니다. 0이 대부분인 벡터는 메모리를 낭비하고, AI가 단어 사이의 관계를 학습하기 어렵게 만듭니다.
             </div>
         </div>
@@ -126,30 +123,30 @@ function DistanceComparison() {
     const sameGroup = semanticGroups[words[wordA]] === semanticGroups[words[wordB]];
 
     return (
-        <div style={styles.tabContent}>
-            <p style={styles.desc}>
+        <div className={s.tabContent}>
+            <p className={s.desc}>
                 두 단어를 선택하면 원-핫 벡터 간 <strong>유클리드 거리</strong>를 계산합니다.
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'block', marginTop: 4 }}>유클리드 거리(Euclidean Distance)는 두 점 사이의 직선 거리입니다. 자로 두 점 사이를 재는 것과 같아요.</span>
+                <span className={s.whySpan}>유클리드 거리(Euclidean Distance)는 두 점 사이의 직선 거리입니다. 자로 두 점 사이를 재는 것과 같아요.</span>
             </p>
 
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 150 }}>
-                    <label className="label-cosmic" style={{ fontSize: '0.8rem' }}>단어 A</label>
-                    <div style={styles.wordSelectGrid}>
+            <div className={s.distSelectRow}>
+                <div className={s.distSelectCol}>
+                    <label className={`label-cosmic ${s.distSelectLabel}`}>단어 A</label>
+                    <div className={s.wordSelectGrid}>
                         {words.map((w, i) => (
                             <button key={i} onClick={() => setWordA(i)}
-                                style={{ ...styles.selectBtn, ...(wordA === i ? styles.selectBtnActiveA : {}) }}>
+                                className={`${s.selectBtn} ${wordA === i ? s.selectBtnActiveA : ''}`}>
                                 {w}
                             </button>
                         ))}
                     </div>
                 </div>
-                <div style={{ flex: 1, minWidth: 150 }}>
-                    <label className="label-cosmic" style={{ fontSize: '0.8rem' }}>단어 B</label>
-                    <div style={styles.wordSelectGrid}>
+                <div className={s.distSelectCol}>
+                    <label className={`label-cosmic ${s.distSelectLabel}`}>단어 B</label>
+                    <div className={s.wordSelectGrid}>
                         {words.map((w, i) => (
                             <button key={i} onClick={() => setWordB(i)}
-                                style={{ ...styles.selectBtn, ...(wordB === i ? styles.selectBtnActiveB : {}) }}>
+                                className={`${s.selectBtn} ${wordB === i ? s.selectBtnActiveB : ''}`}>
                                 {w}
                             </button>
                         ))}
@@ -157,34 +154,30 @@ function DistanceComparison() {
                 </div>
             </div>
 
-            <div style={styles.distanceResult}>
-                <div style={styles.distPair}>
-                    <span style={{ fontWeight: 700, color: '#f59e0b', fontSize: '1.1rem' }}>{words[wordA]}</span>
-                    <span style={{ color: 'var(--text-dim)' }}>↔</span>
-                    <span style={{ fontWeight: 700, color: '#3b82f6', fontSize: '1.1rem' }}>{words[wordB]}</span>
+            <div className={s.distanceResult}>
+                <div className={s.distPair}>
+                    <span className={s.distPairWordA}>{words[wordA]}</span>
+                    <span className={s.distPairArrow}>↔</span>
+                    <span className={s.distPairWordB}>{words[wordB]}</span>
                 </div>
-                <div style={styles.distValue}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>유클리드 거리</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 800, color: '#f43f5e', fontFamily: 'monospace' }}>
+                <div className={s.distValue}>
+                    <span className={s.distValueLabel}>유클리드 거리</span>
+                    <span className={s.distValueNumber}>
                         {wordA === wordB ? '0' : '√2 ≈ 1.414'}
                     </span>
                     {wordA !== wordB && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', display: 'block', marginTop: 4 }}>
+                        <span className={s.distValueNote}>
                             원-핫 벡터에서 서로 다른 두 단어의 거리는 항상 √2입니다. 1이 있는 위치가 서로 다르기 때문이에요.
                         </span>
                     )}
                 </div>
                 {wordA !== wordB && (
-                    <div style={{ width: '100%' }}>
-                        <div style={{
-                            padding: '10px 14px', borderRadius: 8,
-                            background: sameGroup ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)',
-                            border: `1px solid ${sameGroup ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'}`,
-                        }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: sameGroup ? '#10b981' : '#f43f5e' }}>
+                    <div className={s.distFullWidth}>
+                        <div className={sameGroup ? s.distGroupBoxSame : s.distGroupBoxDiff}>
+                            <span className={sameGroup ? s.distGroupTitleSame : s.distGroupTitleDiff}>
                                 {sameGroup ? '🧲 상식적으로 비슷한 단어인데...' : '🔀 상식적으로 다른 단어인데...'}
                             </span>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 4 }}>
+                            <p className={s.distGroupDesc}>
                                 원-핫에서는 거리가 <strong>항상 √2</strong>로 동일! 의미의 유사성을 전혀 반영하지 못합니다.
                             </p>
                         </div>
@@ -192,22 +185,22 @@ function DistanceComparison() {
                 )}
             </div>
 
-            <div style={styles.distTable}>
-                <label className="label-cosmic" style={{ fontSize: '0.78rem' }}>📊 전체 거리 행렬</label>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={styles.table}>
+            <div className={s.distTable}>
+                <label className={`label-cosmic ${s.distTableLabel}`}>📊 전체 거리 행렬</label>
+                <div className={s.distTableScroll}>
+                    <table className={s.table}>
                         <thead>
                             <tr>
-                                <th style={styles.th}></th>
-                                {words.map((w) => <th key={w} style={styles.th}>{w}</th>)}
+                                <th className={s.th}></th>
+                                {words.map((w) => <th key={w} className={s.th}>{w}</th>)}
                             </tr>
                         </thead>
                         <tbody>
                             {words.map((w1, i) => (
                                 <tr key={w1}>
-                                    <td style={{ ...styles.td, fontWeight: 700, color: 'var(--text-secondary)' }}>{w1}</td>
+                                    <td className={s.tdHeader}>{w1}</td>
                                     {words.map((_, j) => (
-                                        <td key={j} style={{ ...styles.td, color: i === j ? '#10b981' : '#f43f5e', fontWeight: i === j ? 700 : 400 }}>
+                                        <td key={j} className={`${s.td} ${i === j ? s.tdSame : s.tdDiff}`}>
                                             {i === j ? '0' : '√2'}
                                         </td>
                                     ))}
@@ -216,7 +209,7 @@ function DistanceComparison() {
                         </tbody>
                     </table>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 8 }}>
+                <p className={s.distTableFooter}>
                     대각선(자기 자신) 빼고 전부 √2 — <strong>이것이 원-핫의 한계!</strong>
                 </p>
             </div>
@@ -250,51 +243,51 @@ function MemoryCalculator() {
     ];
 
     return (
-        <div style={styles.tabContent}>
-            <p style={styles.desc}>
+        <div className={s.tabContent}>
+            <p className={s.desc}>
                 슬라이더로 단어장 크기를 조절하고 메모리 사용량을 비교해보세요!
             </p>
-            <div style={styles.sliderGroup}>
-                <div style={styles.sliderRow}>
-                    <span style={styles.sliderLabel}>단어장 크기</span>
-                    <input type="range" className="slider-cosmic" min={10} max={100000} step={10}
-                        value={vocabSize} onChange={(e) => setVocabSize(parseInt(e.target.value))} style={{ flex: 1 }} />
-                    <span style={styles.sliderVal}>{vocabSize.toLocaleString()}</span>
+            <div className={s.sliderGroup}>
+                <div className={s.sliderRow}>
+                    <span className={s.sliderLabel}>단어장 크기</span>
+                    <input type="range" className={`slider-cosmic ${s.sliderInput}`} min={10} max={100000} step={10}
+                        value={vocabSize} onChange={(e) => setVocabSize(parseInt(e.target.value))} />
+                    <span className={s.sliderVal}>{vocabSize.toLocaleString()}</span>
                 </div>
-                <div style={styles.sliderRow}>
-                    <span style={styles.sliderLabel}>문장 길이</span>
-                    <input type="range" className="slider-cosmic" min={1} max={100} step={1}
-                        value={sentenceLen} onChange={(e) => setSentenceLen(parseInt(e.target.value))} style={{ flex: 1 }} />
-                    <span style={styles.sliderVal}>{sentenceLen}토큰</span>
-                </div>
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-                <div style={{ ...styles.memCard, border: '1px solid rgba(244, 63, 94, 0.3)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>원-핫 인코딩</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f43f5e' }}>{formatBytes(sentenceBytes)}</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{vocabSize.toLocaleString()}차원 × {sentenceLen}토큰</span>
-                </div>
-                <div style={{ ...styles.memCard, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>임베딩 (참고)</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981' }}>{formatBytes(embSentenceBytes)}</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>{embDim}차원 × {sentenceLen}토큰</span>
-                </div>
-                <div style={{ ...styles.memCard, border: '1px solid rgba(124, 92, 252, 0.3)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>절감률</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#7c5cfc' }}>{savings.toFixed(1)}%</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>메모리 절약</span>
+                <div className={s.sliderRow}>
+                    <span className={s.sliderLabel}>문장 길이</span>
+                    <input type="range" className={`slider-cosmic ${s.sliderInput}`} min={1} max={100} step={1}
+                        value={sentenceLen} onChange={(e) => setSentenceLen(parseInt(e.target.value))} />
+                    <span className={s.sliderVal}>{sentenceLen}토큰</span>
                 </div>
             </div>
-            <div className="glass-card" style={{ padding: 14 }}>
-                <label className="label-cosmic" style={{ fontSize: '0.78rem' }}>🤖 실제 모델의 원-핫 vs 임베딩</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+            <div className={s.memCardsRow}>
+                <div className={`${s.memCard} ${s.memCardRed}`}>
+                    <span className={s.memCardLabel}>원-핫 인코딩</span>
+                    <span className={s.memCardValueRed}>{formatBytes(sentenceBytes)}</span>
+                    <span className={s.memCardSub}>{vocabSize.toLocaleString()}차원 × {sentenceLen}토큰</span>
+                </div>
+                <div className={`${s.memCard} ${s.memCardGreen}`}>
+                    <span className={s.memCardLabel}>임베딩 (참고)</span>
+                    <span className={s.memCardValueGreen}>{formatBytes(embSentenceBytes)}</span>
+                    <span className={s.memCardSub}>{embDim}차원 × {sentenceLen}토큰</span>
+                </div>
+                <div className={`${s.memCard} ${s.memCardPurple}`}>
+                    <span className={s.memCardLabel}>절감률</span>
+                    <span className={s.memCardValuePurple}>{savings.toFixed(1)}%</span>
+                    <span className={s.memCardSub}>메모리 절약</span>
+                </div>
+            </div>
+            <div className={`glass-card ${s.realModelsPadding}`}>
+                <label className={`label-cosmic ${s.realModelsLabel}`}>🤖 실제 모델의 원-핫 vs 임베딩</label>
+                <div className={s.realModelsCol}>
                     {realModels.map((m) => (
-                        <div key={m.name} style={styles.modelRow}>
-                            <span style={{ fontWeight: 700, minWidth: 70, fontSize: '0.82rem' }}>{m.name}</span>
-                            <div style={{ flex: 1, display: 'flex', gap: 8, alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.72rem', color: '#f43f5e' }}>원-핫: {formatBytes(m.vocab * 4)}</span>
-                                <span style={{ color: 'var(--text-dim)' }}>→</span>
-                                <span style={{ fontSize: '0.72rem', color: '#10b981' }}>임베딩: {typeof m.emb === 'number' ? formatBytes(m.emb * 4) : '?'}</span>
+                        <div key={m.name} className={s.modelRow}>
+                            <span className={s.modelName}>{m.name}</span>
+                            <div className={s.modelDetail}>
+                                <span className={s.modelOneHot}>원-핫: {formatBytes(m.vocab * 4)}</span>
+                                <span className={s.modelArrow}>→</span>
+                                <span className={s.modelEmb}>임베딩: {typeof m.emb === 'number' ? formatBytes(m.emb * 4) : '?'}</span>
                             </div>
                         </div>
                     ))}
@@ -315,46 +308,45 @@ function EncodingComparison() {
     const [activeMethod, setActiveMethod] = useState(1);
 
     return (
-        <div style={styles.tabContent}>
-            <p style={styles.desc}>세 가지 인코딩 방식을 비교해보세요. 각각의 장단점이 있습니다!</p>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className={s.tabContent}>
+            <p className={s.desc}>세 가지 인코딩 방식을 비교해보세요. 각각의 장단점이 있습니다!</p>
+            <div className={s.methodBtnRow}>
                 {methods.map((m, i) => (
-                    <button key={i} onClick={() => setActiveMethod(i)} style={{
-                        flex: 1, minWidth: 120, padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-                        border: activeMethod === i ? `2px solid ${m.color}` : '1px solid rgba(124, 92, 252, 0.15)',
-                        background: activeMethod === i ? `${m.color}15` : 'transparent',
-                        color: activeMethod === i ? m.color : 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textAlign: 'center',
+                    <button key={i} onClick={() => setActiveMethod(i)} className={s.methodBtn} style={{
+                        border: activeMethod === i ? `2px solid ${m.color}` : undefined,
+                        background: activeMethod === i ? `${m.color}15` : undefined,
+                        color: activeMethod === i ? m.color : undefined,
                     }}>{m.emoji} {m.name}</button>
                 ))}
             </div>
-            <div className="glass-card" style={{ padding: 16, marginBottom: 12 }}>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginBottom: 10 }}>{methods[activeMethod].description}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className={`glass-card ${s.encCardPadding}`}>
+                <p className={s.encMethodDesc}>{methods[activeMethod].description}</p>
+                <div className={s.encVectorCol}>
                     {words.map((w, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', borderRadius: 6, background: 'rgba(15, 10, 40, 0.4)' }}>
-                            <span style={{ fontWeight: 600, minWidth: 60, fontSize: '0.85rem' }}>{w}</span>
-                            <span style={{ color: 'var(--text-dim)' }}>→</span>
-                            <code style={{ fontSize: '0.78rem', color: methods[activeMethod].color, fontWeight: 600 }}>{methods[activeMethod].vectors[i]}</code>
+                        <div key={i} className={s.encVectorRow}>
+                            <span className={s.encWordLabel}>{w}</span>
+                            <span className={s.encArrow}>→</span>
+                            <code className={s.encCode} style={{ color: methods[activeMethod].color }}>{methods[activeMethod].vectors[i]}</code>
                         </div>
                     ))}
                 </div>
             </div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 180, padding: 14, borderRadius: 10, background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#10b981' }}>장점</span>
-                    <ul style={{ paddingLeft: 16, marginTop: 6 }}>
-                        {methods[activeMethod].pros.map((p, i) => (<li key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>{p}</li>))}
+            <div className={s.prosConsRow}>
+                <div className={s.prosBox}>
+                    <span className={s.prosTitle}>장점</span>
+                    <ul className={s.prosConsList}>
+                        {methods[activeMethod].pros.map((p, i) => (<li key={i} className={s.prosConsItem}>{p}</li>))}
                     </ul>
                 </div>
-                <div style={{ flex: 1, minWidth: 180, padding: 14, borderRadius: 10, background: 'rgba(244, 63, 94, 0.06)', border: '1px solid rgba(244, 63, 94, 0.15)' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f43f5e' }}>단점</span>
-                    <ul style={{ paddingLeft: 16, marginTop: 6 }}>
-                        {methods[activeMethod].cons.map((c, i) => (<li key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>{c}</li>))}
+                <div className={s.consBox}>
+                    <span className={s.consTitle}>단점</span>
+                    <ul className={s.prosConsList}>
+                        {methods[activeMethod].cons.map((c, i) => (<li key={i} className={s.prosConsItem}>{c}</li>))}
                     </ul>
                 </div>
             </div>
-            <div style={styles.tipBox}>
-                💡 원-핫 인코딩은 간단하지만 한계가 명확합니다. 다음 주차에서 이 문제를 해결하는 <strong style={{ color: '#7c5cfc' }}>임베딩</strong>을 배워요!
+            <div className={s.tipBox}>
+                💡 원-핫 인코딩은 간단하지만 한계가 명확합니다. 다음 주차에서 이 문제를 해결하는 <strong className={s.embHighlight}>임베딩</strong>을 배워요!
             </div>
         </div>
     );
@@ -387,106 +379,56 @@ export default function Week3Page() {
     };
 
     return (
-        <div style={styles.pageContainer}>
+        <div className={s.pageContainer}>
             <Breadcrumb
                 items={[{ label: '3주차 인트로', href: '/week3/intro' }]}
                 current="원-핫 인코딩 실험실"
             />
-            <div style={styles.header}>
+            <div className={s.header}>
                 <div>
-                    <h2 style={styles.weekTitle}>3주차</h2>
-                    <h1 style={styles.moduleTitle}><span className="text-gradient">원-핫 인코딩 실험실</span></h1>
-                    <p style={styles.headerDesc}>원-핫 벡터를 직접 만들고, 한계를 체험해보세요! 🔢</p>
+                    <h2 className={s.weekTitle}>3주차</h2>
+                    <h1 className={s.moduleTitle}><span className="text-gradient">원-핫 인코딩 실험실</span></h1>
+                    <p className={s.headerDesc}>원-핫 벡터를 직접 만들고, 한계를 체험해보세요! 🔢</p>
                 </div>
             </div>
 
-            <div style={styles.tabBar}>
+            <div className={s.tabBar}>
                 {TABS.map((tab) => (
                     <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                        style={{ ...styles.tabBtn, ...(activeTab === tab.id ? styles.tabBtnActive : {}) }}>
+                        className={`${s.tabBtn} ${activeTab === tab.id ? s.tabBtnActive : ''}`}>
                         {tab.label}
                     </button>
                 ))}
             </div>
 
-            <div style={styles.contentArea}>{renderTab()}</div>
+            <div className={s.contentArea}>{renderTab()}</div>
 
-            <div className="glass-card" style={styles.theoryCard}>
+            <div className={`glass-card ${s.theoryCard}`}>
                 <label className="label-cosmic">🤖 원-핫 인코딩이 실제로 쓰이는 곳</label>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                    <p style={{ marginBottom: 10 }}>
+                <div className={s.theoryBody}>
+                    <p className={s.theoryParagraph}>
                         <strong>1. 분류 문제의 출력층</strong><br />
                         &quot;이 사진은 고양이/강아지/자동차 중 뭐야?&quot; → 정답 레이블을 원-핫으로 표현합니다.<br />
                         [1, 0, 0] = 고양이, [0, 1, 0] = 강아지
                     </p>
-                    <p style={{ marginBottom: 10 }}>
+                    <p className={s.theoryParagraph}>
                         <strong>2. 임베딩 레이어의 입력</strong><br />
                         실제 GPT에서 원-핫 벡터는 임베딩 행렬과 곱해져서 밀집 벡터로 변환됩니다!<br />
-                        <code style={{ color: '#f59e0b', fontSize: '0.8rem' }}>원-핫 × 임베딩 행렬 = 임베딩 벡터</code>
+                        <code className={s.theoryCode}>원-핫 × 임베딩 행렬 = 임베딩 벡터</code>
                     </p>
                     <p>
                         <strong>3. 4주차 미리보기</strong><br />
-                        다음 주에는 이 원-핫의 한계를 해결하는 <strong style={{ color: '#7c5cfc' }}>임베딩</strong>을 배웁니다!
+                        다음 주에는 이 원-핫의 한계를 해결하는 <strong className={s.embHighlight}>임베딩</strong>을 배웁니다!
                         단어의 의미를 담은 3D 은하수를 직접 체험해보세요. 🌌
                     </p>
                 </div>
             </div>
 
-            <div style={styles.footer}>
-                <button className="btn-nova" onClick={() => { handleComplete(); router.push('/week4/intro'); }}
-                    style={{ padding: '12px 32px', fontSize: '1rem' }}>
+            <div className={s.footer}>
+                <button className={`btn-nova ${s.footerBtn}`} onClick={() => { handleComplete(); router.push('/week4/intro'); }}>
                     <span>🌌 다음: 임베딩 은하수 →</span>
                 </button>
             </div>
         </div>
     );
 }
-
-const styles = {
-    pageContainer: { maxWidth: 800, margin: '0 auto', padding: '24px 20px 60px', minHeight: '100vh' },
-    header: { display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 },
-    backBtn: { padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-dim)', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap', marginTop: 4 },
-    weekTitle: { fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 },
-    moduleTitle: { fontSize: '1.6rem', fontWeight: 800, marginBottom: 8 },
-    headerDesc: { fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 },
-    tabBar: { display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 },
-    tabBtn: { padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-dim)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' },
-    tabBtnActive: { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)' },
-    contentArea: { marginBottom: 24 },
-    tabContent: { display: 'flex', flexDirection: 'column', gap: 14 },
-    desc: { fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 4 },
-    wordGrid: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 },
-    wordChip: { padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.06)', color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' },
-    wordChipActive: { background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.2)' },
-    removeBtn: { width: 18, height: 18, borderRadius: '50%', border: 'none', background: 'rgba(244, 63, 94, 0.2)', color: '#f43f5e', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 },
-    vectorPanel: { padding: 16, borderRadius: 12, background: 'rgba(15, 10, 40, 0.5)', border: '1px solid rgba(245, 158, 11, 0.15)' },
-    vectorHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 },
-    vectorGrid: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 },
-    vectorCell: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 },
-    cellValue: { width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontFamily: 'monospace', border: '1px solid', transition: 'all 0.3s' },
-    cellLabel: { fontSize: '0.65rem', color: 'var(--text-dim)', maxWidth: 40, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-    statsRow: { display: 'flex', gap: 10 },
-    statBox: { flex: 1, padding: '8px 10px', borderRadius: 8, background: 'rgba(124, 92, 252, 0.05)', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 2 },
-    statLabel: { fontSize: '0.7rem', color: 'var(--text-dim)' },
-    statValue: { fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'monospace' },
-    tipBox: { padding: 14, borderRadius: 10, background: 'rgba(245, 158, 11, 0.06)', border: '1px solid rgba(245, 158, 11, 0.15)', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 },
-    wordSelectGrid: { display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 },
-    selectBtn: { padding: '6px 12px', borderRadius: 6, border: '1px solid rgba(124, 92, 252, 0.15)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' },
-    selectBtnActiveA: { background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', color: '#f59e0b', fontWeight: 700 },
-    selectBtnActiveB: { background: 'rgba(59, 130, 246, 0.15)', border: '1px solid #3b82f6', color: '#3b82f6', fontWeight: 700 },
-    distanceResult: { padding: 20, borderRadius: 12, background: 'rgba(15, 10, 40, 0.5)', border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 },
-    distPair: { display: 'flex', alignItems: 'center', gap: 12 },
-    distValue: { textAlign: 'center' },
-    distTable: { padding: 12, borderRadius: 10, background: 'rgba(15, 10, 40, 0.3)', border: '1px solid rgba(124, 92, 252, 0.1)' },
-    table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'center' },
-    th: { padding: '6px 8px', color: 'var(--text-dim)', fontWeight: 700, borderBottom: '1px solid rgba(124, 92, 252, 0.1)' },
-    td: { padding: '6px 8px', borderBottom: '1px solid rgba(124, 92, 252, 0.05)', fontFamily: 'monospace' },
-    sliderGroup: { display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 },
-    sliderRow: { display: 'flex', alignItems: 'center', gap: 10 },
-    sliderLabel: { fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', minWidth: 80 },
-    sliderVal: { fontSize: '0.85rem', fontWeight: 700, color: '#f59e0b', minWidth: 60, textAlign: 'right', fontFamily: 'monospace' },
-    memCard: { flex: 1, minWidth: 140, padding: 14, borderRadius: 10, border: '1px solid', background: 'rgba(15, 10, 40, 0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 },
-    modelRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', borderRadius: 6, background: 'rgba(15, 10, 40, 0.3)' },
-    theoryCard: { padding: 20, marginBottom: 20 },
-    footer: { display: 'flex', justifyContent: 'center', paddingTop: 16, borderTop: '1px solid var(--border-subtle)' },
-};

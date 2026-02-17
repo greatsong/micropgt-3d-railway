@@ -1,0 +1,538 @@
+/* ── Layout ── */
+.container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.leftPanel {
+    width: 380px;
+    min-width: 380px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-right: 1px solid var(--border-subtle);
+}
+
+.rightPanel {
+    flex: 1;
+    height: 100%;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Header ── */
+.header {
+    margin-bottom: 4px;
+}
+
+.weekTitle {
+    font-size: 0.85rem;
+    color: var(--accent-pulsar);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.moduleTitle {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ── Card ── */
+.card {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── Buttons ── */
+.btnRow {
+    display: flex;
+    gap: 6px;
+}
+
+.dsBtn {
+    flex: 1;
+    font-size: 0.78rem;
+    padding: 8px 4px;
+}
+
+/* ── Architecture Banner ── */
+.archBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(124, 92, 252, 0.08);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* ── Slider ── */
+.sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sliderLabel {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: monospace;
+}
+
+/* ── Stats ── */
+.statsRow {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.statBox {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    background: rgba(124, 92, 252, 0.05);
+    border-radius: var(--radius-sm);
+}
+
+.statLabel {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+}
+
+.statValue {
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+/* ── Success Banner ── */
+.successBanner {
+    padding: 10px 16px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: var(--radius-sm);
+    color: #10b981;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* ── Hint ── */
+.hint {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+
+/* ── Weight Sliders ── */
+.weightSliders {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.weightGroup {
+    font-size: 0.72rem;
+    color: var(--accent-pulsar);
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.wRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    font-family: monospace;
+    width: 50px;
+    text-align: right;
+}
+
+.wVal {
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: monospace;
+    width: 40px;
+    text-align: right;
+}
+
+/* ── Viz Card ── */
+.vizCard {
+    padding: 20px;
+    background: var(--bg-glass);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+}
+
+.vizHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.vizTitle {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.vizSub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+/* ── Table ── */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.th {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: center;
+}
+
+.td {
+    padding: 6px 8px;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Phase Indicator ── */
+.phaseBanner {
+    padding: 10px 12px;
+    background: rgba(124, 92, 252, 0.06);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+}
+
+.phaseSteps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.phaseArrow {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.phaseDescription {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* ── Chain Rule ── */
+.chainRuleBox {
+    padding: 12px 14px;
+    background: rgba(124, 92, 252, 0.06);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    margin-bottom: 10px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
+.chainRuleTitle {
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: var(--accent-pulsar);
+    margin-bottom: 6px;
+}
+
+.chainRuleFormula {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    text-align: center;
+    padding: 4px 0;
+    font-weight: 600;
+}
+
+.chainRuleDetail {
+    margin-top: 8px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(124, 92, 252, 0.3);
+    font-size: 0.78rem;
+    font-family: "JetBrains Mono", monospace;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* ── Inline helper classes (for values previously set as small inline objects) ── */
+.textCenter {
+    text-align: center;
+}
+
+.archEmoji {
+    font-size: 1.1rem;
+}
+
+.subNote {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+.perceptronNote {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.statSubNote {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.statusEmoji {
+    font-size: 1.1rem;
+}
+
+.descriptionSm {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.chainRuleNote {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+}
+
+.chainRuleSmallNote {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-top: 4px;
+    text-align: left;
+}
+
+.chainRuleMultiNote {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+}
+
+.chainRuleMultiP {
+    line-height: 1.7;
+    font-size: 0.8rem;
+}
+
+.chainRuleMb {
+    margin-bottom: 10px;
+}
+
+.chainRuleFormulaSpaced {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    text-align: center;
+    padding: 4px 0;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.vizTitleDim {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+/* ── Deep Dive Accordion ── */
+.deepDiveWrapper {
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.deepDiveToggle {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveMb {
+    margin-bottom: 8px;
+}
+
+/* ── Navigation ── */
+.navRow {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.navBack {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.navNext {
+    padding: 10px 24px;
+    flex: 1;
+}
+
+/* ── Canvas ── */
+.networkCanvas {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+}
+
+.lossCanvas {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+}
+
+.boundaryCanvas {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    margin: 0 auto;
+    display: block;
+}
+
+/* ── PhaseStep component ── */
+.phaseStep {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+/* ── Misc flex helpers ── */
+.flex1 {
+    flex: 1;
+}
+
+.tdBold {
+    padding: 6px 8px;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-weight: 700;
+}
+
+.tdMono {
+    padding: 6px 8px;
+    font-size: 0.82rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-family: monospace;
+}
+
+/* ── Extracted static inline styles ── */
+.lrDisplay {
+    font-weight: 800;
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+.chainRuleParaSpaced {
+    margin-bottom: 6px;
+    line-height: 1.7;
+}
+
+.colorGold {
+    color: #fbbf24;
+}
+
+.colorBlue {
+    color: #60a5fa;
+}
+
+.colorOrange {
+    color: #fb923c;
+}
+
+.colorRed {
+    color: #f43f5e;
+}
+
+.colorGreen {
+    color: #10b981;
+}
+
+.colorTextDim {
+    color: var(--text-dim);
+}
+
+.colorMint {
+    color: #34d399;
+}
+
+.colorRedLight {
+    color: #f87171;
+}

@@ -1,0 +1,403 @@
+.container {
+    min-height: 100vh;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: space-between;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.headerEmoji {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.headerText {
+    font-weight: 700;
+}
+
+.scoreBadge {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.scoreBadgeDetail {
+    font-size: 0.65rem;
+    display: block;
+    color: #a78bfa;
+    margin-top: 2px;
+}
+
+.progressContainer {
+    margin-bottom: 16px;
+}
+
+.progressInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.progressLabel {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.stageBadge {
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    border-radius: 10px;
+    border: 1px solid;
+    font-weight: 600;
+}
+
+.progressBarOuter {
+    position: relative;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: visible;
+}
+
+.progressBarInner {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease, background 0.3s ease;
+}
+
+.progressMarker {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-1px);
+}
+
+.progressMarkerLabel {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+}
+
+.chatWindow {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #fff;
+    border: 1px solid transparent;
+    animation: fadeIn 0.3s ease;
+    line-height: 1.5;
+}
+
+.messageUser {
+    align-self: flex-end;
+    background: #4b5563;
+}
+
+.messageHeaderRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.messageStageBadge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+}
+
+.messageText {
+    margin: 4px 0 0;
+}
+
+.controlPanel {
+    background: rgba(15, 10, 40, 0.8);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.instruction {
+    text-align: center;
+    margin-bottom: 16px;
+    color: #a78bfa;
+}
+
+.instructionTheory {
+    composes: instruction;
+    text-align: left;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.badgeRow {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.categoryBadge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.optionsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.optionBtn {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #e2e8f0;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.5;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.feedbackBox {
+    text-align: center;
+}
+
+.feedbackText {
+    margin-bottom: 16px;
+}
+
+.finishCard {
+    text-align: center;
+    padding: 30px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 16px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.finishTitle {
+    margin-bottom: 8px;
+}
+
+.finishSubtitle {
+    margin-bottom: 4px;
+}
+
+.finishScore {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #a78bfa;
+    margin: 10px 0 20px;
+}
+
+.radarContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.radarCanvas {
+    max-width: 100%;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.analysisBox {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.analysisTitle {
+    color: #a78bfa;
+    margin-bottom: 8px;
+}
+
+.analysisText {
+    white-space: pre-line;
+    color: #cbd5e1;
+    line-height: 1.7;
+    font-size: 0.9rem;
+}
+
+.categoryScoreRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.categoryScoreChip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Theory section */
+.theoryContent {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.theoryParagraph {
+    margin-bottom: 10px;
+}
+
+.theoryAlignmentNote {
+    font-size: 0.82rem;
+    color: #a78bfa;
+}
+
+.theoryDpoNote {
+    font-size: 0.82rem;
+    color: #34d399;
+}
+
+.theoryPpoNote {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.compareBox {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 6px;
+}
+
+.compareTitle {
+    color: #60a5fa;
+}
+
+.compareContent {
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+
+.compareColumns {
+    display: flex;
+    gap: 12px;
+}
+
+.compareColumn {
+    flex: 1;
+}
+
+/* Deep Dive */
+.deepDive {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.25);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.deepDiveHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.deepDiveTitle {
+    color: rgba(124, 92, 252, 1);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.deepDiveToggle {
+    font-size: 0.72rem;
+    color: rgba(124, 92, 252, 0.7);
+    font-weight: 600;
+}
+
+.deepDiveContent {
+    margin-top: 12px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.8;
+}
+
+.deepDiveParagraph {
+    margin-bottom: 10px;
+}
+
+.deepDiveParagraphLast {
+    margin-bottom: 0;
+}
+
+.deepDiveHighlight {
+    color: rgba(124, 92, 252, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}

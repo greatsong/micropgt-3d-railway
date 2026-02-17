@@ -1,0 +1,539 @@
+/* ── pageStyles ── */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.progressBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.progressDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1;
+}
+
+.progressFill {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    height: 3px;
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: width 0.3s;
+    z-index: 0;
+    background: #a78bfa;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weekBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.stepCount {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* ── ds (demo styles) ── */
+.dsContainer {
+    padding: 20px;
+}
+
+.dsText {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.dsInstruction {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.dsHint {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.dsBridgeBox {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.dsHintBox {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.dsHintItem {
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(15, 10, 40, 0.5);
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    flex: 1;
+    min-width: 120px;
+}
+
+/* ── WordOrderDemo ── */
+.wordOrderExamples {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.wordOrderWordRow {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.wordOrderWord {
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(15, 10, 40, 0.6);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.5s;
+}
+
+.wordOrderMeaning {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.flipButton {
+    padding: 10px 24px;
+    border-radius: 10px;
+    background: rgba(167, 139, 250, 0.15);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.bridgeBoxLink {
+    color: #fbbf24;
+}
+
+/* ── RNNDemo ── */
+.rnnTokenRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.rnnTokenPair {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rnnToken {
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.4s;
+}
+
+.rnnArrow {
+    font-size: 1.2rem;
+    transition: color 0.4s;
+}
+
+.hiddenStateBox {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.5);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    margin-bottom: 16px;
+    min-height: 80px;
+}
+
+.hiddenStateLabel {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.hiddenStateList {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hiddenStateItem {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.hiddenStatePlaceholder {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.rnnRunButton {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #a78bfa;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ── MemoryDemo ── */
+.memoryCanvas {
+    width: 100%;
+    max-width: 480px;
+    height: 200px;
+    margin-bottom: 16px;
+}
+
+.memorySliderRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.memorySliderLabel {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.memorySlider {
+    width: 180px;
+}
+
+.memorySliderValue {
+    font-size: 0.9rem;
+    color: #a78bfa;
+    font-weight: 700;
+    min-width: 40px;
+}
+
+.memoryStatusBox {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.gradientWarning {
+    color: #f87171;
+}
+
+/* ── LSTMDemo ── */
+.gateButtonRow {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.gateButton {
+    padding: 14px 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    min-width: 130px;
+}
+
+.gateEmoji {
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+}
+
+.gateName {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.gateDesc {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.gateDetailBox {
+    padding: 16px 20px;
+    border-radius: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.gateDetailText {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.gateEmptyBox {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: rgba(15, 10, 40, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
+
+.gateEmptyText {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+/* ── TransformerDemo ── */
+.modeToggleRow {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.modeToggleBtn {
+    padding: 8px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.processingBox {
+    padding: 20px;
+    border-radius: 14px;
+    background: rgba(15, 10, 40, 0.5);
+    margin-bottom: 16px;
+}
+
+.processingLabel {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.processingTokenRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.processingTokenPair {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.processingToken {
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.rnnArrowSmall {
+    color: #a78bfa;
+    font-size: 1rem;
+}
+
+.attentionNote {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #60a5fa;
+}
+
+.comparisonRow {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.comparisonCard {
+    flex: 1;
+    min-width: 180px;
+    padding: 14px;
+    border-radius: 12px;
+    transition: all 0.3s;
+}
+
+.comparisonTitle {
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.comparisonTitleRnn {
+    composes: comparisonTitle;
+    color: #a78bfa;
+}
+
+.comparisonTitleTransformer {
+    composes: comparisonTitle;
+    color: #60a5fa;
+}
+
+.comparisonList {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    padding-left: 16px;
+    line-height: 1.7;
+}
+
+.previewBanner {
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.06);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.previewHighlight {
+    color: #fbbf24;
+}
+
+/* ── Lab step (Step 6) ── */
+.labContainer {
+    composes: dsContainer;
+    text-align: center;
+}
+
+.labEmoji {
+    font-size: 5rem;
+    margin-bottom: 16px;
+}
+
+.labButton {
+    margin-top: 24px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+}
+
+.emojiLarge {
+    font-size: 3rem;
+}
+
+/* ── Shared margin utilities ── */
+.mt16 {
+    margin-top: 16px;
+}
+
+.mt20 {
+    margin-top: 20px;
+}
+
+/* ── WordOrderDemo card ── */
+.wordOrderCard {
+    padding: 14px 18px;
+    border-radius: 12px;
+}
+
+/* ── Lab highlight ── */
+.labHighlight {
+    color: #a78bfa;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}

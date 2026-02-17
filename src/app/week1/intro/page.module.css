@@ -1,0 +1,171 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.content {
+    text-align: center;
+    max-width: 600px;
+}
+
+.badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: #fbbf2420;
+    color: #fbbf24;
+}
+
+.emoji {
+    font-size: 4rem;
+    margin: 20px 0;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+.card {
+    padding: 30px;
+    border-radius: 20px;
+    background: rgba(15, 10, 40, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 브리지 박스 & WHY 박스 공통 */
+.bridgeBox,
+.whyBox {
+    border-radius: 12px;
+    margin-bottom: 16px;
+    text-align: left;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.bridgeBox {
+    padding: 14px 18px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.whyBox {
+    padding: 16px 20px;
+    background: rgba(52, 211, 153, 0.08);
+    border: 1px solid rgba(52, 211, 153, 0.15);
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.bridgeLabel {
+    color: #fbbf24;
+}
+
+.whyLabel {
+    color: #34d399;
+}
+
+/* 학습 목표 */
+.objectivesHeader {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.objectivesTitle {
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.objectivesList {
+    color: var(--text-secondary);
+    padding-left: 20px;
+    line-height: 1.8;
+}
+
+.termDetail {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.ctaText {
+    line-height: 1.6;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+}
+
+/* 한 걸음 더 (Deep Dive) */
+.deepDiveContainer {
+    margin-top: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+    text-align: left;
+}
+
+.deepDiveButton {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.deepDiveContent p {
+    margin-bottom: 6px;
+}
+
+.deepDiveContent p:first-child {
+    margin-bottom: 10px;
+}
+
+.deepDiveContent p:last-child {
+    margin-bottom: 0;
+}
+
+.strongWord {
+    color: #f87171;
+}
+
+.strongChar {
+    color: #fbbf24;
+}
+
+.strongSubword {
+    color: #34d399;
+}
+
+/* CTA 버튼 */
+.ctaButton {
+    margin-top: 30px;
+    padding: 12px 30px;
+}

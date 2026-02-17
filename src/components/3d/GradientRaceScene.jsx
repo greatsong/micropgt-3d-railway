@@ -8,6 +8,7 @@ import LossSurface from './LossSurface';
 import RacingBall from './RacingBall';
 import SpaceBackground from './SpaceBackground';
 import { useState, useEffect } from 'react';
+import styles from './GradientRaceScene.module.css';
 
 export default function GradientRaceScene() {
     const teams = useRaceStore((s) => s.teams);
@@ -27,11 +28,7 @@ export default function GradientRaceScene() {
     return (
         <Canvas
             camera={{ position: [0, 18, 18], fov: 55 }}
-            style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 'var(--radius-md)',
-            }}
+            className={styles.canvas}
             gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
             dpr={[1, 2]}
             frameloop={visible ? 'always' : 'never'}
@@ -129,4 +126,3 @@ function GoalMarker() {
         </group>
     );
 }
-

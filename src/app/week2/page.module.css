@@ -1,0 +1,599 @@
+/* week2/page.module.css */
+
+.container {
+    min-height: 100vh;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 20px;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.headerIcon {
+    font-size: 1.5rem;
+    margin-right: 8px;
+}
+
+.headerText {
+    font-weight: 700;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modeToggle {
+    display: flex;
+    gap: 8px;
+}
+
+.modeBtn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    background: rgba(15, 10, 40, 0.6);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btnGroup {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.scenarioBtn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    min-width: fit-content;
+}
+
+.previewBox {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    line-height: 1.6;
+}
+
+.blank {
+    border-bottom: 2px solid #34d399;
+    min-width: 60px;
+    text-align: center;
+    margin-left: 8px;
+    color: #34d399;
+    font-weight: bold;
+}
+
+.customInputGroup {
+    margin-bottom: 12px;
+}
+
+.customLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.customInputFull {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.customWordsSection {
+    margin-top: 12px;
+}
+
+.customWordsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.customWordsHelp {
+    font-size: 0.72rem;
+    display: block;
+    margin-top: 2px;
+}
+
+.addBtn {
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.customEntryRow {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+}
+
+.customWordInput {
+    flex: 2;
+    font-size: 0.85rem;
+}
+
+.customLogitInput {
+    flex: 1;
+    font-size: 0.85rem;
+}
+
+.removeBtn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.samplingPad {
+    padding: 0 10px;
+}
+
+.tempSection {
+    margin-bottom: 16px;
+}
+
+.tempHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.tempLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.tempValue {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #34d399;
+    font-family: monospace;
+}
+
+.sliderFull {
+    width: 100%;
+}
+
+.sliderLabels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.tempDesc {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.formulaBox {
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    margin-bottom: 14px;
+}
+
+.formulaCode {
+    font-size: 0.82rem;
+    color: #fbbf24;
+}
+
+.formulaSigma {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.formulaExplain {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.samplingOption {
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.checkLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sliderRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.sliderRowLabel {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
+.topKValue {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #3b82f6;
+    font-family: monospace;
+    width: 20px;
+}
+
+.topPValue {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #a78bfa;
+    font-family: monospace;
+    width: 36px;
+}
+
+.samplingDesc {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.probHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.labelNoMargin {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.labelSubtext {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    display: block;
+    margin-top: 2px;
+}
+
+.spinBtnPad {
+    padding: 8px 24px;
+}
+
+.barChart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.barRow {
+    display: flex;
+    align-items: center;
+    transition: opacity 0.3s;
+}
+
+.barLabel {
+    width: 80px;
+    font-size: 0.85rem;
+    text-align: right;
+    padding-right: 12px;
+    color: var(--text-secondary);
+}
+
+.filteredX {
+    font-size: 0.65rem;
+    color: #f43f5e;
+    margin-left: 4px;
+}
+
+.barTrack {
+    flex: 1;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.barFill {
+    height: 100%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.probText {
+    position: absolute;
+    right: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.logitValue {
+    width: 50px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: monospace;
+    text-align: right;
+}
+
+.filterNote {
+    font-size: 0.78rem;
+    color: #f59e0b;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.theoryContent {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dimText {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.autoregBox {
+    padding: 16px;
+    border-radius: 10px;
+    background: rgba(52, 211, 153, 0.06);
+    border: 1px solid rgba(52, 211, 153, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: monospace;
+    font-size: 0.88rem;
+}
+
+.arStep {
+    padding: 4px 8px;
+}
+
+.arArrow {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.greenHighlight {
+    color: #34d399;
+}
+
+.redHighlight {
+    color: #f43f5e;
+}
+
+.yellowCode {
+    color: #fbbf24;
+}
+
+.comparisonTable {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.compRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.compCell {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+}
+
+.compCellHeader {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.compCellGreen {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #34d399;
+}
+
+.compCellBlue {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #3b82f6;
+}
+
+.compCellPurple {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #a78bfa;
+}
+
+.compCellAmber {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #f59e0b;
+}
+
+.tipBox {
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.deepDiveWrapper {
+    border-radius: 12px;
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    overflow: hidden;
+}
+
+.deepDiveToggle {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: none;
+    color: #a78bfa;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deepDiveContent {
+    padding: 16px;
+    background: rgba(124, 92, 252, 0.04);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    text-align: left;
+}
+
+.deepDiveP {
+    margin-bottom: 10px;
+}
+
+.deepDivePSmall {
+    margin-bottom: 8px;
+}
+
+.highlightYellow {
+    color: #fbbf24;
+}
+
+.highlightGreen {
+    color: #34d399;
+}
+
+.highlightRed {
+    color: #f87171;
+}
+
+.navRow {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-bottom: 40px;
+}
+
+.navBackBtn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.navNextPad {
+    padding: 10px 24px;
+}
+
+.flexOne {
+    flex: 1;
+}

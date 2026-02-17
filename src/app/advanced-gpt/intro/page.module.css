@@ -1,0 +1,231 @@
+/* === pageStyles === */
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.progressBar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.progressDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 1;
+}
+
+.progressFill {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    height: 3px;
+    background: var(--accent-nova);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: width 0.3s;
+    z-index: 0;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weekBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+.content {
+    flex: 1;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.navBtn {
+    padding: 10px 24px;
+    font-size: 0.9rem;
+}
+
+.stepCount {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+/* === ds (detail styles) === */
+
+.overviewContainer {
+    text-align: center;
+    padding: 20px;
+}
+
+.text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.diagramBox {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: 300px;
+    margin: 32px auto 0;
+}
+
+.diagramLayer {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(15, 10, 40, 0.5);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.diagramLayerGreen {
+    composes: diagramLayer;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10b981;
+}
+
+.diagramLayerBlocks {
+    composes: diagramLayer;
+    height: 100px;
+    justify-content: space-between;
+    padding: 10px;
+    border: 2px dashed rgba(124, 92, 252, 0.4);
+}
+
+.diagramLayerSmall {
+    composes: diagramLayer;
+    height: 30px;
+    font-size: 0.8rem;
+}
+
+.diagramLayerYellow {
+    composes: diagramLayer;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid #fbbf24;
+}
+
+.arrow {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+}
+
+.explanationBox {
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(124, 92, 252, 0.1);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    margin-bottom: 20px;
+}
+
+.codeBox {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: #1e1e1e;
+}
+
+.codeHeader {
+    padding: 8px 16px;
+    background: #2d2d2d;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-bottom: 1px solid #333;
+}
+
+.codeBlock {
+    margin: 0;
+    padding: 20px;
+    overflow-x: auto;
+    font-family: "Fira Code", monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+/* === inline-only helpers === */
+
+.emoji {
+    font-size: 5rem;
+    margin-bottom: 20px;
+}
+
+.explanationTitle {
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.explanationText {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: pre-line;
+}
+
+.highlightPurple {
+    color: #7c5cfc;
+}
+
+.highlightGreen {
+    color: #10b981;
+}
+
+.blocksLabel {
+    font-size: 0.8rem;
+    color: #7c5cfc;
+}
+
+.stepEmoji {
+    font-size: 3rem;
+}
