@@ -7,30 +7,30 @@ import s from './page.module.css';
 
 const SCENARIOS = [
     {
-        id: 'fox',
-        prefix: "The quick brown fox jumps over the",
-        logits: { 'dog': 8.0, 'lazy': 5.0, 'moon': 2.0, 'fence': 4.0, 'log': 3.0 }
-    },
-    {
-        id: 'eat',
-        prefix: "I am so hungry, I want to eat",
-        logits: { 'pizza': 7.0, 'apple': 5.0, 'homework': -2.0, 'shoe': -1.0, 'burger': 6.5 }
-    },
-    {
-        id: 'code',
-        prefix: "def hello_world(): print(",
-        logits: { '"Hello"': 9.0, 'x': 3.0, 'return': 1.0, 'error': 0.5, 'None': 2.0 }
-    },
-    {
-        id: 'korean',
+        id: 'weather',
         prefix: "오늘 날씨가 정말",
         logits: { '좋다': 7.5, '춥다': 5.0, '덥다': 4.5, '흐리다': 3.0, '미쳤다': 1.0 }
+    },
+    {
+        id: 'food',
+        prefix: "배가 너무 고파서 밥을",
+        logits: { '먹었다': 7.0, '시켰다': 5.5, '지었다': 4.0, '굶었다': 2.0, '던졌다': -1.0 }
+    },
+    {
+        id: 'story',
+        prefix: "옛날 옛적에 한 마을에",
+        logits: { '할머니가': 7.0, '호랑이가': 6.0, '왕이': 5.5, '토끼가': 5.0, '사람들이': 4.0 }
+    },
+    {
+        id: 'school',
+        prefix: "학교에 가면 제일 먼저",
+        logits: { '친구를': 6.5, '교실에': 5.0, '가방을': 4.0, '선생님께': 3.5, '운동장에': 3.0 }
     },
 ];
 
 export default function PredictionLab() {
     const router = useRouter();
-    const [scenarioId, setScenarioId] = useState('fox');
+    const [scenarioId, setScenarioId] = useState('weather');
     const [temp, setTemp] = useState(1.0);
     const [generatedWord, setGeneratedWord] = useState(null);
     const [isSpinning, setIsSpinning] = useState(false);
@@ -196,7 +196,7 @@ export default function PredictionLab() {
                                             }}
                                             onClick={() => { setScenarioId(sc.id); setGeneratedWord(null); }}
                                         >
-                                            {sc.id === 'fox' ? '🦊 Fox' : sc.id === 'eat' ? '🍕 Food' : sc.id === 'code' ? '🐍 Code' : '🇰🇷 한국어'}
+                                            {sc.id === 'weather' ? '☀️ 날씨' : sc.id === 'food' ? '🍕 음식' : sc.id === 'story' ? '📖 동화' : '🏫 학교'}
                                         </button>
                                     ))}
                                 </div>

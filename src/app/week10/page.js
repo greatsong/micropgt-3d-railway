@@ -93,9 +93,9 @@ export default function Week10Page() {
     // ── 상태: Query, Key 벡터 ──
     const [query, setQuery] = useState({ x: 1.0, y: 0.2 });
     const keys = useMemo(() => [
-        { id: 'K1', x: 0.8, y: 0.1, label: '나 (I)' },
-        { id: 'K2', x: 0.1, y: 0.9, label: '사과 (Apple)' },
-        { id: 'K3', x: -0.5, y: -0.5, label: '컴퓨터 (Computer)' },
+        { id: 'K1', x: 0.8, y: 0.1, label: '나' },
+        { id: 'K2', x: 0.1, y: 0.9, label: '사과' },
+        { id: 'K3', x: -0.5, y: -0.5, label: '컴퓨터' },
     ], []);
 
     // ── Attention Score ──
@@ -112,8 +112,8 @@ export default function Week10Page() {
     // ── 미션 ──
     const [missionPhase, setMissionPhase] = useState(0);
     const missions = [
-        { targetId: 'K2', label: '사과 (Apple)', threshold: 0.7 },
-        { targetId: 'K3', label: '컴퓨터 (Computer)', threshold: 0.7 }
+        { targetId: 'K2', label: '사과', threshold: 0.7 },
+        { targetId: 'K3', label: '컴퓨터', threshold: 0.7 }
     ];
     const currentMission = missions[missionPhase];
 

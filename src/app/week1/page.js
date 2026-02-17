@@ -70,16 +70,6 @@ function getVocab(wordFreq) {
 // ─── 예시 코퍼스 프리셋 ───
 
 const PRESETS = {
-    english: {
-        label: 'English',
-        sentences: [
-            'low low low low low',
-            'lower lower lower',
-            'newest newest newest newest',
-            'widest widest',
-        ],
-        description: '"low", "lower", "newest", "widest" -- 접미사 공유 패턴',
-    },
     korean: {
         label: '한국어',
         sentences: [
@@ -88,16 +78,27 @@ const PRESETS = {
             '하세요 하세요',
             '세요 세요 세요',
         ],
-        description: '"안녕", "안녕하세요", "하세요", "세요" -- 한국어 음절 병합',
+        description: '"안녕", "안녕하세요", "하세요", "세요" — 한국어 음절 병합',
     },
-    mixed: {
-        label: 'Mixed',
+    school: {
+        label: '학교생활',
         sentences: [
-            'token token token token',
-            'tokenize tokenize tokenize',
-            'tokenizer tokenizer',
+            '학교 학교 학교 학교 학교',
+            '학교생활 학교생활 학교생활',
+            '생활 생활 생활',
+            '학생 학생 학생 학생',
         ],
-        description: '"token", "tokenize", "tokenizer" -- 어근 공유 패턴',
+        description: '"학교", "학교생활", "생활", "학생" — 공통 음절 병합',
+    },
+    food: {
+        label: '음식',
+        sentences: [
+            '김치 김치 김치 김치',
+            '김치찌개 김치찌개 김치찌개',
+            '찌개 찌개 찌개',
+            '김밥 김밥 김밥 김밥',
+        ],
+        description: '"김치", "김치찌개", "찌개", "김밥" — 공통 글자 병합',
     },
 };
 
@@ -105,10 +106,10 @@ const PRESETS = {
 
 export default function TokenizerLab() {
     const router = useRouter();
-    const [inputText, setInputText] = useState("Artificial Intelligence is fascinating!");
+    const [inputText, setInputText] = useState("인공지능이 세상을 바꾸고 있습니다!");
 
     // BPE 시뮬레이션 상태
-    const [bpePreset, setBpePreset] = useState('english');
+    const [bpePreset, setBpePreset] = useState('korean');
     const [bpeHistory, setBpeHistory] = useState(null);  // { steps: [...], currentStep: 0 }
     const [showDeepDive, setShowDeepDive] = useState(false);
 
@@ -119,8 +120,8 @@ export default function TokenizerLab() {
         let words = inputText.split(/(\s+|[.,!?;])/).filter(Boolean);
         let detailedTokens = [];
 
-        const suffixes = ['ing', 'ed', 'ly', 'tion', 'ment', 'nes', 's', 'al', 'ive', 'ic', 'est', 'er'];
-        const prefixes = ['un', 're', 'im', 'in', 'dis', 'pre', 'anti', 'super', 'micro'];
+        const suffixes = ['습니다', '합니다', '입니다', '했다', '하는', '에서', '으로', '이다', '하고', '하면', '에게', '처럼'];
+        const prefixes = ['인공', '자동', '초고', '최신', '재사', '불가', '반자', '다중', '마이크로'];
 
         words.forEach(word => {
             if (/^[\s.,!?;]+$/.test(word)) {
@@ -305,7 +306,7 @@ export default function TokenizerLab() {
                     </div>
                     <p className={s.explanation}>
                         각 색깔 블록 하나가 <strong>1개의 토큰</strong>입니다.<br />
-                        &quot;fascinating&quot; 같은 단어가 &quot;fascinat&quot; + &quot;ing&quot;으로 나뉘는 것을 관찰해보세요!
+                        &quot;바꾸고&quot; 같은 단어가 &quot;바꾸&quot; + &quot;고&quot;로 나뉘는 것을 관찰해보세요!
                     </p>
                     <p className={s.tokenIdHint}>
                         각 토큰 아래 숫자는 Token ID입니다. AI는 글자 대신 이 숫자를 사용합니다.
@@ -332,8 +333,8 @@ export default function TokenizerLab() {
                     <div className={s.bpeTipBox}>
                         💡 시뮬레이션에서 보이는 <code className={s.codeGold}>&lt;/w&gt;</code>는
                         &quot;<strong>단어의 끝</strong>&quot;을 표시하는 특수 기호예요.
-                        예를 들어 <code>l o w &lt;/w&gt;</code>는 &quot;low라는 단어가 여기서 끝남&quot;을 뜻합니다.
-                        이 기호 덕분에 &quot;low&quot;(낮은)와 &quot;lower&quot;(더 낮은)를 구분할 수 있어요!
+                        예를 들어 <code>안 녕 &lt;/w&gt;</code>는 &quot;안녕이라는 단어가 여기서 끝남&quot;을 뜻합니다.
+                        이 기호 덕분에 &quot;안녕&quot;과 &quot;안녕하세요&quot;를 구분할 수 있어요!
                     </div>
 
                     {/* 프리셋 선택 */}
