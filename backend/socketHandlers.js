@@ -1,0 +1,350 @@
+import { rooms, getRoomState, isTeacher, broadcastRoomUpdate } from './roomManager.js';
+import { getWordPosition, lossFunction, gradient } from './gameLogic.js';
+
+const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || 'teacher2025';
+
+export function registerSocketHandlers(io) {
+  io.on('connection', (socket) => {
+    console.log(`✨ 연결: ${socket.id}`);
+    let currentRoom = null;
+    let studentInfo = null;
+
+    // ▸ 학생 입장
+    socket.on('join_class', (payload) => {
+      const { studentName, schoolCode, roomCode } = payload;
+      currentRoom = roomCode;
+      studentInfo = {
+        id: socket.id,
+        studentName,
+        schoolCode,
+        roomCode,
+        joinedAt: Date.now(),
+        word: null,
+        position: { x: 0, y: 0, z: 0 },
+        color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
+        role: null,
+        sliderValue_Q: 0,
+        sliderValue_K: 0,
+      };
+
+      socket.join(roomCode);
+      const room = getRoomState(roomCode);
+      room.students.set(socket.id, studentInfo);
+
+      console.log(`🚀 ${studentName}(${schoolCode}) → 방 [${roomCode}] 입장 (${room.students.size}명)`);
+
+      io.to(roomCode).emit('student_joined', {
+        student: studentInfo,
+        totalCount: room.students.size,
+      });
+
+      socket.emit('room_state', {
+        students: Array.from(room.students.values()),
+        roomCode,
+      });
+
+      broadcastRoomUpdate(io, roomCode);
+    });
+
+    // ▸ 교사 관제탑 입장 (비밀번호 인증)
+    socket.on('join_dashboard', (payload) => {
+      const { roomCode, password } = payload;
+
+      if (password && password !== TEACHER_PASSWORD) {
+        socket.emit('auth_error', { message: '교사 비밀번호가 올바르지 않습니다.' });
+        return;
+      }
+
+      currentRoom = roomCode;
+      socket.join(roomCode);
+      const room = getRoomState(roomCode);
+      room.teacherId = socket.id;
+
+      console.log(`🎓 교사 관제탑 연결 → 방 [${roomCode}]`);
+
+      socket.emit('room_state', {
+        students: Array.from(room.students.values()),
+        roomCode,
+        raceTeams: room.raceTeams || {},
+        racePhase: room.racePhase || 'waiting',
+        raceBalls: room.raceBalls || {},
+      });
+    });
+
+    // ▸ 3D 은하수: 단어 등록
+    socket.on('register_word', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      const student = room.students.get(socket.id);
+      if (!student) return;
+
+      student.word = payload.word;
+      student.position = getWordPosition(payload.word);
+
+      io.to(currentRoom).emit('word_registered', {
+        studentId: socket.id,
+        studentName: student.studentName,
+        word: student.word,
+        position: student.position,
+        color: student.color,
+      });
+    });
+
+    // ▸ 3D 은하수: 좌표 이동
+    socket.on('update_word_position', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      const student = room.students.get(socket.id);
+      if (!student) return;
+
+      student.position = payload.position;
+
+      socket.to(currentRoom).emit('word_moved', {
+        studentId: socket.id,
+        studentName: student.studentName,
+        word: student.word,
+        position: student.position,
+        color: student.color,
+      });
+    });
+
+    // ▸ 어텐션 게임: 슬라이더 업데이트
+    socket.on('update_attention_slider', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      const student = room.students.get(socket.id);
+      if (!student) return;
+
+      student.role = payload.role ?? student.role;
+      student.sliderValue_Q = payload.sliderValue_Q ?? student.sliderValue_Q;
+      student.sliderValue_K = payload.sliderValue_K ?? student.sliderValue_K;
+      student.attentionWeights = payload.attentionWeights ?? student.attentionWeights;
+      student.selectedWord = payload.selectedWord ?? student.selectedWord;
+      student.sentenceName = payload.sentenceName ?? student.sentenceName;
+      student.headCount = payload.headCount ?? student.headCount;
+
+      io.to(currentRoom).emit('attention_updated', {
+        studentId: socket.id,
+        studentName: student.studentName,
+        role: student.role,
+        sliderValue_Q: student.sliderValue_Q,
+        sliderValue_K: student.sliderValue_K,
+        attentionWeights: student.attentionWeights,
+        selectedWord: student.selectedWord,
+        sentenceName: student.sentenceName,
+        headCount: student.headCount,
+      });
+    });
+
+    // ═══════════════════════════════════════════════
+    // ▸ 경사하강법 레이싱 시스템
+    // ═══════════════════════════════════════════════
+
+    // 팀 파라미터 등록
+    socket.on('set_race_params', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (!room.raceTeams) room.raceTeams = {};
+
+      const teamId = payload.teamId || socket.id;
+      room.raceTeams[teamId] = {
+        id: teamId,
+        name: payload.teamName || studentInfo?.studentName || 'Team',
+        color: payload.color || `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
+        learningRate: Math.max(0.001, Math.min(2.0, payload.learningRate || 0.1)),
+        momentum: Math.max(0, Math.min(0.99, payload.momentum || 0.9)),
+        memberId: socket.id,
+      };
+
+      console.log(`🏎️ 팀 [${room.raceTeams[teamId].name}] 파라미터: lr=${payload.learningRate}, m=${payload.momentum}`);
+
+      io.to(currentRoom).emit('race_teams_updated', {
+        teams: room.raceTeams,
+      });
+    });
+
+    // 교사: 레이스 시작
+    socket.on('start_race', () => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
+
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 6 + Math.random() * 2;
+      const centerX = Math.cos(angle) * radius;
+      const centerZ = Math.sin(angle) * radius;
+
+      room.raceBalls = {};
+      room.raceFinished = {};
+
+      for (const [teamId, team] of Object.entries(room.raceTeams)) {
+        room.raceBalls[teamId] = {
+          x: centerX + (Math.random() - 0.5) * 1.0,
+          z: centerZ + (Math.random() - 0.5) * 1.0,
+          y: 0,
+          vx: 0,
+          vz: 0,
+          trail: [],
+          status: 'racing',
+          loss: 0,
+          lr: team.learningRate,
+          momentum: team.momentum,
+        };
+        room.raceBalls[teamId].y = lossFunction(room.raceBalls[teamId].x, room.raceBalls[teamId].z);
+        room.raceBalls[teamId].loss = room.raceBalls[teamId].y;
+      }
+
+      room.racePhase = 'racing';
+      room.raceStartTime = Date.now();
+
+      io.to(currentRoom).emit('race_started', {
+        balls: room.raceBalls,
+        startTime: room.raceStartTime,
+      });
+
+      console.log(`🏁 레이스 시작! 방 [${currentRoom}] — ${Object.keys(room.raceTeams).length}팀`);
+
+      // 물리 시뮬레이션 루프 (30fps)
+      if (room.raceInterval) clearInterval(room.raceInterval);
+      const roomCode = currentRoom;
+      room.raceInterval = setInterval(() => {
+        const r = rooms.get(roomCode);
+        if (!r || r.racePhase !== 'racing') {
+          clearInterval(r?.raceInterval);
+          return;
+        }
+
+        let allDone = true;
+
+        for (const [teamId, ball] of Object.entries(r.raceBalls)) {
+          if (ball.status !== 'racing') continue;
+          allDone = false;
+
+          const grad = gradient(ball.x, ball.z);
+          ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx;
+          ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz;
+          ball.x += ball.vx;
+          ball.z += ball.vz;
+          ball.y = lossFunction(ball.x, ball.z);
+          ball.loss = ball.y;
+
+          ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+          if (ball.trail.length > 200) ball.trail.shift();
+
+          if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) {
+            ball.status = 'escaped';
+            r.raceFinished[teamId] = {
+              teamId,
+              teamName: r.raceTeams[teamId]?.name,
+              finalLoss: ball.loss,
+              status: 'escaped',
+              time: Date.now() - r.raceStartTime,
+            };
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: r.raceTeams[teamId]?.name,
+              message: '🚨 공 이탈! 학습률이 너무 큽니다!',
+            });
+          }
+
+          const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
+          if (speed < 0.001 && ball.trail.length > 30) {
+            ball.status = 'converged';
+            r.raceFinished[teamId] = {
+              teamId,
+              teamName: r.raceTeams[teamId]?.name,
+              finalLoss: ball.loss,
+              status: 'converged',
+              time: Date.now() - r.raceStartTime,
+            };
+          }
+        }
+
+        io.to(roomCode).emit('race_tick', { balls: r.raceBalls });
+
+        const totalTeams = Object.keys(r.raceBalls).length;
+        const finishedTeams = Object.keys(r.raceFinished).length;
+        if (finishedTeams >= totalTeams || allDone) {
+          clearInterval(r.raceInterval);
+          r.raceInterval = null;
+          r.racePhase = 'finished';
+
+          const results = Object.values(r.raceFinished)
+            .sort((a, b) => {
+              if (a.status === 'escaped' && b.status !== 'escaped') return 1;
+              if (b.status === 'escaped' && a.status !== 'escaped') return -1;
+              return a.finalLoss - b.finalLoss;
+            })
+            .map((r, i) => ({ ...r, rank: i + 1 }));
+
+          io.to(roomCode).emit('race_finished', { results });
+          console.log(`🏆 레이스 종료! 방 [${roomCode}]`, results);
+        }
+      }, 33);
+    });
+
+    // 교사: 레이스 리셋
+    socket.on('reset_race', () => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
+      room.racePhase = 'setup';
+      room.raceBalls = {};
+      room.raceFinished = {};
+      io.to(currentRoom).emit('race_reset');
+      console.log(`🔄 레이스 리셋! 방 [${currentRoom}]`);
+    });
+
+    // ▸ 교사 명령
+    socket.on('teacher_command', (payload) => {
+      if (!currentRoom) return;
+      if (!isTeacher(socket.id, currentRoom)) {
+        socket.emit('auth_error', { message: '교사 권한이 필요합니다.' });
+        return;
+      }
+      console.log(`🎓 교사 명령: ${payload.command}`);
+      io.to(currentRoom).emit('teacher_command', payload);
+    });
+
+    // ▸ 연결 해제
+    socket.on('disconnect', () => {
+      if (currentRoom) {
+        const room = rooms.get(currentRoom);
+        if (!room) return;
+
+        const student = room.students.get(socket.id);
+
+        if (student) {
+          console.log(`💫 ${student.studentName} 퇴장 (방 [${currentRoom}])`);
+          room.students.delete(socket.id);
+
+          io.to(currentRoom).emit('student_left', {
+            studentId: socket.id,
+            studentName: student.studentName,
+            totalCount: room.students.size,
+          });
+
+          broadcastRoomUpdate(io, currentRoom);
+        }
+
+        if (room.teacherId === socket.id) {
+          console.log(`🎓 교사 퇴장 (방 [${currentRoom}])`);
+          room.teacherId = null;
+          if (room.raceInterval) {
+            clearInterval(room.raceInterval);
+            room.raceInterval = null;
+          }
+        }
+
+        if (room.students.size === 0 && !room.teacherId) {
+          if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
+          rooms.delete(currentRoom);
+          console.log(`🗑️ 빈 방 삭제: [${currentRoom}]`);
+        }
+      }
+      console.log(`🌙 연결 해제: ${socket.id}`);
+    });
+  });
+}
