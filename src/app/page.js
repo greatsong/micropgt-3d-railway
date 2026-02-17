@@ -29,6 +29,10 @@ export default function HomePage() {
   const setConnected = useClassStore((s) => s.setConnected);
   const addNotification = useClassStore((s) => s.addNotification);
 
+  const savedName = useClassStore((s) => s.studentName);
+  const savedSchool = useClassStore((s) => s.schoolCode);
+  const savedRoom = useClassStore((s) => s.roomCode);
+
   const [name, setName] = useState('');
   const [school, setSchool] = useState('');
   const [room, setRoom] = useState('');
@@ -40,6 +44,13 @@ export default function HomePage() {
   useEffect(() => {
     setParticles(generateParticles(30));
   }, []);
+
+  // 저장된 접속 정보 자동 복원
+  useEffect(() => {
+    if (savedName && !name) setName(savedName);
+    if (savedSchool && !school) setSchool(savedSchool);
+    if (savedRoom && !room) setRoom(savedRoom);
+  }, [savedName, savedSchool, savedRoom]);
 
   const handleJoin = () => {
     const errors = {};
