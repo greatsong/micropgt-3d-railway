@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 
 /* ── Activation Graph (Canvas) ── */
@@ -169,6 +170,7 @@ function ActivationGraph({ activation, z, y }) {
 
 /* ── Main Component ── */
 export default function NeuronLab() {
+    const router = useRouter();
 
     // Inputs (x)
     const [inputs, setInputs] = useState({ x1: 0.5, x2: -0.2 });
@@ -575,6 +577,19 @@ export default function NeuronLab() {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* 네비게이션 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 30, paddingBottom: 40 }}>
+                <button onClick={() => router.push('/week6/intro')} style={{
+                    padding: '10px 24px', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                }}>← 인트로로</button>
+                <button className="btn-nova" onClick={() => router.push('/week7/intro')} style={{ padding: '10px 24px' }}>
+                    <span>🔄 7주차: 역전파 훈련소 →</span>
+                </button>
             </div>
         </div>
     );

@@ -54,6 +54,17 @@ export default function DashboardPage() {
     const [activeWeek, setActiveWeek] = useState(3);
     const [attentionStates, setAttentionStates] = useState({});
 
+    // 퀴즈 시스템
+    const [showQuizPanel, setShowQuizPanel] = useState(false);
+    const [quizType, setQuizType] = useState('ox');
+    const [quizQuestion, setQuizQuestion] = useState('');
+    const [quizOptions, setQuizOptions] = useState(['', '', '', '']);
+    const [quizCorrect, setQuizCorrect] = useState('O');
+    const [quizTimeLimit, setQuizTimeLimit] = useState(15);
+    const [quizLive, setQuizLive] = useState(null);
+    const [quizAnswerCount, setQuizAnswerCount] = useState(0);
+    const [quizResults, setQuizResults] = useState(null);
+
     const handleConnect = () => {
         if (!roomCode.trim()) return;
 
@@ -125,6 +136,17 @@ export default function DashboardPage() {
                 [data.studentId]: data,
             }));
         });
+
+        // 퀴즈 이벤트
+        socket.on('quiz_answer_received', (data) => {
+            setQuizAnswerCount(data.totalAnswered);
+            addNotification(`✅ ${data.studentName} 퀴즈 답변 제출 (${data.totalAnswered}/${data.totalStudents})`);
+        });
+        socket.on('quiz_results', (data) => {
+            setQuizResults(data);
+            setQuizLive(null);
+            addNotification(`📊 퀴즈 결과: 정답률 ${data.correctRate}%`);
+        });
     };
 
     const handleTeacherCommand = (command) => {
@@ -143,6 +165,44 @@ export default function DashboardPage() {
     const handleResetRace = () => {
         const socket = getSocket();
         if (socket) socket.emit('reset_race');
+    };
+
+    // 퀴즈 전송
+    const handleSendQuiz = () => {
+        if (!quizQuestion.trim()) return;
+        const socket = getSocket();
+        if (!socket) return;
+
+        const payload = {
+            question: quizQuestion,
+            type: quizType,
+            correctAnswer: quizCorrect,
+            timeLimit: quizTimeLimit,
+        };
+        if (quizType === 'choice') {
+            payload.options = quizOptions.filter(o => o.trim());
+        }
+
+        socket.emit('send_quiz', payload);
+        setQuizLive(payload);
+        setQuizAnswerCount(0);
+        setQuizResults(null);
+        setShowQuizPanel(false);
+        addNotification(`📝 퀴즈 전송! "${quizQuestion}"`);
+    };
+
+    // 퀴즈 결과 공개
+    const handleRevealResults = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('reveal_quiz_results');
+    };
+
+    // 퀴즈 취소
+    const handleCancelQuiz = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('cancel_quiz');
+        setQuizLive(null);
+        setQuizAnswerCount(0);
     };
 
     // ── 미연결 상태 ──
@@ -237,6 +297,13 @@ export default function DashboardPage() {
                             </button>
                         </>
                     )}
+                    <button
+                        className="btn-nova"
+                        style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                        onClick={() => setShowQuizPanel(!showQuizPanel)}
+                    >
+                        <span>📝 퀴즈</span>
+                    </button>
                     <button
                         className="btn-nova"
                         style={{ padding: '8px 20px', fontSize: '0.85rem' }}
@@ -356,6 +423,202 @@ export default function DashboardPage() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* 퀴즈 패널 */}
+                    {showQuizPanel && !quizLive && (
+                        <div className="glass-card" style={styles.sideSection}>
+                            <label className="label-cosmic">📝 퀴즈 만들기</label>
+                            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                                <button
+                                    onClick={() => { setQuizType('ox'); setQuizCorrect('O'); }}
+                                    style={{
+                                        ...styles.quizTypeBtn,
+                                        ...(quizType === 'ox' ? styles.quizTypeBtnActive : {}),
+                                    }}
+                                >⭕❌ O/X</button>
+                                <button
+                                    onClick={() => { setQuizType('choice'); setQuizCorrect(''); }}
+                                    style={{
+                                        ...styles.quizTypeBtn,
+                                        ...(quizType === 'choice' ? styles.quizTypeBtnActive : {}),
+                                    }}
+                                >①②③④ 선택</button>
+                            </div>
+                            <input
+                                className="input-cosmic"
+                                placeholder="질문을 입력하세요"
+                                value={quizQuestion}
+                                onChange={e => setQuizQuestion(e.target.value)}
+                                style={{ fontSize: '0.85rem' }}
+                            />
+                            {quizType === 'ox' && (
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                    <button
+                                        onClick={() => setQuizCorrect('O')}
+                                        style={{
+                                            ...styles.quizTypeBtn, flex: 1,
+                                            ...(quizCorrect === 'O' ? { background: 'rgba(96,165,250,0.2)', border: '1px solid #60a5fa', color: '#60a5fa' } : {}),
+                                        }}
+                                    >정답: ⭕ O</button>
+                                    <button
+                                        onClick={() => setQuizCorrect('X')}
+                                        style={{
+                                            ...styles.quizTypeBtn, flex: 1,
+                                            ...(quizCorrect === 'X' ? { background: 'rgba(248,113,113,0.2)', border: '1px solid #f87171', color: '#f87171' } : {}),
+                                        }}
+                                    >정답: ❌ X</button>
+                                </div>
+                            )}
+                            {quizType === 'choice' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    {quizOptions.map((opt, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                            <input
+                                                className="input-cosmic"
+                                                placeholder={`선택지 ${i + 1}`}
+                                                value={opt}
+                                                onChange={e => {
+                                                    const next = [...quizOptions];
+                                                    next[i] = e.target.value;
+                                                    setQuizOptions(next);
+                                                }}
+                                                style={{ flex: 1, fontSize: '0.8rem', padding: '6px 10px' }}
+                                            />
+                                            <button
+                                                onClick={() => setQuizCorrect(opt)}
+                                                style={{
+                                                    padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem',
+                                                    border: quizCorrect === opt ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)',
+                                                    background: quizCorrect === opt ? 'rgba(16,185,129,0.2)' : 'transparent',
+                                                    color: quizCorrect === opt ? '#10b981' : 'var(--text-dim)',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >정답</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>제한시간:</span>
+                                {[10, 15, 20, 30].map(t => (
+                                    <button key={t} onClick={() => setQuizTimeLimit(t)} style={{
+                                        padding: '4px 10px', borderRadius: 6, fontSize: '0.75rem',
+                                        border: quizTimeLimit === t ? '1px solid #a78bfa' : '1px solid rgba(255,255,255,0.1)',
+                                        background: quizTimeLimit === t ? 'rgba(167,139,250,0.2)' : 'transparent',
+                                        color: quizTimeLimit === t ? '#a78bfa' : 'var(--text-dim)',
+                                        cursor: 'pointer',
+                                    }}>{t}초</button>
+                                ))}
+                            </div>
+                            <button className="btn-nova" style={{ width: '100%', padding: '10px' }} onClick={handleSendQuiz}>
+                                <span>🚀 퀴즈 전송 ({students.length}명에게)</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 진행 중인 퀴즈 */}
+                    {quizLive && !quizResults && (
+                        <div className="glass-card" style={styles.sideSection}>
+                            <label className="label-cosmic">📝 퀴즈 진행 중</label>
+                            <p style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+                                {quizLive.question}
+                            </p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                                    응답: <strong style={{ color: '#10b981' }}>{quizAnswerCount}</strong> / {students.length}명
+                                </span>
+                                <div style={{
+                                    width: 60, height: 6, borderRadius: 3,
+                                    background: 'rgba(255,255,255,0.1)',
+                                }}>
+                                    <div style={{
+                                        width: `${students.length > 0 ? (quizAnswerCount / students.length * 100) : 0}%`,
+                                        height: '100%', borderRadius: 3,
+                                        background: '#10b981', transition: 'width 0.3s',
+                                    }} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button className="btn-nova" style={{ flex: 1, padding: '8px' }} onClick={handleRevealResults}>
+                                    <span>📊 결과 공개</span>
+                                </button>
+                                <button onClick={handleCancelQuiz} style={{
+                                    padding: '8px 14px', borderRadius: 8,
+                                    background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)',
+                                    color: '#f43f5e', fontSize: '0.82rem', cursor: 'pointer',
+                                }}>취소</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 퀴즈 결과 */}
+                    {quizResults && (
+                        <div className="glass-card" style={styles.sideSection}>
+                            <label className="label-cosmic">📊 퀴즈 결과</label>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                                {quizResults.question}
+                            </p>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                <div style={styles.quizResultStat}>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>
+                                        {quizResults.correctRate}%
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>정답률</span>
+                                </div>
+                                <div style={styles.quizResultStat}>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#60a5fa' }}>
+                                        {quizResults.correctCount}/{quizResults.totalAnswered}
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>정답/응답</span>
+                                </div>
+                            </div>
+                            {quizResults.fastest && (
+                                <div style={{
+                                    padding: '6px 10px', borderRadius: 6,
+                                    background: 'rgba(251,191,36,0.1)',
+                                    fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center',
+                                }}>
+                                    ⚡ 최빠 정답: {quizResults.fastest.studentName} ({(quizResults.fastest.responseTime / 1000).toFixed(1)}초)
+                                </div>
+                            )}
+                            {/* 답변 분포 */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {Object.entries(quizResults.tally).map(([answer, count]) => (
+                                    <div key={answer} style={{
+                                        display: 'flex', alignItems: 'center', gap: 8,
+                                        padding: '4px 8px', borderRadius: 6,
+                                        background: answer === quizResults.correctAnswer
+                                            ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)',
+                                    }}>
+                                        <span style={{
+                                            fontSize: '0.8rem', fontWeight: 600, minWidth: 30,
+                                            color: answer === quizResults.correctAnswer ? '#10b981' : 'var(--text-dim)',
+                                        }}>
+                                            {answer === quizResults.correctAnswer ? '✅' : ''} {answer}
+                                        </span>
+                                        <div style={{
+                                            flex: 1, height: 6, borderRadius: 3,
+                                            background: 'rgba(255,255,255,0.05)',
+                                        }}>
+                                            <div style={{
+                                                width: `${quizResults.totalAnswered > 0 ? (count / quizResults.totalAnswered * 100) : 0}%`,
+                                                height: '100%', borderRadius: 3,
+                                                background: answer === quizResults.correctAnswer ? '#10b981' : '#64748b',
+                                            }} />
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', minWidth: 20 }}>
+                                            {count}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => setQuizResults(null)} style={{
+                                padding: '6px 12px', borderRadius: 6,
+                                background: 'rgba(124,92,252,0.1)', border: '1px solid rgba(124,92,252,0.2)',
+                                color: '#a78bfa', fontSize: '0.78rem', cursor: 'pointer', width: '100%',
+                            }}>닫기</button>
                         </div>
                     )}
 
@@ -652,5 +915,28 @@ const styles = {
         color: 'var(--text-dim)',
         fontSize: '0.82rem',
         textAlign: 'center',
+    },
+    quizTypeBtn: {
+        flex: 1,
+        padding: '6px 12px',
+        borderRadius: 8,
+        fontSize: '0.78rem',
+        fontWeight: 600,
+        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'transparent',
+        color: 'var(--text-dim)',
+        cursor: 'pointer',
+    },
+    quizTypeBtnActive: {
+        background: 'rgba(124, 92, 252, 0.15)',
+        border: '1px solid rgba(124, 92, 252, 0.4)',
+        color: '#a78bfa',
+    },
+    quizResultStat: {
+        textAlign: 'center',
+        padding: '8px 16px',
+        borderRadius: 8,
+        background: 'rgba(15, 10, 40, 0.4)',
+        flex: 1,
     },
 };

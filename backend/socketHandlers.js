@@ -297,6 +297,116 @@ export function registerSocketHandlers(io) {
       console.log(`🔄 레이스 리셋! 방 [${currentRoom}]`);
     });
 
+    // ═══════════════════════════════════════════════
+    // ▸ 교사 퀴즈 브로드캐스트 시스템
+    // ═══════════════════════════════════════════════
+
+    // 교사: 퀴즈 전송
+    socket.on('send_quiz', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+
+      const quiz = {
+        id: `quiz_${Date.now()}`,
+        question: payload.question,
+        type: payload.type || 'ox',
+        options: payload.options || [],
+        correctAnswer: payload.correctAnswer,
+        timeLimit: payload.timeLimit || 15,
+        createdAt: Date.now(),
+      };
+
+      room.activeQuiz = quiz;
+      room.quizAnswers = {};
+
+      io.to(currentRoom).emit('quiz_broadcast', quiz);
+      console.log(`📝 퀴즈 전송! 방 [${currentRoom}] — "${quiz.question}"`);
+    });
+
+    // 학생: 퀴즈 답변 제출
+    socket.on('submit_quiz_answer', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (!room.activeQuiz) return;
+      const student = room.students.get(socket.id);
+      if (!student) return;
+
+      const answer = {
+        studentId: socket.id,
+        studentName: student.studentName,
+        answer: payload.answer,
+        timestamp: Date.now(),
+        responseTime: Date.now() - room.activeQuiz.createdAt,
+      };
+
+      room.quizAnswers[socket.id] = answer;
+
+      if (room.teacherId) {
+        io.to(room.teacherId).emit('quiz_answer_received', {
+          ...answer,
+          totalAnswered: Object.keys(room.quizAnswers).length,
+          totalStudents: room.students.size,
+        });
+      }
+
+      console.log(`✅ ${student.studentName} 퀴즈 답변: ${payload.answer}`);
+    });
+
+    // 교사: 퀴즈 결과 공개
+    socket.on('reveal_quiz_results', () => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!room.activeQuiz) return;
+
+      const answers = Object.values(room.quizAnswers);
+      const correct = room.activeQuiz.correctAnswer;
+
+      const tally = {};
+      answers.forEach(a => {
+        tally[a.answer] = (tally[a.answer] || 0) + 1;
+      });
+
+      const correctCount = answers.filter(a => a.answer === correct).length;
+
+      const fastestCorrect = answers
+        .filter(a => a.answer === correct)
+        .sort((a, b) => a.responseTime - b.responseTime)[0];
+
+      const results = {
+        quizId: room.activeQuiz.id,
+        question: room.activeQuiz.question,
+        correctAnswer: correct,
+        tally,
+        totalAnswered: answers.length,
+        totalStudents: room.students.size,
+        correctCount,
+        correctRate: answers.length > 0 ? (correctCount / answers.length * 100).toFixed(1) : '0',
+        fastest: fastestCorrect ? {
+          studentName: fastestCorrect.studentName,
+          responseTime: fastestCorrect.responseTime,
+        } : null,
+      };
+
+      io.to(currentRoom).emit('quiz_results', results);
+      room.activeQuiz = null;
+      room.quizAnswers = {};
+
+      console.log(`📊 퀴즈 결과 공개! 정답률 ${results.correctRate}%`);
+    });
+
+    // 교사: 퀴즈 취소
+    socket.on('cancel_quiz', () => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      room.activeQuiz = null;
+      room.quizAnswers = {};
+      io.to(currentRoom).emit('quiz_cancelled');
+      console.log(`❌ 퀴즈 취소! 방 [${currentRoom}]`);
+    });
+
     // ▸ 교사 명령
     socket.on('teacher_command', (payload) => {
       if (!currentRoom) return;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import WebGLErrorBoundary from '@/components/layout/WebGLErrorBoundary';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 import useIsMobile from '@/lib/useIsMobile';
@@ -29,6 +30,7 @@ const GradientRaceScene = dynamic(
 );
 
 export default function Week5Page() {
+    const router = useRouter();
     const isMobile = useIsMobile();
     const studentName = useClassStore((s) => s.studentName);
     const schoolCode = useClassStore((s) => s.schoolCode);
@@ -474,6 +476,52 @@ export default function Week5Page() {
                     </div>
                 )}
 
+                {/* 실시간 리더보드 (레이싱 중) */}
+                {racePhase === 'racing' && Object.keys(balls).length > 1 && (
+                    <div className="glass-card" style={styles.leaderboardCard}>
+                        <label className="label-cosmic">📊 실시간 순위</label>
+                        <div style={styles.leaderboardList}>
+                            {Object.entries(balls)
+                                .map(([id, ball]) => ({
+                                    teamId: id,
+                                    teamName: teams[id]?.name || id,
+                                    color: teams[id]?.color || '#a78bfa',
+                                    loss: ball.loss,
+                                    status: ball.status,
+                                }))
+                                .sort((a, b) => {
+                                    if (a.status === 'escaped' && b.status !== 'escaped') return 1;
+                                    if (a.status !== 'escaped' && b.status === 'escaped') return -1;
+                                    return a.loss - b.loss;
+                                })
+                                .map((entry, idx) => (
+                                    <div key={entry.teamId} style={{
+                                        ...styles.leaderboardItem,
+                                        ...(entry.teamId === myTeamId ? styles.leaderboardItemMine : {}),
+                                        ...(entry.status === 'escaped' ? { opacity: 0.5 } : {}),
+                                    }}>
+                                        <span style={styles.leaderboardRank}>
+                                            {entry.status === 'escaped' ? '💥' :
+                                                entry.status === 'converged' ? '🏁' :
+                                                    idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                                        </span>
+                                        <div style={{ ...styles.leaderboardDot, background: entry.color }} />
+                                        <span style={styles.leaderboardName}>{entry.teamName}</span>
+                                        <span style={{
+                                            ...styles.leaderboardLoss,
+                                            color: entry.status === 'escaped' ? '#f43f5e' :
+                                                entry.status === 'converged' ? '#10b981' :
+                                                    entry.loss < 2 ? '#10b981' : entry.loss < 4 ? '#fbbf24' : '#f43f5e',
+                                        }}>
+                                            {entry.status === 'escaped' ? '이탈' : entry.loss?.toFixed(3)}
+                                        </span>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                )}
+
                 {/* 결과 */}
                 {racePhase === 'finished' && results.length > 0 && (
                     <div className="glass-card" style={styles.resultCard}>
@@ -645,6 +693,19 @@ export default function Week5Page() {
                             </p>
                         </div>
                     )}
+                </div>
+
+                {/* 네비게이션 */}
+                <div style={{ display: 'flex', gap: 12, marginTop: 20, paddingBottom: 20 }}>
+                    <button onClick={() => router.push('/week5/intro')} style={{
+                        padding: '10px 24px', borderRadius: 10,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                    }}>← 인트로로</button>
+                    <button className="btn-nova" onClick={() => router.push('/week6/intro')} style={{ padding: '10px 24px', flex: 1 }}>
+                        <span>🧪 6주차: 인공 뉴런 →</span>
+                    </button>
                 </div>
             </div>
 
@@ -871,6 +932,34 @@ const styles = {
         textAlign: 'center',
         padding: 20,
     },
+    leaderboardCard: {
+        padding: 14,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+    },
+    leaderboardList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+    },
+    leaderboardItem: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '6px 10px',
+        borderRadius: 'var(--radius-sm)',
+        background: 'rgba(124, 92, 252, 0.05)',
+        transition: 'all 0.3s',
+    },
+    leaderboardItemMine: {
+        background: 'rgba(251, 191, 36, 0.1)',
+        border: '1px solid rgba(251, 191, 36, 0.25)',
+    },
+    leaderboardRank: { fontSize: '1rem', minWidth: 28, textAlign: 'center' },
+    leaderboardDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+    leaderboardName: { fontSize: '0.82rem', fontWeight: 600, flex: 1, color: 'var(--text-primary)' },
+    leaderboardLoss: { fontSize: '0.78rem', fontWeight: 700, fontFamily: 'monospace', minWidth: 50, textAlign: 'right' },
     canvasWrapper: {
         flex: 1,
         position: 'relative',

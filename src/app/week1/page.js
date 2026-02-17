@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 
 // ─── BPE 알고리즘 핵심 함수들 ───
@@ -102,6 +103,7 @@ const PRESETS = {
 // ─── 메인 컴포넌트 ───
 
 export default function TokenizerLab() {
+    const router = useRouter();
     const [inputText, setInputText] = useState("Artificial Intelligence is fascinating!");
 
     // BPE 시뮬레이션 상태
@@ -693,6 +695,19 @@ export default function TokenizerLab() {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            {/* 네비게이션 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 30, paddingBottom: 40 }}>
+                <button onClick={() => router.push('/week1/intro')} style={{
+                    padding: '10px 24px', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                }}>← 인트로로</button>
+                <button className="btn-nova" onClick={() => router.push('/week2/intro')} style={{ padding: '10px 24px' }}>
+                    <span>🔮 2주차: 다음 단어 예측기 →</span>
+                </button>
             </div>
         </div>
     );

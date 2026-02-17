@@ -855,9 +855,18 @@ export default function Week7Page() {
                     )}
                 </div>
 
-                <button className="btn-ghost" onClick={() => router.push('/hub')} style={{ marginTop: 4 }}>
-                    ← 허브로 돌아가기
-                </button>
+                {/* 네비게이션 */}
+                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                    <button onClick={() => router.push('/week7/intro')} style={{
+                        padding: '10px 24px', borderRadius: 10,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                    }}>← 인트로로</button>
+                    <button className="btn-nova" onClick={() => router.push('/week8/intro')} style={{ padding: '10px 24px', flex: 1 }}>
+                        <span>〰️ 8주차: 시퀀스와 포지션 →</span>
+                    </button>
+                </div>
             </div>
 
             {/* ── 우측 시각화 ── */}

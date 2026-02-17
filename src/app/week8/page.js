@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 
 export default function RNNPELab() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('rnn');
 
     return (
@@ -41,6 +43,19 @@ export default function RNNPELab() {
                 {activeTab === 'lstm' && <LSTMVisualizer />}
                 {activeTab === 'pe' && <PEVisualizer />}
                 {activeTab === 'compare' && <CompareSection />}
+            </div>
+
+            {/* 네비게이션 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 30, paddingBottom: 40 }}>
+                <button onClick={() => router.push('/week8/intro')} style={{
+                    padding: '10px 24px', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                }}>← 인트로로</button>
+                <button className="btn-nova" onClick={() => router.push('/week10/intro')} style={{ padding: '10px 24px' }}>
+                    <span>👁️ 10주차: 어텐션 →</span>
+                </button>
             </div>
         </div>
     );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
+import QuizOverlay from '@/components/quiz/QuizOverlay';
 import useIsMobile from '@/lib/useIsMobile';
 import { getSocket } from '@/lib/socket';
 
@@ -131,6 +132,9 @@ export default function ClientLayout({ children }) {
                     {displayChildren}
                 </div>
             </div>
+
+            {/* 교사 퀴즈 오버레이 (모든 페이지에서 작동) */}
+            <QuizOverlay />
         </div>
     );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import WebGLErrorBoundary from '@/components/layout/WebGLErrorBoundary';
 import useIsMobile from '@/lib/useIsMobile';
 import Breadcrumb from '@/components/layout/Breadcrumb';
@@ -314,6 +315,7 @@ const EmbeddingGalaxy = dynamic(() => import('@/components/3d/EmbeddingGalaxy'),
 });
 
 export default function Week4Page() {
+    const router = useRouter();
     const isMobile = useIsMobile();
     const studentName = useClassStore((s) => s.studentName);
     const schoolCode = useClassStore((s) => s.schoolCode);
@@ -609,6 +611,19 @@ export default function Week4Page() {
                             그리고 질문과 가장 가까운 위치에 있는 문서를 찾아(Search) 답변을 생성(Generate)합니다!
                         </p>
                     </div>
+                </div>
+
+                {/* 네비게이션 */}
+                <div style={{ display: 'flex', gap: 12, marginTop: 20, paddingBottom: 20 }}>
+                    <button onClick={() => router.push('/week4/intro')} style={{
+                        padding: '10px 24px', borderRadius: 10,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+                    }}>← 인트로로</button>
+                    <button className="btn-nova" onClick={() => router.push('/week5/intro')} style={{ padding: '10px 24px', flex: 1 }}>
+                        <span>🏔️ 5주차: 경사하강법 →</span>
+                    </button>
                 </div>
             </div>
 

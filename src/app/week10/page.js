@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/layout/Breadcrumb';
+import { useClassStore } from '@/stores/useClassStore';
+import { getSocket, connectSocket } from '@/lib/socket';
 
 // ── Self-Attention 히트맵용 데이터 ──
 const SENTENCES = [
@@ -81,6 +83,11 @@ const MULTI_HEAD_DATA = {
 
 export default function Week10Page() {
     const router = useRouter();
+    const studentName = useClassStore((s) => s.studentName);
+    const roomCode = useClassStore((s) => s.roomCode);
+
+    // 다른 학생들의 어텐션 상태
+    const [classAttention, setClassAttention] = useState({});
 
     // ── 상태: Query, Key 벡터 ──
     const [query, setQuery] = useState({ x: 1.0, y: 0.2 });
@@ -131,6 +138,56 @@ export default function Week10Page() {
 
     // ── 한 걸음 더 (Deep Dive) ──
     const [showDeepDive, setShowDeepDive] = useState(false);
+
+    // ── Socket 연결: 어텐션 상태 공유 ──
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket) return;
+        if (!socket.connected) connectSocket();
+
+        const handleConnect = () => {
+            if (roomCode) {
+                socket.emit('join_class', {
+                    studentName: studentName || '익명',
+                    schoolCode: 'UNKNOWN',
+                    roomCode,
+                });
+            }
+        };
+
+        if (socket.connected && roomCode) handleConnect();
+        socket.on('connect', handleConnect);
+
+        const handleAttentionUpdated = (data) => {
+            if (data.studentId === socket.id) return;
+            setClassAttention(prev => ({
+                ...prev,
+                [data.studentId]: data,
+            }));
+        };
+
+        socket.on('attention_updated', handleAttentionUpdated);
+
+        return () => {
+            socket.off('connect', handleConnect);
+            socket.off('attention_updated', handleAttentionUpdated);
+        };
+    }, [roomCode, studentName]);
+
+    // 내 어텐션 상태 변경 시 서버에 전송
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket?.connected || !roomCode) return;
+
+        socket.emit('update_attention_slider', {
+            sliderValue_Q: query.x,
+            sliderValue_K: query.y,
+            attentionWeights: sentenceData ? sentenceData.weights : [],
+            selectedWord: `Q(${query.x.toFixed(1)}, ${query.y.toFixed(1)})`,
+            sentenceName: selectedSentence,
+            headCount: activeHead + 1,
+        });
+    }, [query, selectedSentence, activeHead, roomCode]);
 
     const getHeatColor = (v) => {
         const r = Math.round(124 + (251 - 124) * v);
@@ -560,6 +617,62 @@ export default function Week10Page() {
                         </div>
                     )}
                 </div>
+
+                {/* ── 클래스 어텐션 현황 ── */}
+                {roomCode && Object.keys(classAttention).length > 0 && (
+                    <div style={styles.card}>
+                        <h2 style={styles.cardTitle}>👥 클래스 어텐션 현황</h2>
+                        <p style={styles.desc}>
+                            같은 수업에 참여한 학생들이 어떤 어텐션 패턴을 탐색하고 있는지 실시간으로 확인하세요!
+                        </p>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                            gap: 10,
+                        }}>
+                            {Object.values(classAttention).map((a) => (
+                                <div key={a.studentId} style={{
+                                    padding: 12,
+                                    borderRadius: 10,
+                                    background: 'rgba(124, 92, 252, 0.06)',
+                                    border: '1px solid rgba(124, 92, 252, 0.15)',
+                                }}>
+                                    <div style={{
+                                        display: 'flex', justifyContent: 'space-between',
+                                        alignItems: 'center', marginBottom: 8,
+                                    }}>
+                                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fbbf24' }}>
+                                            {a.studentName}
+                                        </span>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+                                            H{a.headCount || 1}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                        {a.selectedWord || '-'}
+                                    </div>
+                                    {a.attentionWeights && a.attentionWeights.length > 0 && (
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: `repeat(${a.attentionWeights.length}, 1fr)`,
+                                            gap: 2, marginTop: 6,
+                                        }}>
+                                            {a.attentionWeights.map((row, ri) =>
+                                                row.map((w, ci) => (
+                                                    <div key={`${ri}-${ci}`} style={{
+                                                        aspectRatio: '1',
+                                                        background: `rgba(124, 92, 252, ${w * 0.85 + 0.05})`,
+                                                        borderRadius: 2,
+                                                    }} />
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* ── Navigation ── */}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 12, paddingBottom: 40 }}>
