@@ -361,9 +361,9 @@ export default function DashboardPage() {
                                         <div>
                                             <div className={s.cardName}>{st.studentName}</div>
                                             <div className={s.cardSchool}>
-                                                {st.schoolCode === 'SEOUL_HIGH' ? '서울고' :
-                                                    st.schoolCode === 'DONGDUK_GIRL' ? '동덕여고' :
-                                                        st.schoolCode === 'SANGMUN_HIGH' ? '상문고' : st.schoolCode}
+                                                {st.schoolCode === 'DANGOK_HIGH' ? '당곡고' :
+                                                    st.schoolCode === 'SINRIM_HIGH' ? '신림고' :
+                                                        st.schoolCode === 'SUDO_GIRL' ? '수도여고' : st.schoolCode}
                                             </div>
                                         </div>
                                         {stars[st.id] && (

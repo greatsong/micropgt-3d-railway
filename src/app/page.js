@@ -7,9 +7,9 @@ import { connectSocket } from '@/lib/socket';
 import s from './page.module.css';
 
 const SCHOOLS = [
-  { code: 'SEOUL_HIGH', name: '서울고등학교', emoji: '🏫' },
-  { code: 'DONGDUK_GIRL', name: '동덕여자고등학교', emoji: '🏫' },
-  { code: 'SANGMUN_HIGH', name: '상문고등학교', emoji: '🏫' },
+  { code: 'DANGOK_HIGH', name: '당곡고등학교', emoji: '🏫' },
+  { code: 'SINRIM_HIGH', name: '신림고등학교', emoji: '🏫' },
+  { code: 'SUDO_GIRL', name: '수도여자고등학교', emoji: '🏫' },
 ];
 
 // Pre-generate stable particle data to avoid hydration mismatch
