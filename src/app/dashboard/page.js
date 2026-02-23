@@ -51,6 +51,8 @@ export default function DashboardPage() {
     const resetRace = useRaceStore((st) => st.reset);
 
     const [roomCode, setRoomCode] = useState('');
+    const [password, setPassword] = useState('');
+    const [authError, setAuthError] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [activeWeek, setActiveWeek] = useState(3);
     const [attentionStates, setAttentionStates] = useState({});
@@ -67,17 +69,23 @@ export default function DashboardPage() {
     const [quizResults, setQuizResults] = useState(null);
 
     const handleConnect = () => {
-        if (!roomCode.trim()) return;
+        if (!roomCode.trim() || !password.trim()) return;
+        setAuthError('');
 
         const socket = connectSocket();
 
         socket.on('connect', () => {
-            setIsConnected(true);
-            socket.emit('join_dashboard', { roomCode: roomCode.trim() });
-            addNotification('🎓 관제탑 연결 완료');
+            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
+        });
+
+        socket.on('auth_error', (data) => {
+            setAuthError(data.message || '인증에 실패했습니다.');
+            socket.disconnect();
         });
 
         socket.on('room_state', (data) => {
+            setIsConnected(true);
+            addNotification('🎓 관제탑 연결 완료');
             setStudents(data.students);
             loadFromRoomState(data.students);
             // 레이싱 상태 복원
@@ -231,6 +239,20 @@ export default function DashboardPage() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
                             />
                         </div>
+                        <div>
+                            <label className="label-cosmic">교사 비밀번호</label>
+                            <input
+                                className="input-cosmic"
+                                type="password"
+                                placeholder="교사 인증 비밀번호 입력"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+                            />
+                        </div>
+                        {authError && (
+                            <p className={s.authError}>{authError}</p>
+                        )}
                         <button className={`btn-nova ${s.loginBtn}`} onClick={handleConnect}>
                             <span>🔭 관제탑 접속</span>
                         </button>

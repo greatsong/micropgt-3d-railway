@@ -44,6 +44,16 @@
     width: 100%;
 }
 
+.authError {
+    color: #f43f5e;
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
 .container {
     height: 100vh;
     display: flex;
