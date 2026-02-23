@@ -1,7 +1,8 @@
 import { rooms, getRoomState, isTeacher, broadcastRoomUpdate } from './roomManager.js';
 import { getWordPosition, lossFunction, gradient } from './gameLogic.js';
 
-const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || 'teacher2025';
+const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
+if (!TEACHER_PASSWORD) console.warn('⚠️ TEACHER_PASSWORD 환경변수가 설정되지 않았습니다. 교사 인증이 작동하지 않습니다.');
 
 export function registerSocketHandlers(io) {
   io.on('connection', (socket) => {
@@ -50,7 +51,7 @@ export function registerSocketHandlers(io) {
     socket.on('join_dashboard', (payload) => {
       const { roomCode, password } = payload;
 
-      if (password && password !== TEACHER_PASSWORD) {
+      if (!TEACHER_PASSWORD || !password || password !== TEACHER_PASSWORD) {
         socket.emit('auth_error', { message: '교사 비밀번호가 올바르지 않습니다.' });
         return;
       }
