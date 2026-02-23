@@ -4,6 +4,18 @@ import { getWordPosition, lossFunction, gradient } from './gameLogic.js';
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
 if (!TEACHER_PASSWORD) console.warn('⚠️ TEACHER_PASSWORD 환경변수가 설정되지 않았습니다. 교사 인증이 작동하지 않습니다.');
 
+function sanitize(str, maxLen = 50) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[<>&"']/g, '').trim().slice(0, maxLen);
+}
+
+function safeHandler(name, handler) {
+  return (...args) => {
+    try { handler(...args); }
+    catch (err) { console.error(`[${name}] Socket handler error:`, err); }
+  };
+}
+
 export function registerSocketHandlers(io) {
   io.on('connection', (socket) => {
     console.log(`✨ 연결: ${socket.id}`);
@@ -11,8 +23,11 @@ export function registerSocketHandlers(io) {
     let studentInfo = null;
 
     // ▸ 학생 입장
-    socket.on('join_class', (payload) => {
-      const { studentName, schoolCode, roomCode } = payload;
+    socket.on('join_class', safeHandler('join_class', (payload) => {
+      const studentName = sanitize(payload.studentName, 20);
+      const schoolCode = sanitize(payload.schoolCode, 10);
+      const roomCode = sanitize(payload.roomCode, 10);
+      if (!studentName || !roomCode) return;
       currentRoom = roomCode;
       studentInfo = {
         id: socket.id,
@@ -45,10 +60,10 @@ export function registerSocketHandlers(io) {
       });
 
       broadcastRoomUpdate(io, roomCode);
-    });
+    }));
 
     // ▸ 교사 관제탑 입장 (비밀번호 인증)
-    socket.on('join_dashboard', (payload) => {
+    socket.on('join_dashboard', safeHandler('join_dashboard', (payload) => {
       const { roomCode, password } = payload;
 
       if (!TEACHER_PASSWORD || !password || password !== TEACHER_PASSWORD) {
@@ -70,17 +85,19 @@ export function registerSocketHandlers(io) {
         racePhase: room.racePhase || 'waiting',
         raceBalls: room.raceBalls || {},
       });
-    });
+    }));
 
     // ▸ 3D 은하수: 단어 등록
-    socket.on('register_word', (payload) => {
+    socket.on('register_word', safeHandler('register_word', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       const student = room.students.get(socket.id);
       if (!student) return;
 
-      student.word = payload.word;
-      student.position = getWordPosition(payload.word);
+      const word = sanitize(payload.word, 50);
+      if (!word) return;
+      student.word = word;
+      student.position = getWordPosition(word);
 
       io.to(currentRoom).emit('word_registered', {
         studentId: socket.id,
@@ -89,10 +106,10 @@ export function registerSocketHandlers(io) {
         position: student.position,
         color: student.color,
       });
-    });
+    }));
 
     // ▸ 3D 은하수: 좌표 이동
-    socket.on('update_word_position', (payload) => {
+    socket.on('update_word_position', safeHandler('update_word_position', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       const student = room.students.get(socket.id);
@@ -107,10 +124,10 @@ export function registerSocketHandlers(io) {
         position: student.position,
         color: student.color,
       });
-    });
+    }));
 
     // ▸ 어텐션 게임: 슬라이더 업데이트
-    socket.on('update_attention_slider', (payload) => {
+    socket.on('update_attention_slider', safeHandler('update_attention_slider', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       const student = room.students.get(socket.id);
@@ -135,14 +152,14 @@ export function registerSocketHandlers(io) {
         sentenceName: student.sentenceName,
         headCount: student.headCount,
       });
-    });
+    }));
 
     // ═══════════════════════════════════════════════
     // ▸ 경사하강법 레이싱 시스템
     // ═══════════════════════════════════════════════
 
     // 팀 파라미터 등록
-    socket.on('set_race_params', (payload) => {
+    socket.on('set_race_params', safeHandler('set_race_params', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!room.raceTeams) room.raceTeams = {};
@@ -162,10 +179,10 @@ export function registerSocketHandlers(io) {
       io.to(currentRoom).emit('race_teams_updated', {
         teams: room.raceTeams,
       });
-    });
+    }));
 
     // 교사: 레이스 시작
-    socket.on('start_race', () => {
+    socket.on('start_race', safeHandler('start_race', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
@@ -283,10 +300,10 @@ export function registerSocketHandlers(io) {
           console.log(`🏆 레이스 종료! 방 [${roomCode}]`, results);
         }
       }, 33);
-    });
+    }));
 
     // 교사: 레이스 리셋
-    socket.on('reset_race', () => {
+    socket.on('reset_race', safeHandler('reset_race', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
@@ -296,14 +313,14 @@ export function registerSocketHandlers(io) {
       room.raceFinished = {};
       io.to(currentRoom).emit('race_reset');
       console.log(`🔄 레이스 리셋! 방 [${currentRoom}]`);
-    });
+    }));
 
     // ═══════════════════════════════════════════════
     // ▸ 교사 퀴즈 브로드캐스트 시스템
     // ═══════════════════════════════════════════════
 
     // 교사: 퀴즈 전송
-    socket.on('send_quiz', (payload) => {
+    socket.on('send_quiz', safeHandler('send_quiz', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
@@ -323,10 +340,10 @@ export function registerSocketHandlers(io) {
 
       io.to(currentRoom).emit('quiz_broadcast', quiz);
       console.log(`📝 퀴즈 전송! 방 [${currentRoom}] — "${quiz.question}"`);
-    });
+    }));
 
     // 학생: 퀴즈 답변 제출
-    socket.on('submit_quiz_answer', (payload) => {
+    socket.on('submit_quiz_answer', safeHandler('submit_quiz_answer', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!room.activeQuiz) return;
@@ -352,10 +369,10 @@ export function registerSocketHandlers(io) {
       }
 
       console.log(`✅ ${student.studentName} 퀴즈 답변: ${payload.answer}`);
-    });
+    }));
 
     // 교사: 퀴즈 결과 공개
-    socket.on('reveal_quiz_results', () => {
+    socket.on('reveal_quiz_results', safeHandler('reveal_quiz_results', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
@@ -395,10 +412,10 @@ export function registerSocketHandlers(io) {
       room.quizAnswers = {};
 
       console.log(`📊 퀴즈 결과 공개! 정답률 ${results.correctRate}%`);
-    });
+    }));
 
     // 교사: 퀴즈 취소
-    socket.on('cancel_quiz', () => {
+    socket.on('cancel_quiz', safeHandler('cancel_quiz', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
@@ -406,10 +423,10 @@ export function registerSocketHandlers(io) {
       room.quizAnswers = {};
       io.to(currentRoom).emit('quiz_cancelled');
       console.log(`❌ 퀴즈 취소! 방 [${currentRoom}]`);
-    });
+    }));
 
     // ▸ 교사 명령
-    socket.on('teacher_command', (payload) => {
+    socket.on('teacher_command', safeHandler('teacher_command', (payload) => {
       if (!currentRoom) return;
       if (!isTeacher(socket.id, currentRoom)) {
         socket.emit('auth_error', { message: '교사 권한이 필요합니다.' });
@@ -417,10 +434,10 @@ export function registerSocketHandlers(io) {
       }
       console.log(`🎓 교사 명령: ${payload.command}`);
       io.to(currentRoom).emit('teacher_command', payload);
-    });
+    }));
 
     // ▸ 연결 해제
-    socket.on('disconnect', () => {
+    socket.on('disconnect', safeHandler('disconnect', () => {
       if (currentRoom) {
         const room = rooms.get(currentRoom);
         if (!room) return;
@@ -456,6 +473,6 @@ export function registerSocketHandlers(io) {
         }
       }
       console.log(`🌙 연결 해제: ${socket.id}`);
-    });
+    }));
   });
 }
