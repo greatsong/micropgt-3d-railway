@@ -78,6 +78,20 @@ export default function Week5Page() {
         if (socket.connected && roomCode) handleConnect();
         socket.on('connect', handleConnect);
 
+        // 재연결 시 레이스 상태 복원
+        const handleRoomState = (data) => {
+            if (data.raceTeams && Object.keys(data.raceTeams).length > 0) {
+                setTeams(data.raceTeams);
+            }
+            if (data.racePhase && data.racePhase !== 'waiting') {
+                setRacePhase(data.racePhase);
+            }
+            if (data.raceBalls && Object.keys(data.raceBalls).length > 0) {
+                updateBalls(data.raceBalls);
+            }
+        };
+        socket.on('room_state', handleRoomState);
+
         const handleTeamsUpdated = (data) => {
             setTeams(data.teams);
         };
@@ -114,6 +128,7 @@ export default function Week5Page() {
 
         return () => {
             socket.off('connect', handleConnect);
+            socket.off('room_state', handleRoomState);
             socket.off('race_teams_updated', handleTeamsUpdated);
             socket.off('race_started', handleRaceStarted);
             socket.off('race_tick', handleRaceTick);
@@ -185,11 +200,26 @@ export default function Week5Page() {
                 const grad = gradientFn(ball.x, ball.z);
                 ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx;
                 ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz;
+
+                // 속도 제한 (발산 방지)
+                ball.vx = Math.max(-10, Math.min(10, ball.vx));
+                ball.vz = Math.max(-10, Math.min(10, ball.vz));
+
                 ball.x += ball.vx;
                 ball.z += ball.vz;
                 ball.y = lossFunction(ball.x, ball.z);
                 ball.loss = ball.y;
-                ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+
+                // NaN/Infinity 방어 — 이탈 처리
+                if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) {
+                    ball.status = 'escaped';
+                    continue;
+                }
+
+                // trail push 전 유효성 확인
+                if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) {
+                    ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+                }
                 if (ball.trail.length > 200) ball.trail.shift();
 
                 // 이탈 판정

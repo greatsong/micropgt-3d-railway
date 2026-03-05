@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import WebGLErrorBoundary from '@/components/layout/WebGLErrorBoundary';
 import useIsMobile from '@/lib/useIsMobile';
@@ -68,6 +68,10 @@ export default function DashboardPage() {
     const [quizAnswerCount, setQuizAnswerCount] = useState(0);
     const [quizResults, setQuizResults] = useState(null);
     const [authenticated, setAuthenticated] = useState(false);
+
+    // 재연결 시 join_dashboard를 다시 emit하기 위해 인증 정보를 ref로 유지
+    const roomCodeRef = useRef('');
+    const passwordRef = useRef('');
 
     // 소켓 연결 및 이벤트 핸들러 등록 — 인증 성공 후 유지
     useEffect(() => {
@@ -141,6 +145,10 @@ export default function DashboardPage() {
         };
 
         // 퀴즈 이벤트
+        // 새 퀴즈 브로드캐스트 수신 시 이전 결과 정리
+        const onQuizBroadcast = () => {
+            setQuizResults(null);
+        };
         const onQuizAnswerReceived = (data) => {
             setQuizAnswerCount(data.totalAnswered);
             addNotification(`✅ ${data.studentName} 퀴즈 답변 제출 (${data.totalAnswered}/${data.totalStudents})`);
@@ -149,6 +157,21 @@ export default function DashboardPage() {
             setQuizResults(data);
             setQuizLive(null);
             addNotification(`📊 퀴즈 결과: 정답률 ${data.correctRate}%`);
+        };
+
+        // 소켓 끊김 감지 — 로그인 화면으로 전환
+        const onDisconnect = (reason) => {
+            setIsConnected(false);
+            addNotification(`⚠️ 소켓 연결 끊김 (${reason})`);
+        };
+
+        // 소켓 재연결 감지 — 방에 다시 참여하여 room_state 수신
+        const onReconnect = () => {
+            addNotification('🔄 소켓 재연결 중... 방에 다시 참여합니다');
+            socket.emit('join_dashboard', {
+                roomCode: roomCodeRef.current,
+                password: passwordRef.current,
+            });
         };
 
         // 이벤트 등록
@@ -164,8 +187,11 @@ export default function DashboardPage() {
         socket.on('race_finished', onRaceFinished);
         socket.on('race_reset', onRaceReset);
         socket.on('attention_updated', onAttentionUpdated);
+        socket.on('quiz_broadcast', onQuizBroadcast);
         socket.on('quiz_answer_received', onQuizAnswerReceived);
         socket.on('quiz_results', onQuizResults);
+        socket.on('disconnect', onDisconnect);
+        socket.io.on('reconnect', onReconnect);
 
         // cleanup — 컴포넌트 언마운트 또는 authenticated 변경 시 리스너 해제
         return () => {
@@ -181,8 +207,11 @@ export default function DashboardPage() {
             socket.off('race_finished', onRaceFinished);
             socket.off('race_reset', onRaceReset);
             socket.off('attention_updated', onAttentionUpdated);
+            socket.off('quiz_broadcast', onQuizBroadcast);
             socket.off('quiz_answer_received', onQuizAnswerReceived);
             socket.off('quiz_results', onQuizResults);
+            socket.off('disconnect', onDisconnect);
+            socket.io.off('reconnect', onReconnect);
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authenticated]);
@@ -191,6 +220,10 @@ export default function DashboardPage() {
     const handleConnect = () => {
         if (!roomCode.trim() || !password.trim()) return;
         setAuthError('');
+
+        // ref에 인증 정보 저장 — 재연결 시 사용
+        roomCodeRef.current = roomCode.trim();
+        passwordRef.current = password.trim();
 
         const socket = connectSocket();
 

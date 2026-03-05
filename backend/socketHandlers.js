@@ -68,9 +68,13 @@ export function registerSocketHandlers(io) {
         totalCount: room.students.size,
       });
 
+      // 레이스 상태도 포함하여 재연결 시 복구 가능하게 함
       socket.emit('room_state', {
         students: Array.from(room.students.values()),
         roomCode,
+        raceTeams: room.raceTeams || {},
+        racePhase: room.racePhase || 'waiting',
+        raceBalls: room.raceBalls || {},
       });
 
       broadcastRoomUpdate(io, roomCode);
@@ -259,12 +263,38 @@ export function registerSocketHandlers(io) {
           const grad = gradient(ball.x, ball.z);
           ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx;
           ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz;
+
+          // 속도 제한 (발산 방지)
+          ball.vx = Math.max(-10, Math.min(10, ball.vx));
+          ball.vz = Math.max(-10, Math.min(10, ball.vz));
+
           ball.x += ball.vx;
           ball.z += ball.vz;
           ball.y = lossFunction(ball.x, ball.z);
           ball.loss = ball.y;
 
-          ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+          // NaN/Infinity 방어 — 복구 불가하므로 이탈 처리
+          if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) {
+            ball.status = 'escaped';
+            r.raceFinished[teamId] = {
+              teamId,
+              teamName: r.raceTeams[teamId]?.name,
+              finalLoss: NaN,
+              status: 'escaped',
+              time: Date.now() - r.raceStartTime,
+            };
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: r.raceTeams[teamId]?.name,
+              message: '🚨 공 이탈! 수치 오류(NaN) 발생!',
+            });
+            continue;
+          }
+
+          // trail push 전 좌표 유효성 확인
+          if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) {
+            ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+          }
           if (ball.trail.length > 200) ball.trail.shift();
 
           if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) {

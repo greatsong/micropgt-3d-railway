@@ -71,9 +71,11 @@ export default function QuizOverlay() {
     }, [quiz, submitted, results]);
 
     const handleSubmit = (answer) => {
-        if (submitted || timeLeft === 0) return;
-        setSelectedAnswer(answer);
+        // 이중 제출 방지: submitted 또는 시간 초과 시 무시
+        if (submitted || timeLeft <= 0) return;
+        // 즉시 submitted 설정하여 타이머 만료와의 경쟁 조건 방지
         setSubmitted(true);
+        setSelectedAnswer(answer);
 
         const socket = getSocket();
         if (socket) {
