@@ -2,10 +2,12 @@
 
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { lossFunction } from '@/lib/lossFunction';
+import { lossFunctionByLevel } from '@/lib/lossFunction';
+import { useRaceStore } from '@/stores/useRaceStore';
 
 export default function LossSurface() {
     const meshRef = useRef();
+    const mapLevel = useRaceStore((s) => s.mapLevel);
 
     const { geometry, colors } = useMemo(() => {
         const size = 20;
@@ -21,7 +23,7 @@ export default function LossSurface() {
         for (let i = 0; i < positions.count; i++) {
             const x = positions.getX(i);
             const zPlane = positions.getY(i); // PlaneGeometry의 Y는 3D 공간의 -Z
-            const y = lossFunction(x, -zPlane); // Z좌표 부호 반전
+            const y = lossFunctionByLevel(x, -zPlane, mapLevel); // Z좌표 부호 반전
             if (y < minY) minY = y;
             if (y > maxY) maxY = y;
         }
@@ -30,7 +32,7 @@ export default function LossSurface() {
         for (let i = 0; i < positions.count; i++) {
             const x = positions.getX(i);
             const zPlane = positions.getY(i);
-            const y = lossFunction(x, -zPlane); // Z좌표 부호 반전
+            const y = lossFunctionByLevel(x, -zPlane, mapLevel); // Z좌표 부호 반전
 
             positions.setZ(i, y); // Z축을 높이로 사용 (회전 후 Y가 됨)
 
@@ -53,7 +55,7 @@ export default function LossSurface() {
         geo.computeVertexNormals();
 
         return { geometry: geo, colors: colorArray };
-    }, []);
+    }, [mapLevel]);
 
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
@@ -82,4 +84,3 @@ export default function LossSurface() {
     );
 }
 
-export { lossFunction };

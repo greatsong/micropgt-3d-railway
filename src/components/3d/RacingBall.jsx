@@ -4,7 +4,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { lossFunction } from './LossSurface';
+import { lossFunctionByLevel } from '@/lib/lossFunction';
 import styles from './RacingBall.module.css';
 
 export default function RacingBall({ teamName, color, ballData, isMyTeam }) {

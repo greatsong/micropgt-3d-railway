@@ -49,6 +49,17 @@ export default function DashboardPage() {
     const setResults = useRaceStore((st) => st.setResults);
     const raceResults = useRaceStore((st) => st.results);
     const resetRace = useRaceStore((st) => st.reset);
+    const setMapLevel = useRaceStore((st) => st.setMapLevel);
+    const gpActive = useRaceStore((st) => st.gpActive);
+    const setGpActive = useRaceStore((st) => st.setGpActive);
+    const gpStage = useRaceStore((st) => st.gpStage);
+    const setGpStage = useRaceStore((st) => st.setGpStage);
+    const stageResults = useRaceStore((st) => st.stageResults);
+    const addStageResult = useRaceStore((st) => st.addStageResult);
+    const gpFinalResults = useRaceStore((st) => st.gpFinalResults);
+    const setGpFinalResults = useRaceStore((st) => st.setGpFinalResults);
+    const gpCountdown = useRaceStore((st) => st.gpCountdown);
+    const setGpCountdown = useRaceStore((st) => st.setGpCountdown);
 
     const [roomCode, setRoomCode] = useState('');
     const [password, setPassword] = useState('');
@@ -90,6 +101,7 @@ export default function DashboardPage() {
             if (data.raceTeams) setTeams(data.raceTeams);
             if (data.racePhase) setRacePhase(data.racePhase);
             if (data.raceBalls) updateBalls(data.raceBalls);
+            if (data.mapLevel) setMapLevel(data.mapLevel);
         };
 
         const onStudentJoined = (data) => {
@@ -122,7 +134,9 @@ export default function DashboardPage() {
         const onRaceStarted = (data) => {
             setRacePhase('racing');
             updateBalls(data.balls);
-            addNotification('🏁 레이스 시작!');
+            if (data.mapLevel) setMapLevel(data.mapLevel);
+            if (data.gpStage) setGpStage(data.gpStage);
+            addNotification(`🏁 ${data.gpStage ? `GP Stage ${data.gpStage}` : '레이스'} 시작!`);
         };
         const onRaceTick = (data) => updateBalls(data.balls);
         const onRaceAlert = (data) => addNotification(data.message);
@@ -134,6 +148,26 @@ export default function DashboardPage() {
         const onRaceReset = () => {
             resetRace();
             addNotification('🔄 레이스 리셋');
+        };
+
+        // GP 이벤트
+        const onGpStarted = (data) => {
+            setGpActive(true);
+            setGpStage(data.currentStage);
+            addNotification('🏎️ Grand Prix 시작!');
+        };
+        const onGpStageComplete = (data) => {
+            setRacePhase('stageResult');
+            addStageResult(data.stage - 1, data.results);
+            addNotification(`🏁 GP Stage ${data.stage}/3 완료!`);
+        };
+        const onGpCountdown = (data) => {
+            setGpCountdown(data.seconds);
+        };
+        const onGpFinalResults = (data) => {
+            setRacePhase('finished');
+            setGpFinalResults(data.finalResults);
+            addNotification('🏆🏆🏆 Grand Prix 종합 결과 발표!');
         };
 
         // 어텐션 이벤트 (Week 10)
@@ -186,6 +220,10 @@ export default function DashboardPage() {
         socket.on('race_alert', onRaceAlert);
         socket.on('race_finished', onRaceFinished);
         socket.on('race_reset', onRaceReset);
+        socket.on('gp_started', onGpStarted);
+        socket.on('gp_stage_complete', onGpStageComplete);
+        socket.on('gp_countdown', onGpCountdown);
+        socket.on('gp_final_results', onGpFinalResults);
         socket.on('attention_updated', onAttentionUpdated);
         socket.on('quiz_broadcast', onQuizBroadcast);
         socket.on('quiz_answer_received', onQuizAnswerReceived);
@@ -206,6 +244,10 @@ export default function DashboardPage() {
             socket.off('race_alert', onRaceAlert);
             socket.off('race_finished', onRaceFinished);
             socket.off('race_reset', onRaceReset);
+            socket.off('gp_started', onGpStarted);
+            socket.off('gp_stage_complete', onGpStageComplete);
+            socket.off('gp_countdown', onGpCountdown);
+            socket.off('gp_final_results', onGpFinalResults);
             socket.off('attention_updated', onAttentionUpdated);
             socket.off('quiz_broadcast', onQuizBroadcast);
             socket.off('quiz_answer_received', onQuizAnswerReceived);
@@ -269,6 +311,11 @@ export default function DashboardPage() {
     const handleStartRace = () => {
         const socket = getSocket();
         if (socket) socket.emit('start_race');
+    };
+
+    const handleStartGP = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('start_gp');
     };
 
     const handleResetRace = () => {
@@ -402,11 +449,16 @@ export default function DashboardPage() {
                         <>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
-                                onClick={handleStartRace}
-                                disabled={racePhase === 'racing'}
+                                onClick={handleStartGP}
+                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
                             >
-                                <span>🏁 레이스 시작 ({raceTeamCount}팀)</span>
+                                <span>🏎️ GP 시작 ({raceTeamCount}팀)</span>
                             </button>
+                            {gpActive && gpStage > 0 && (
+                                <span style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 700, padding: '0 4px' }}>
+                                    Stage {gpStage}/3 {racePhase === 'stageResult' ? `(${gpCountdown}s)` : ''}
+                                </span>
+                            )}
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleResetRace}
@@ -456,7 +508,7 @@ export default function DashboardPage() {
                             {activeWeek === 3
                                 ? '🌌 임베딩 은하수 · 빔프로젝터 투사용'
                                 : activeWeek === 5
-                                    ? `🏔️ 경사하강법 레이싱 · ${racePhase === 'racing' ? '레이싱 중!' : racePhase === 'finished' ? '완료!' : '대기 중'}`
+                                    ? `🏔️ ${gpActive ? `GP Stage ${gpStage}/3` : '레이싱'} · ${racePhase === 'racing' ? '레이싱 중!' : racePhase === 'finished' ? '완료!' : racePhase === 'stageResult' ? `Stage 결과 (${gpCountdown}s)` : '대기 중'}`
                                     : `✨ 어텐션 게임 · ${Object.keys(attentionStates).length}명 참여 중`}
                         </span>
                     </div>
@@ -497,8 +549,47 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    {/* 레이스 결과 (Week 5) */}
-                    {activeWeek === 5 && raceResults.length > 0 && (
+                    {/* GP 종합 결과 */}
+                    {activeWeek === 5 && gpActive && gpFinalResults.length > 0 && (
+                        <div className={`glass-card ${s.sideSection}`}>
+                            <label className="label-cosmic">🏆 GP 종합 결과</label>
+                            {gpFinalResults.map((r) => (
+                                <div key={r.teamId} className={s.resultRow}>
+                                    <span>{r.gpRank === 1 ? '🥇' : r.gpRank === 2 ? '🥈' : r.gpRank === 3 ? '🥉' : `#${r.gpRank}`}</span>
+                                    <span className={s.resultName}>{r.teamName}</span>
+                                    <span className={s.resultSuccess} style={{ color: '#a78bfa', fontWeight: 800 }}>
+                                        {r.totalPoints}pt
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* GP 스테이지 진행 중 결과 */}
+                    {activeWeek === 5 && gpActive && gpFinalResults.length === 0 && stageResults.some(sr => sr.length > 0) && (
+                        <div className={`glass-card ${s.sideSection}`}>
+                            <label className="label-cosmic">🏁 스테이지별 결과</label>
+                            {stageResults.map((sr, si) => sr.length > 0 && (
+                                <div key={si} style={{ marginBottom: 8 }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: 4 }}>
+                                        Stage {si + 1}
+                                    </div>
+                                    {sr.map((r) => (
+                                        <div key={r.teamId} className={s.resultRow}>
+                                            <span>{r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : `#${r.rank}`}</span>
+                                            <span className={s.resultName}>{r.teamName}</span>
+                                            <span className={r.status === 'escaped' ? s.resultEscaped : s.resultSuccess}>
+                                                {r.status === 'escaped' ? '0pt' : `${r.points}pt`}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* 일반 레이스 결과 (GP 아닐 때) */}
+                    {activeWeek === 5 && !gpActive && raceResults.length > 0 && (
                         <div className={`glass-card ${s.sideSection}`}>
                             <label className="label-cosmic">🏆 레이스 결과</label>
                             {raceResults.map((r) => (
