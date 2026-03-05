@@ -208,12 +208,19 @@ export default function Week5Page() {
             if (allDone) {
                 clearInterval(soloIntervalRef.current);
                 setRacePhase('finished');
-                const res = Object.entries(localBalls).map(([id, b]) => ({
-                    teamId: id,
-                    teamName: id === myId ? (studentName || '나') : 'AI 봇',
-                    finalLoss: b.loss,
-                    status: b.status,
-                }));
+                const res = Object.entries(localBalls)
+                    .map(([id, b]) => ({
+                        teamId: id,
+                        teamName: id === myId ? (studentName || '나') : 'AI 봇',
+                        finalLoss: b.loss,
+                        status: b.status,
+                    }))
+                    .sort((a, b) => {
+                        if (a.status === 'escaped' && b.status !== 'escaped') return 1;
+                        if (b.status === 'escaped' && a.status !== 'escaped') return -1;
+                        return a.finalLoss - b.finalLoss;
+                    })
+                    .map((r, i) => ({ ...r, rank: i + 1 }));
                 setResults(res);
             }
         }, 33);
