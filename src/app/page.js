@@ -36,11 +36,25 @@ export default function HomePage() {
   const [isJoining, setIsJoining] = useState(false);
   const [particles, setParticles] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
+  // 소켓 참조를 보관하여 unmount 시 cleanup에 활용
+  const [socketRef, setSocketRef] = useState(null);
 
   // Generate particles only on client after mount to avoid SSR mismatch
   useEffect(() => {
     setParticles(generateParticles(30));
   }, []);
+
+  // 컴포넌트 unmount 시 소켓 이벤트 핸들러 정리
+  useEffect(() => {
+    return () => {
+      if (socketRef) {
+        socketRef.off('connect');
+        socketRef.off('room_state');
+        socketRef.off('room_full');
+        socketRef.off('connect_error');
+      }
+    };
+  }, [socketRef]);
 
   const handleJoin = () => {
     const errors = {};
@@ -57,6 +71,13 @@ export default function HomePage() {
     setStudentInfo(name.trim(), school, room.trim());
 
     const socket = connectSocket();
+    setSocketRef(socket);
+
+    // 기존 핸들러 제거 후 재등록 (중복 등록 방지)
+    socket.off('connect');
+    socket.off('room_state');
+    socket.off('room_full');
+    socket.off('connect_error');
 
     socket.on('connect', () => {
       setConnected(true);
@@ -69,6 +90,12 @@ export default function HomePage() {
 
     socket.on('room_state', () => {
       router.push('/hub');
+    });
+
+    // 방이 가득 찬 경우 처리
+    socket.on('room_full', () => {
+      setIsJoining(false);
+      addNotification('방이 가득 찼습니다! 선생님에게 문의해주세요.');
     });
 
     socket.on('connect_error', () => {

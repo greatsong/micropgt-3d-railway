@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import QuizOverlay from '@/components/quiz/QuizOverlay';
 import useIsMobile from '@/lib/useIsMobile';
 import { getSocket } from '@/lib/socket';
+import { useClassStore } from '@/stores/useClassStore';
 import s from './ClientLayout.module.css';
 
 function getInitialTheme() {
@@ -46,8 +47,14 @@ export default function ClientLayout({ children }) {
         const onReconnectAttempt = () => setSocketStatus('reconnecting');
         const onReconnectFailed = () => setSocketStatus('disconnected');
 
+        // 서버에서 방이 삭제되면 클라이언트 상태 초기화
+        const onRoomDeleted = () => {
+            useClassStore.getState().clearRoom();
+        };
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
+        socket.on('room_deleted', onRoomDeleted);
         socket.io.on('reconnect_attempt', onReconnectAttempt);
         socket.io.on('reconnect_failed', onReconnectFailed);
 
@@ -56,6 +63,7 @@ export default function ClientLayout({ children }) {
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            socket.off('room_deleted', onRoomDeleted);
             socket.io.off('reconnect_attempt', onReconnectAttempt);
             socket.io.off('reconnect_failed', onReconnectFailed);
         };

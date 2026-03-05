@@ -49,6 +49,9 @@ export const useClassStore = create(
 
             // ── 주차 전환 ──
             setCurrentWeek: (week) => set({ currentWeek: week }),
+
+            // ── 방 삭제 시 상태 초기화 ──
+            clearRoom: () => set({ roomCode: '', isConnected: false, students: [] }),
         }),
         {
             name: 'microgpt-class',

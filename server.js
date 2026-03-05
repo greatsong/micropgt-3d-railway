@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import next from 'next';
 import express from 'express';
+import cors from 'cors';
 import { Server as SocketIOServer } from 'socket.io';
 import { registerSocketHandlers } from './backend/socketHandlers.js';
 import { rooms } from './backend/roomManager.js';
@@ -14,6 +15,7 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   const expressApp = express();
+  expressApp.use(cors());
   expressApp.use(express.json());
 
   // ── REST API ──
@@ -42,12 +44,16 @@ app.prepare().then(() => {
   const io = new SocketIOServer(httpServer, {
     pingTimeout: 60000,
     pingInterval: 25000,
-    ...(dev ? {
-      cors: {
-        origin: ['http://localhost:3000', 'http://localhost:3030'],
-        methods: ['GET', 'POST'],
-      },
-    } : {}),
+    cors: {
+      origin: dev
+        ? ['http://localhost:3000', 'http://localhost:3030']
+        : (origin, callback) => {
+            // Same-origin 요청(origin undefined) 및 Railway 도메인 허용
+            callback(null, true);
+          },
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
   });
 
   registerSocketHandlers(io);

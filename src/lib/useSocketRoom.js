@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useClassStore } from '@/stores/useClassStore';
-import { getSocket, connectSocket } from '@/lib/socket';
+import { getSocket, connectSocket, setupReconnectHandler } from '@/lib/socket';
 
 /**
  * 소켓 방 입장 + 이벤트 바인딩 커스텀 훅
@@ -23,6 +23,9 @@ export function useSocketRoom({ events = {}, autoJoin = true } = {}) {
     useEffect(() => {
         const socket = getSocket();
         if (!socket.connected) connectSocket();
+
+        // 재연결 시 방 자동 재입장 핸들러 등록 (한 번만)
+        setupReconnectHandler(useClassStore.getState);
 
         // 이벤트 핸들러 등록 (핸들러 참조 저장)
         const currentHandlers = {};

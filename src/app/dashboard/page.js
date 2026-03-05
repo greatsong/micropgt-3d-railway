@@ -67,23 +67,17 @@ export default function DashboardPage() {
     const [quizLive, setQuizLive] = useState(null);
     const [quizAnswerCount, setQuizAnswerCount] = useState(0);
     const [quizResults, setQuizResults] = useState(null);
+    const [authenticated, setAuthenticated] = useState(false);
 
-    const handleConnect = () => {
-        if (!roomCode.trim() || !password.trim()) return;
-        setAuthError('');
+    // 소켓 연결 및 이벤트 핸들러 등록 — 인증 성공 후 유지
+    useEffect(() => {
+        if (!authenticated) return;
 
-        const socket = connectSocket();
+        const socket = getSocket();
+        if (!socket) return;
 
-        socket.on('connect', () => {
-            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
-        });
-
-        socket.on('auth_error', (data) => {
-            setAuthError(data.message || '인증에 실패했습니다.');
-            socket.disconnect();
-        });
-
-        socket.on('room_state', (data) => {
+        // 이벤트 핸들러 정의
+        const onRoomState = (data) => {
             setIsConnected(true);
             addNotification('🎓 관제탑 연결 완료');
             setStudents(data.students);
@@ -92,20 +86,20 @@ export default function DashboardPage() {
             if (data.raceTeams) setTeams(data.raceTeams);
             if (data.racePhase) setRacePhase(data.racePhase);
             if (data.raceBalls) updateBalls(data.raceBalls);
-        });
+        };
 
-        socket.on('student_joined', (data) => {
+        const onStudentJoined = (data) => {
             addStudent(data.student);
             addNotification(`🚀 ${data.student.studentName}(${data.student.schoolCode}) 입장! (${data.totalCount}명)`);
-        });
+        };
 
-        socket.on('student_left', (data) => {
+        const onStudentLeft = (data) => {
             removeStudent(data.studentId);
             removeStar(data.studentId);
             addNotification(`💫 ${data.studentName} 퇴장 (${data.totalCount}명)`);
-        });
+        };
 
-        socket.on('word_registered', (data) => {
+        const onWordRegistered = (data) => {
             addOrUpdateStar(data.studentId, {
                 studentName: data.studentName,
                 word: data.word,
@@ -113,49 +107,122 @@ export default function DashboardPage() {
                 color: data.color,
             });
             addNotification(`⭐ ${data.studentName}이(가) "${data.word}" 별을 생성!`);
-        });
+        };
 
-        socket.on('word_moved', (data) => {
+        const onWordMoved = (data) => {
             addOrUpdateStar(data.studentId, { position: data.position });
-        });
+        };
 
         // 레이싱 이벤트
-        socket.on('race_teams_updated', (data) => setTeams(data.teams));
-        socket.on('race_started', (data) => {
+        const onRaceTeamsUpdated = (data) => setTeams(data.teams);
+        const onRaceStarted = (data) => {
             setRacePhase('racing');
             updateBalls(data.balls);
             addNotification('🏁 레이스 시작!');
-        });
-        socket.on('race_tick', (data) => updateBalls(data.balls));
-        socket.on('race_alert', (data) => addNotification(data.message));
-        socket.on('race_finished', (data) => {
+        };
+        const onRaceTick = (data) => updateBalls(data.balls);
+        const onRaceAlert = (data) => addNotification(data.message);
+        const onRaceFinished = (data) => {
             setRacePhase('finished');
             setResults(data.results);
             addNotification('🏆 레이스 종료!');
-        });
-        socket.on('race_reset', () => {
+        };
+        const onRaceReset = () => {
             resetRace();
             addNotification('🔄 레이스 리셋');
-        });
+        };
 
         // 어텐션 이벤트 (Week 10)
-        socket.on('attention_updated', (data) => {
+        const onAttentionUpdated = (data) => {
             setAttentionStates((prev) => ({
                 ...prev,
                 [data.studentId]: data,
             }));
-        });
+        };
 
         // 퀴즈 이벤트
-        socket.on('quiz_answer_received', (data) => {
+        const onQuizAnswerReceived = (data) => {
             setQuizAnswerCount(data.totalAnswered);
             addNotification(`✅ ${data.studentName} 퀴즈 답변 제출 (${data.totalAnswered}/${data.totalStudents})`);
-        });
-        socket.on('quiz_results', (data) => {
+        };
+        const onQuizResults = (data) => {
             setQuizResults(data);
             setQuizLive(null);
             addNotification(`📊 퀴즈 결과: 정답률 ${data.correctRate}%`);
-        });
+        };
+
+        // 이벤트 등록
+        socket.on('room_state', onRoomState);
+        socket.on('student_joined', onStudentJoined);
+        socket.on('student_left', onStudentLeft);
+        socket.on('word_registered', onWordRegistered);
+        socket.on('word_moved', onWordMoved);
+        socket.on('race_teams_updated', onRaceTeamsUpdated);
+        socket.on('race_started', onRaceStarted);
+        socket.on('race_tick', onRaceTick);
+        socket.on('race_alert', onRaceAlert);
+        socket.on('race_finished', onRaceFinished);
+        socket.on('race_reset', onRaceReset);
+        socket.on('attention_updated', onAttentionUpdated);
+        socket.on('quiz_answer_received', onQuizAnswerReceived);
+        socket.on('quiz_results', onQuizResults);
+
+        // cleanup — 컴포넌트 언마운트 또는 authenticated 변경 시 리스너 해제
+        return () => {
+            socket.off('room_state', onRoomState);
+            socket.off('student_joined', onStudentJoined);
+            socket.off('student_left', onStudentLeft);
+            socket.off('word_registered', onWordRegistered);
+            socket.off('word_moved', onWordMoved);
+            socket.off('race_teams_updated', onRaceTeamsUpdated);
+            socket.off('race_started', onRaceStarted);
+            socket.off('race_tick', onRaceTick);
+            socket.off('race_alert', onRaceAlert);
+            socket.off('race_finished', onRaceFinished);
+            socket.off('race_reset', onRaceReset);
+            socket.off('attention_updated', onAttentionUpdated);
+            socket.off('quiz_answer_received', onQuizAnswerReceived);
+            socket.off('quiz_results', onQuizResults);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authenticated]);
+
+    // 접속 버튼 핸들러 — 소켓 연결 + 인증 요청만 수행
+    const handleConnect = () => {
+        if (!roomCode.trim() || !password.trim()) return;
+        setAuthError('');
+
+        const socket = connectSocket();
+
+        // 인증 관련 일회성 핸들러 — 매 시도마다 교체
+        socket.off('connect');
+        socket.off('auth_error');
+
+        const onConnect = () => {
+            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
+        };
+
+        const onAuthError = (data) => {
+            // 소켓은 유지하고 에러 메시지만 표시 — 재시도 가능
+            setAuthError(data.message || '인증에 실패했습니다.');
+            setAuthenticated(false);
+        };
+
+        const onRoomState = () => {
+            // 인증 성공 — 일회성 핸들러 정리 후 authenticated 플래그로 전환
+            socket.off('auth_error', onAuthError);
+            setAuthenticated(true);
+        };
+
+        socket.on('connect', onConnect);
+        socket.on('auth_error', onAuthError);
+        // room_state가 오면 인증 성공으로 판단
+        socket.once('room_state', onRoomState);
+
+        // 이미 연결된 상태라면 즉시 인증 요청
+        if (socket.connected) {
+            onConnect();
+        }
     };
 
     const handleTeacherCommand = (command) => {

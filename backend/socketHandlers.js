@@ -4,6 +4,8 @@ import { getWordPosition, lossFunction, gradient } from './gameLogic.js';
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
 if (!TEACHER_PASSWORD) console.warn('⚠️ TEACHER_PASSWORD 환경변수가 설정되지 않았습니다. 교사 인증이 작동하지 않습니다.');
 
+const MAX_STUDENTS_PER_ROOM = 50;
+
 function sanitize(str, maxLen = 50) {
   if (typeof str !== 'string') return '';
   return str.replace(/[<>&"']/g, '').trim().slice(0, maxLen);
@@ -28,6 +30,18 @@ export function registerSocketHandlers(io) {
       const schoolCode = sanitize(payload.schoolCode, 10);
       const roomCode = sanitize(payload.roomCode, 10);
       if (!studentName || !roomCode) return;
+
+      // 방 인원 제한 체크
+      const existingRoom = getRoomState(roomCode);
+      if (existingRoom.students.size >= MAX_STUDENTS_PER_ROOM) {
+        socket.emit('room_full', {
+          message: `방이 가득 찼습니다. 최대 ${MAX_STUDENTS_PER_ROOM}명까지 입장할 수 있습니다.`,
+          maxCapacity: MAX_STUDENTS_PER_ROOM,
+        });
+        console.log(`🚫 ${studentName}(${schoolCode}) → 방 [${roomCode}] 입장 거부 (정원 초과: ${existingRoom.students.size}/${MAX_STUDENTS_PER_ROOM})`);
+        return;
+      }
+
       currentRoom = roomCode;
       studentInfo = {
         id: socket.id,
@@ -223,8 +237,11 @@ export function registerSocketHandlers(io) {
 
       console.log(`🏁 레이스 시작! 방 [${currentRoom}] — ${Object.keys(room.raceTeams).length}팀`);
 
-      // 물리 시뮬레이션 루프 (30fps)
-      if (room.raceInterval) clearInterval(room.raceInterval);
+      // 기존 시뮬레이션 루프가 있으면 안전하게 정리 후 재시작
+      if (room.raceInterval) {
+        clearInterval(room.raceInterval);
+        room.raceInterval = null;
+      }
       const roomCode = currentRoom;
       room.raceInterval = setInterval(() => {
         const r = rooms.get(roomCode);
@@ -467,6 +484,8 @@ export function registerSocketHandlers(io) {
         }
 
         if (room.students.size === 0 && !room.teacherId) {
+          // 방 삭제 전 남은 소켓에 알림 (클라이언트 localStorage 정리용)
+          io.to(currentRoom).emit('room_deleted', { roomCode: currentRoom });
           if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
           rooms.delete(currentRoom);
           console.log(`🗑️ 빈 방 삭제: [${currentRoom}]`);
