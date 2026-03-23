@@ -13,9 +13,9 @@ RUN npm run build
 RUN npm prune --production
 
 ENV NODE_ENV=production
-ENV PORT=4024
-ENV APP_BASE_PATH=/turing-test-codex
+ENV PORT=3000
+ENV APP_BASE_PATH=/turing-test
 
-EXPOSE 4024
+EXPOSE 3000
 
 CMD ["node", "server/index.js"]
