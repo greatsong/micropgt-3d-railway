@@ -26,3 +26,11 @@ yarn-error.log*
 
 # Misc
 *.pem
+
+# SQLite runtime files
+*.db
+*.db-shm
+*.db-wal
+
+# Vite timestamp files
+*.timestamp-*

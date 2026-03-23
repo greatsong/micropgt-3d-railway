@@ -1,0 +1,217 @@
+/* ══════════════════════════════════════════════════════════════
+   게임 전용 컴포넌트 (index.css 위에 추가)
+   — base 토큰을 재정의하지 않음
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── btn 시스템 (교사/게임 UI) ────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  font-size: 0.9rem; font-weight: 600; font-family: inherit;
+  transition: opacity 0.15s, transform 0.1s; white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-danger    { background: var(--danger); color: #fff; }
+.btn-success   { background: var(--success); color: #fff; }
+.btn-outline   { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-ghost     { background: transparent; color: var(--muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+.btn-lg  { padding: 13px 26px; font-size: 1rem; }
+.btn-sm  { padding: 6px 14px; font-size: 0.8rem; }
+.btn-full { width: 100%; }
+
+/* ── 카드 (game 전용 .card) ──────────────────────────── */
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); padding: 20px;
+}
+
+/* ── 입력 (game 전용 .input / .select) ───────────────── */
+.input, .select {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit;
+  color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s;
+}
+.input:focus, .select:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--muted); }
+
+/* ── 타이머 ──────────────────────────────────────────── */
+.timer-display {
+  display: flex; flex-direction: column; align-items: center;
+  background: #1E293B; color: #F1F5F9;
+  border-radius: var(--radius); padding: 12px 24px;
+}
+.timer-display .time { font-size: 2.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.timer-display .label { font-size: 0.78rem; color: #94A3B8; }
+.timer-display.urgent .time { color: #F87171; }
+
+/* ── 턴 도트 ─────────────────────────────────────────── */
+.turn-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); }
+.turn-dot.done { background: var(--accent); }
+.turn-dot.current { background: var(--warning); }
+
+/* ── 교사 레이아웃 (사이드바 + 메인) ─────────────────── */
+.teacher-layout { display: flex; min-height: 100vh; }
+.teacher-sidebar {
+  width: 280px; min-height: 100vh; background: #1E293B; color: #F1F5F9;
+  display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+}
+.teacher-main { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── 사이드바 ────────────────────────────────────────── */
+.sidebar-section-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #94A3B8; margin-bottom: 10px;
+}
+.sidebar-item-label { font-size: 0.78rem; color: #94A3B8; margin-bottom: 4px; }
+
+/* ── 옵션 버튼 (라운드 설정) ─────────────────────────── */
+.option-group { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+.option-btn {
+  padding: 7px 14px; border-radius: 6px; border: 2px solid #334155;
+  background: transparent; color: #94A3B8; font-family: inherit;
+  font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.option-btn:hover { border-color: var(--accent); color: #F1F5F9; }
+.option-btn.selected { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+/* ── 팀 그리드 (교사 대시보드) ───────────────────────── */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.team-card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 2px solid var(--border); padding: 14px; cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.team-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.team-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+.team-card-color-bar { height: 4px; border-radius: 3px; margin-bottom: 8px; }
+.team-card-name { font-weight: 700; font-size: 1rem; margin-bottom: 2px; }
+.team-card-members { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+.team-card-top { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+
+/* ── 진행 바 ─────────────────────────────────────────── */
+.progress-bar { height: 6px; border-radius: 4px; background: #334155; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.3s; }
+
+/* ── 채팅 턴 (교사 뷰) ──────────────────────────────── */
+.chat-container { display: flex; flex-direction: column; gap: 8px; }
+.chat-turn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+.chat-turn.current { border-color: var(--accent); background: var(--accent-soft); }
+.chat-turn-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.chat-question { font-weight: 600; margin-bottom: 4px; }
+.chat-answer { color: var(--muted); }
+.chat-waiting { display: flex; align-items: center; gap: 8px; color: var(--warning); font-weight: 600; }
+
+/* ── 투표 (게임 전용 vote-turn) ──────────────────────── */
+.vote-turn {
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 8px;
+}
+.vote-turn.selected-human { border-color: var(--judge); background: var(--judge-soft); }
+.vote-turn.selected-ai    { border-color: var(--vote); background: var(--vote-soft); }
+.vote-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.vote-btn {
+  padding: 10px; border-radius: var(--radius-sm); border: 2px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 0.95rem; font-weight: 600;
+  font-family: inherit; transition: all 0.15s; text-align: center;
+}
+.vote-btn.human { border-color: var(--judge); color: var(--judge); }
+.vote-btn.human.selected { background: var(--judge); color: #fff; }
+.vote-btn.ai    { border-color: var(--vote); color: var(--vote); }
+.vote-btn.ai.selected { background: var(--vote); color: #fff; }
+.vote-btn:active { transform: scale(0.97); }
+.vote-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── 순위 ────────────────────────────────────────────── */
+.rankings { display: flex; flex-direction: column; gap: 8px; }
+.rank-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border);
+}
+.rank-num { font-size: 1.15rem; font-weight: 700; min-width: 28px; text-align: center; }
+
+/* ── 학생 헤더 (게임 중 상단 바) ─────────────────────── */
+.student-header {
+  background: #1E293B; color: #F1F5F9; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10; border-radius: var(--radius) var(--radius) 0 0;
+}
+.student-header .title { font-weight: 700; font-size: 0.95rem; }
+.student-header .timer-sm {
+  font-size: 1.15rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: #F1F5F9;
+}
+.student-header .timer-sm.urgent { color: #F87171; }
+.student-content { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── 대기 화면 ───────────────────────────────────────── */
+.waiting-screen {
+  min-height: 40vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; text-align: center; padding: 32px 20px;
+}
+.waiting-spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 교사 PIN 화면 ───────────────────────────────────── */
+.gate-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: #1E293B; padding: 20px;
+}
+.gate-card {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 32px 28px; max-width: 360px; width: 100%;
+  text-align: center; box-shadow: var(--shadow-lg);
+}
+
+/* ── QR ──────────────────────────────────────────────── */
+.qr-container {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 16px; background: white; border-radius: var(--radius); border: 2px solid var(--border);
+}
+.qr-url { font-size: 0.78rem; color: var(--muted); text-align: center; word-break: break-all; }
+
+/* ── 유틸 ────────────────────────────────────────────── */
+.text-muted { color: var(--muted); font-size: 0.85rem; }
+.text-sm { font-size: 0.85rem; }
+.label { font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; display: block; }
+.error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* ── 히스토리 ────────────────────────────────────────── */
+.history-list { display: grid; gap: 8px; }
+.history-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; padding: 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface);
+}
+.history-row.selected { background: var(--accent-soft); border-color: var(--accent); }
+
+/* ── 턴 칩 ───────────────────────────────────────────── */
+.turn-chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.turn-chip {
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.turn-chip.selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.turn-chip.correct { border-color: rgba(34, 197, 94, 0.3); }
+.turn-chip.wrong { border-color: rgba(239, 68, 68, 0.25); }
+
+/* ── 대화 리스트 (교사) ──────────────────────────────── */
+.conversation-list { display: grid; gap: 8px; }
