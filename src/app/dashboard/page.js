@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
         const onStudentJoined = (data) => {
             addStudent(data.student);
-            addNotification(`🚀 ${data.student.studentName}(${data.student.schoolCode}) 입장! (${data.totalCount}명)`);
+            addNotification(`🚀 ${data.student.studentName} 입장! (${data.totalCount}명)`);
         };
 
         const onStudentLeft = (data) => {
@@ -534,11 +534,6 @@ export default function DashboardPage() {
                                         />
                                         <div>
                                             <div className={s.cardName}>{st.studentName}</div>
-                                            <div className={s.cardSchool}>
-                                                {st.schoolCode === 'DANGOK_HIGH' ? '당곡고' :
-                                                    st.schoolCode === 'SINRIM_HIGH' ? '신림고' :
-                                                        st.schoolCode === 'SUDO_GIRL' ? '수도여고' : st.schoolCode}
-                                            </div>
                                         </div>
                                         {stars[st.id] && (
                                             <span className={s.cardWord}>{stars[st.id].word}</span>

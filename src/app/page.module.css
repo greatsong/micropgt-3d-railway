@@ -55,13 +55,6 @@
     margin-bottom: 16px;
 }
 
-.schoolBadges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-}
-
 .form {
     display: flex;
     flex-direction: column;

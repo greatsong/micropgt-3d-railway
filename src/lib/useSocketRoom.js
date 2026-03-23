@@ -16,7 +16,6 @@ import { getSocket, connectSocket, setupReconnectHandler } from '@/lib/socket';
  */
 export function useSocketRoom({ events = {}, autoJoin = true } = {}) {
     const studentName = useClassStore((s) => s.studentName);
-    const schoolCode = useClassStore((s) => s.schoolCode);
     const roomCode = useClassStore((s) => s.roomCode);
     const handlersRef = useRef({});
 
@@ -40,7 +39,6 @@ export function useSocketRoom({ events = {}, autoJoin = true } = {}) {
             if (autoJoin && roomCode) {
                 socket.emit('join_class', {
                     studentName: studentName || '익명',
-                    schoolCode: schoolCode || 'UNKNOWN',
                     roomCode,
                 });
             }
@@ -56,7 +54,7 @@ export function useSocketRoom({ events = {}, autoJoin = true } = {}) {
                 socket.off(event, handler);
             }
         };
-    }, [roomCode, studentName, schoolCode, autoJoin]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [roomCode, studentName, autoJoin]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const emit = useCallback((event, data) => {
         const socket = getSocket();

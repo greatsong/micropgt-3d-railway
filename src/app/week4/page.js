@@ -308,7 +308,6 @@ export default function Week4Page() {
     const router = useRouter();
     const isMobile = useIsMobile();
     const studentName = useClassStore((st) => st.studentName);
-    const schoolCode = useClassStore((st) => st.schoolCode);
     const roomCode = useClassStore((st) => st.roomCode);
     const students = useClassStore((st) => st.students);
     const setStudents = useClassStore((st) => st.setStudents);
@@ -342,7 +341,6 @@ export default function Week4Page() {
             if (roomCode) {
                 socket.emit('join_class', {
                     studentName: studentName || '익명',
-                    schoolCode: schoolCode || 'UNKNOWN',
                     roomCode,
                 });
             }

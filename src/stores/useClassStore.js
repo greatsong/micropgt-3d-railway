@@ -8,7 +8,6 @@ export const useClassStore = create(
         (set, get) => ({
             // ── 접속 정보 (localStorage 저장) ──
             studentName: '',
-            schoolCode: '',
             roomCode: '',
 
             // ── 실시간 상태 (저장 안 함) ──
@@ -19,8 +18,8 @@ export const useClassStore = create(
             notifications: [],
 
             // ── 액션: 학생 입장 정보 설정 ──
-            setStudentInfo: (name, school, room) =>
-                set({ studentName: name, schoolCode: school, roomCode: room }),
+            setStudentInfo: (name, room) =>
+                set({ studentName: name, roomCode: room }),
 
             setConnected: (val) => set({ isConnected: val }),
             setTeacher: (val) => set({ isTeacher: val }),
@@ -57,7 +56,6 @@ export const useClassStore = create(
             name: 'microgpt-class',
             partialize: (state) => ({
                 studentName: state.studentName,
-                schoolCode: state.schoolCode,
                 roomCode: state.roomCode,
             }),
         }

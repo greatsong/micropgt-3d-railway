@@ -27,7 +27,6 @@ export function registerSocketHandlers(io) {
     // ▸ 학생 입장
     socket.on('join_class', safeHandler('join_class', (payload) => {
       const studentName = sanitize(payload.studentName, 20);
-      const schoolCode = sanitize(payload.schoolCode, 10);
       const roomCode = sanitize(payload.roomCode, 10);
       if (!studentName || !roomCode) return;
 
@@ -38,7 +37,7 @@ export function registerSocketHandlers(io) {
           message: `방이 가득 찼습니다. 최대 ${MAX_STUDENTS_PER_ROOM}명까지 입장할 수 있습니다.`,
           maxCapacity: MAX_STUDENTS_PER_ROOM,
         });
-        console.log(`🚫 ${studentName}(${schoolCode}) → 방 [${roomCode}] 입장 거부 (정원 초과: ${existingRoom.students.size}/${MAX_STUDENTS_PER_ROOM})`);
+        console.log(`🚫 ${studentName} → 방 [${roomCode}] 입장 거부 (정원 초과: ${existingRoom.students.size}/${MAX_STUDENTS_PER_ROOM})`);
         return;
       }
 
@@ -46,7 +45,6 @@ export function registerSocketHandlers(io) {
       studentInfo = {
         id: socket.id,
         studentName,
-        schoolCode,
         roomCode,
         joinedAt: Date.now(),
         word: null,
@@ -61,7 +59,7 @@ export function registerSocketHandlers(io) {
       const room = getRoomState(roomCode);
       room.students.set(socket.id, studentInfo);
 
-      console.log(`🚀 ${studentName}(${schoolCode}) → 방 [${roomCode}] 입장 (${room.students.size}명)`);
+      console.log(`🚀 ${studentName} → 방 [${roomCode}] 입장 (${room.students.size}명)`);
 
       io.to(roomCode).emit('student_joined', {
         student: studentInfo,

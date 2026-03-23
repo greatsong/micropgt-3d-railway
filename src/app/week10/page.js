@@ -150,7 +150,6 @@ export default function Week10Page() {
             if (roomCode) {
                 socket.emit('join_class', {
                     studentName: studentName || '익명',
-                    schoolCode: 'UNKNOWN',
                     roomCode,
                 });
             }

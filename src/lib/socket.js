@@ -40,7 +40,7 @@ export function disconnectSocket() {
 
 /**
  * 재연결 성공 시 자동으로 방에 재입장하는 핸들러 등록.
- * useClassStore에서 roomCode, studentName, schoolCode를 읽어 join_class를 다시 emit한다.
+ * useClassStore에서 roomCode, studentName을 읽어 join_class를 다시 emit한다.
  * 여러 번 호출해도 핸들러는 한 번만 등록된다.
  *
  * @param {Function} getStoreState - useClassStore.getState (zustand)
@@ -55,12 +55,11 @@ export function setupReconnectHandler(getStoreState) {
     s.io.on('reconnect', (attemptNumber) => {
         console.log(`[socket] 재연결 성공 (시도 ${attemptNumber}회)`);
 
-        const { roomCode, studentName, schoolCode } = getStoreState();
+        const { roomCode, studentName } = getStoreState();
         if (roomCode) {
             console.log(`[socket] 방 재입장: ${roomCode}`);
             s.emit('join_class', {
                 studentName: studentName || '익명',
-                schoolCode: schoolCode || 'UNKNOWN',
                 roomCode,
             });
         }

@@ -6,12 +6,6 @@ import { useClassStore } from '@/stores/useClassStore';
 import { connectSocket } from '@/lib/socket';
 import s from './page.module.css';
 
-const SCHOOLS = [
-  { code: 'DANGOK_HIGH', name: '당곡고등학교', emoji: '🏫' },
-  { code: 'SINRIM_HIGH', name: '신림고등학교', emoji: '🏫' },
-  { code: 'SUDO_GIRL', name: '수도여자고등학교', emoji: '🏫' },
-];
-
 // Pre-generate stable particle data to avoid hydration mismatch
 function generateParticles(count) {
   return Array.from({ length: count }, (_, i) => ({
@@ -31,7 +25,6 @@ export default function HomePage() {
   const addNotification = useClassStore((st) => st.addNotification);
 
   const [name, setName] = useState('');
-  const [school, setSchool] = useState('');
   const [room, setRoom] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -59,7 +52,6 @@ export default function HomePage() {
   const handleJoin = () => {
     const errors = {};
     if (!name.trim()) errors.name = true;
-    if (!school) errors.school = true;
     if (!room.trim()) errors.room = true;
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -68,7 +60,7 @@ export default function HomePage() {
     setFieldErrors({});
 
     setIsJoining(true);
-    setStudentInfo(name.trim(), school, room.trim());
+    setStudentInfo(name.trim(), room.trim());
 
     const socket = connectSocket();
     setSocketRef(socket);
@@ -83,7 +75,6 @@ export default function HomePage() {
       setConnected(true);
       socket.emit('join_class', {
         studentName: name.trim(),
-        schoolCode: school,
         roomCode: room.trim(),
       });
     });
@@ -133,13 +124,6 @@ export default function HomePage() {
             <span className="text-gradient">GPT야 놀자!</span>
           </h1>
           <p className={s.subtitle}>3D 인공지능 융합 교육 플랫폼</p>
-          <div className={s.schoolBadges}>
-            {SCHOOLS.map((sc) => (
-              <span key={sc.code} className="badge-glow">
-                {sc.emoji} {sc.name}
-              </span>
-            ))}
-          </div>
         </div>
 
         {/* 입력 폼 */}
@@ -157,23 +141,6 @@ export default function HomePage() {
           </div>
 
           <div>
-            <label className="label-cosmic">소속 학교</label>
-            <select
-              className={`select-cosmic ${fieldErrors.school ? s.inputError : ''}`}
-              value={school}
-              onChange={(e) => { setSchool(e.target.value); setFieldErrors(prev => ({ ...prev, school: false })); }}
-            >
-              <option value="">학교를 선택하세요</option>
-              {SCHOOLS.map((sc) => (
-                <option key={sc.code} value={sc.code}>
-                  {sc.name}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.school && <p className={s.errorMsg}>학교를 선택해주세요</p>}
-          </div>
-
-          <div>
             <label className="label-cosmic">비밀 입장 코드</label>
             <input
               className={`input-cosmic ${fieldErrors.room ? s.inputError : ''}`}
@@ -187,7 +154,7 @@ export default function HomePage() {
           <button
             className={`btn-nova ${s.joinBtn}`}
             onClick={handleJoin}
-            disabled={isJoining || !name.trim() || !school || !room.trim()}
+            disabled={isJoining || !name.trim() || !room.trim()}
           >
             <span>{isJoining ? '🌠 우주로 진입 중...' : '🚀 우주선 탑승하기'}</span>
           </button>

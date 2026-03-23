@@ -40,7 +40,6 @@ export default function Week5Page() {
     const router = useRouter();
     const isMobile = useIsMobile();
     const studentName = useClassStore((st) => st.studentName);
-    const schoolCode = useClassStore((st) => st.schoolCode);
     const roomCode = useClassStore((st) => st.roomCode);
     const addNotification = useClassStore((st) => st.addNotification);
 
@@ -89,7 +88,6 @@ export default function Week5Page() {
             if (roomCode) {
                 socket.emit('join_class', {
                     studentName: studentName || '익명',
-                    schoolCode: schoolCode || 'UNKNOWN',
                     roomCode,
                 });
             }
