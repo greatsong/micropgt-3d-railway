@@ -57,6 +57,14 @@ app.use((req, res, next) => {
   next()
 })
 
+// ── 헬스체크 ──────────────────────────────────────────────────────────────
+app.get(`${BASE_PATH}/api/health`, (req, res) => {
+  res.json({ status: 'ok', timestamp: Date.now() })
+})
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: Date.now() })
+})
+
 // ── 교사 PIN 인증 ─────────────────────────────────────────────────────────
 const TEACHER_PIN = process.env.TEACHER_PIN || '000000'
 

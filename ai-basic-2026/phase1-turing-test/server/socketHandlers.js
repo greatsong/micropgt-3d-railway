@@ -130,11 +130,12 @@ export function registerSocketHandlers(io, db) {
       if (getRole(roundState.pairs, teamId) === 'respondent') return
       if (roundState.teamAwaitingAnswer[teamId]) return
 
-      const turnIndex = roundState.teamCurrentTurn[teamId]
-      if (turnIndex >= roundState.totalTurns) return
+      const turnIndex = roundState.teamCurrentTurn?.[teamId]
+      if (turnIndex == null || turnIndex >= roundState.totalTurns) return
 
       const turnNum = turnIndex + 1
       const respondentType = roundState.teamTurns[teamId]?.[turnIndex]
+      if (!respondentType) return
       const partner = getPartner(roundState.pairs, teamId)
       const questionSentAt = Date.now()
 
@@ -286,7 +287,9 @@ export function registerSocketHandlers(io, db) {
       const sourceTeam = getPartner(roundState.pairs, teamId)
       if (!sourceTeam) return
 
-      const turnNum = roundState.teamCurrentTurn[sourceTeam.id] + 1
+      const currentTurn = roundState.teamCurrentTurn?.[sourceTeam.id]
+      if (currentTurn == null) return
+      const turnNum = currentTurn + 1
       const sourceTurn = db.prepare(`
         SELECT * FROM turns
         WHERE round_id = ? AND team_id = ? AND turn_number = ? AND respondent_type = 'human'
