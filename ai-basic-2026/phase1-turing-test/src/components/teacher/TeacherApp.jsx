@@ -677,31 +677,81 @@ export default function TeacherApp({ navigate }) {
             </section>
           )}
 
-          {/* ═══ 팀 그리드 (라운드 없을 때) ═══ */}
+          {/* ═══ 아레나 대기 (라운드 없을 때) ═══ */}
           {(!roundDetail || currentResults || finalResults) && !finalResults && !currentResults && (
-            <section className="panel">
-              <div className="section-header">
-                <div>
-                  <p className="eyebrow">TEAMS</p>
-                  <h2>{session.teams.length}팀 참여 중</h2>
+            <>
+              {/* 중앙 경기장 헤더 */}
+              <div style={{
+                padding: '32px 24px', borderRadius: 12, textAlign: 'center',
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(139,92,246,0.04) 50%, rgba(99,102,241,0.06) 100%)',
+                border: '1px solid rgba(99,102,241,0.08)',
+                marginBottom: 4,
+              }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
+                  background: 'rgba(99,102,241,0.08)', border: '2px solid rgba(99,102,241,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.6rem',
+                }}>⚔️</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#818cf8', letterSpacing: '0.12em', marginBottom: 6 }}>
+                  ARENA
                 </div>
-                <span className="muted">홀수 팀이면 1팀은 관찰 전용 심판으로 배정됩니다.</span>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#e2e8f0', margin: '0 0 8px' }}>
+                  {session.teams.length === 0 ? '팀 입장 대기 중' : `${session.teams.length}팀 입장 완료`}
+                </h2>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
+                  {session.teams.length < 2
+                    ? '2팀 이상 입장하면 라운드를 시작할 수 있습니다'
+                    : '사이드바에서 라운드 설정 후 시작하세요'}
+                </p>
+                {session.teams.length >= 2 && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12,
+                    padding: '6px 14px', borderRadius: 8,
+                    background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)',
+                    fontSize: '0.72rem', color: '#34d399', fontWeight: 600,
+                  }}>
+                    ✅ {Math.floor(session.teams.length / 2)} 매치 편성 가능
+                    {session.teams.length % 2 === 1 && ' · 1팀 관찰자'}
+                  </div>
+                )}
               </div>
-              <div className="team-grid">
-                {session.teams.map((team) => (
-                  <button key={team.id} className={`team-card ${selectedTeamId === team.id ? 'selected' : ''}`} onClick={() => selectTeam(team.id)}>
-                    <div className="team-card-top" style={{ borderTop: `3px solid ${team.color}` }}>
-                      <span className="team-dot" style={{ background: team.color }} />
-                      <div>
-                        <strong>{team.name}</strong>
-                        <p className="muted">{team.members.join(' · ')}</p>
-                      </div>
-                    </div>
-                    <p className="team-progress score-line">누적 {team.total_score}점</p>
-                  </button>
-                ))}
-              </div>
-            </section>
+
+              {/* 팀 카드 그리드 */}
+              {session.teams.length > 0 && (
+                <section className="panel" style={{ padding: '16px 20px' }}>
+                  <p className="eyebrow" style={{ marginBottom: 12 }}>PARTICIPANTS</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                    {session.teams.map((team) => (
+                      <button key={team.id}
+                        onClick={() => selectTeam(team.id)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '12px 14px', borderRadius: 10,
+                          background: selectedTeamId === team.id ? 'rgba(99,102,241,0.08)' : 'var(--surface2, #1e293b)',
+                          border: selectedTeamId === team.id ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                          cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
+                          borderTop: `3px solid ${team.color}`,
+                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: team.color }} />
+                          <strong style={{ fontSize: '0.88rem' }}>{team.name}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: 6 }}>
+                          {team.members.join(' · ')}
+                        </div>
+                        <div style={{
+                          fontSize: '0.7rem', fontWeight: 600,
+                          color: team.total_score > 0 ? '#818cf8' : '#475569',
+                        }}>
+                          누적 {team.total_score}점
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
           )}
 
           {/* ═══ 라이브 채팅 뷰어 ═══ */}
