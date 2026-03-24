@@ -387,14 +387,15 @@ export default function TeacherApp({ navigate }) {
     <div className="page-shell teacher-shell">
       <header className="topbar">
         <div className="headline-block">
-          <p className="eyebrow">🎮 DASHBOARD</p>
+          <p className="eyebrow" style={{ fontFamily: "'Courier New', monospace", letterSpacing: '0.12em' }}>🔐 COMMAND CENTER</p>
           <h1>이미테이션 게임</h1>
-          <p className="muted hero-copy">질문 → 위장 → 판별, 매 턴이 심리전!</p>
+          <p className="muted hero-copy">기계인가, 인간인가? — The Imitation Game</p>
         </div>
         <div className="topbar-actions">
-          <span className="badge badge-blue">🎮 실시간 운영</span>
+          <span className="badge badge-blue" style={{ fontFamily: "'Courier New', monospace" }}>🔐 LIVE OPS</span>
           <button className="ghost-button" onClick={() => navigator.clipboard?.writeText(joinUrl)}>참가 링크 복사</button>
-          <button className="ghost-button" onClick={() => navigate('/')}>학생 화면 보기</button>
+          <button className="ghost-button" onClick={() => navigate('/guide')}>사용 안내</button>
+          <button className="ghost-button" onClick={() => navigate('/')}>학생 화면</button>
         </div>
       </header>
 
@@ -517,42 +518,43 @@ export default function TeacherApp({ navigate }) {
           {roundDetail && !currentResults && !finalResults && (
             <div style={{
               padding: '20px 24px', borderRadius: 12,
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))',
-              border: '1px solid rgba(99,102,241,0.12)',
+              background: 'linear-gradient(135deg, rgba(212,165,116,0.06) 0%, rgba(74,222,128,0.04) 50%, rgba(212,165,116,0.06) 100%)',
+              border: '1px solid rgba(212,165,116,0.12)',
               textAlign: 'center', marginBottom: 4,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
                 <span style={{
                   width: 8, height: 8, borderRadius: '50%',
-                  background: roundDetail.round?.status === 'chatting' ? '#22c55e' : '#eab308',
-                  boxShadow: roundDetail.round?.status === 'chatting' ? '0 0 8px rgba(34,197,94,0.5)' : '0 0 8px rgba(234,179,8,0.5)',
+                  background: roundDetail.round?.status === 'chatting' ? '#22c55e' : '#f59e0b',
+                  boxShadow: roundDetail.round?.status === 'chatting' ? '0 0 8px rgba(34,197,94,0.5)' : '0 0 8px rgba(245,158,11,0.5)',
                   animation: 'pulse 2s ease-in-out infinite',
                 }} />
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.1em' }}>
-                  {roundDetail.round?.status === 'chatting' ? '⚔️ ARENA — 대화 진행 중' : '🗳️ ARENA — 투표 진행 중'}
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d4a574', letterSpacing: '0.12em', fontFamily: "'Courier New', monospace" }}>
+                  {roundDetail.round?.status === 'chatting' ? '◉ ARENA — TRANSMISSION ACTIVE' : '◉ ARENA — VOTING IN PROGRESS'}
                 </span>
               </div>
               <div style={{
                 fontSize: '2.5rem', fontWeight: 900, fontVariantNumeric: 'tabular-nums',
-                color: timerInfo?.remaining <= 30 ? '#ef4444' : '#e2e8f0',
+                fontFamily: "'Courier New', monospace",
+                color: timerInfo?.remaining <= 30 ? '#ef4444' : '#d4d4c8',
                 textShadow: timerInfo?.remaining <= 30 ? '0 0 20px rgba(239,68,68,0.4)' : 'none',
                 lineHeight: 1, marginBottom: 6,
               }}>
                 {formatDuration(timerInfo?.remaining ?? 0)}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.8rem', color: '#d4a574', fontWeight: 600 }}>
                 R{roundDetail.round?.round_number} · {roundDetail.round?.style_name} · {displayModel(roundDetail.round?.ai_model)}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 12 }}>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  <span style={{ fontWeight: 700, color: '#94a3b8' }}>{arenaMatches.pairs.length}</span> 매치
+                <div style={{ fontSize: '0.72rem', color: '#5a6b4a' }}>
+                  <span style={{ fontWeight: 700, color: '#9aaa8a' }}>{arenaMatches.pairs.length}</span> 매치
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  <span style={{ fontWeight: 700, color: '#94a3b8' }}>{liveCompletedTurns}</span> 턴 완료
+                <div style={{ fontSize: '0.72rem', color: '#5a6b4a' }}>
+                  <span style={{ fontWeight: 700, color: '#9aaa8a' }}>{liveCompletedTurns}</span> 턴 완료
                 </div>
                 {arenaMatches.observers.length > 0 && (
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                    <span style={{ fontWeight: 700, color: '#94a3b8' }}>{arenaMatches.observers.length}</span> 관찰자
+                  <div style={{ fontSize: '0.72rem', color: '#5a6b4a' }}>
+                    <span style={{ fontWeight: 700, color: '#9aaa8a' }}>{arenaMatches.observers.length}</span> 관찰자
                   </div>
                 )}
               </div>
@@ -666,7 +668,7 @@ export default function TeacherApp({ navigate }) {
                     return (
                       <div key={obs.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: obs.color }} />
-                        <span style={{ fontWeight: 600, color: '#94a3b8' }}>👁️ {obs.name}</span>
+                        <span style={{ fontWeight: 600, color: '#94a3b8' }}>👓 {obs.name}</span>
                         <span style={{ color: '#475569' }}>→ {targetName} 관찰 중</span>
                         <span style={{ color: '#475569', marginLeft: 'auto' }}>{obsProgress?.completedTurns ?? 0}턴</span>
                       </div>
@@ -683,20 +685,20 @@ export default function TeacherApp({ navigate }) {
               {/* 중앙 경기장 헤더 */}
               <div style={{
                 padding: '32px 24px', borderRadius: 12, textAlign: 'center',
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(139,92,246,0.04) 50%, rgba(99,102,241,0.06) 100%)',
-                border: '1px solid rgba(99,102,241,0.08)',
+                background: 'linear-gradient(135deg, rgba(212,165,116,0.05) 0%, rgba(74,222,128,0.03) 50%, rgba(212,165,116,0.05) 100%)',
+                border: '1px solid rgba(212,165,116,0.1)',
                 marginBottom: 4,
               }}>
                 <div style={{
-                  width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
-                  background: 'rgba(99,102,241,0.08)', border: '2px solid rgba(99,102,241,0.15)',
+                  width: 64, height: 64, borderRadius: 12, margin: '0 auto 16px',
+                  background: 'rgba(212,165,116,0.08)', border: '2px solid rgba(212,165,116,0.15)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.6rem',
-                }}>⚔️</div>
-                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#818cf8', letterSpacing: '0.12em', marginBottom: 6 }}>
-                  ARENA
+                }}>◉</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d4a574', letterSpacing: '0.15em', marginBottom: 6, fontFamily: "'Courier New', monospace" }}>
+                  IMITATION GAME ARENA
                 </div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#e2e8f0', margin: '0 0 8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#d4d4c8', margin: '0 0 8px' }}>
                   {session.teams.length === 0 ? '팀 입장 대기 중' : `${session.teams.length}팀 입장 완료`}
                 </h2>
                 <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>

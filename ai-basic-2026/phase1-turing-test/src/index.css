@@ -14,36 +14,36 @@
   font-weight: 500;
   color-scheme: dark;
 
-  /* 베이스 */
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --surface2: #334155;
-  --border: #475569;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
+  /* 베이스 — 이미테이션 게임 (밀리터리 그린 + 앰버) */
+  --bg: #0a0f0a;
+  --surface: #131e13;
+  --surface2: #1e2d1c;
+  --border: #3a4a38;
+  --text: #d4d4c8;
+  --muted: #7a8b6a;
 
-  /* 악센트 */
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-soft: rgba(99, 102, 241, 0.15);
+  /* 악센트 — 앰버/골드 (에니그마 기계 톤) */
+  --accent: #d4a574;
+  --accent-hover: #e0b88a;
+  --accent-soft: rgba(212, 165, 116, 0.15);
 
   /* 게임 페이즈 */
-  --judge: #06b6d4;
-  --judge-soft: rgba(6, 182, 212, 0.15);
-  --respond: #a855f7;
-  --respond-soft: rgba(168, 85, 247, 0.15);
+  --judge: #d4a574;
+  --judge-soft: rgba(212, 165, 116, 0.12);
+  --respond: #4ade80;
+  --respond-soft: rgba(74, 222, 128, 0.12);
   --vote: #f59e0b;
   --vote-soft: rgba(245, 158, 11, 0.15);
 
   /* 시맨틱 */
   --success: #22c55e;
-  --success-soft: rgba(34, 197, 94, 0.15);
+  --success-soft: rgba(34, 197, 94, 0.12);
   --danger: #ef4444;
-  --danger-soft: rgba(239, 68, 68, 0.15);
-  --gold: #fbbf24;
-  --gold-soft: rgba(251, 191, 36, 0.18);
-  --sky: #38bdf8;
-  --sky-soft: rgba(56, 189, 248, 0.15);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --gold: #d4a574;
+  --gold-soft: rgba(212, 165, 116, 0.15);
+  --sky: #d4a574;
+  --sky-soft: rgba(212, 165, 116, 0.12);
   --violet: #a78bfa;
   --violet-soft: rgba(167, 139, 250, 0.15);
   --mint: #34d399;

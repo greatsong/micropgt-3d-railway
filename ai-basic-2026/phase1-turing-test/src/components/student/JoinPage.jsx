@@ -89,13 +89,13 @@ export default function JoinPage({ navigate }) {
     <div className="page-shell student-shell">
       <header className="hero">
         <div className="headline-block">
-          <p className="eyebrow">🎮 IMITATION GAME</p>
+          <p className="eyebrow" style={{ fontFamily: "'Courier New', monospace", letterSpacing: '0.12em' }}>🔐 THE IMITATION GAME</p>
           <h1>이미테이션 게임</h1>
-          <p className="muted hero-copy">같은 말투로 대답하는 상대방... 진짜 사람일까, AI일까? 팀끼리 추리 대결!</p>
+          <p className="muted hero-copy">기계인가, 인간인가? — 같은 말투로 위장한 상대의 정체를 밝혀라!</p>
         </div>
         <div className="hero-actions">
-          <span className="badge badge-yellow">🕵️ 추리 게임</span>
-          <span className="badge badge-green">⚔️ 팀 대결</span>
+          <span className="badge badge-yellow">🔐 판별 게임</span>
+          <span className="badge badge-green">◉ 팀 대결</span>
           <button className="ghost-button" onClick={() => navigate('/guide')}>사용 안내</button>
           <button className="ghost-button" onClick={() => navigate('/teacher')}>교사 화면</button>
         </div>
