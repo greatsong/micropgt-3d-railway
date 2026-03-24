@@ -96,6 +96,7 @@ export default function JoinPage({ navigate }) {
         <div className="hero-actions">
           <span className="badge badge-yellow">🕵️ 추리 게임</span>
           <span className="badge badge-green">⚔️ 팀 대결</span>
+          <button className="ghost-button" onClick={() => navigate('/guide')}>사용 안내</button>
           <button className="ghost-button" onClick={() => navigate('/teacher')}>교사 화면</button>
         </div>
       </header>
