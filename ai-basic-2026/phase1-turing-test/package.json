@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
-    "@rollup/rollup-linux-arm64-gnu": "^4.60.0",
     "better-sqlite3": "^12.6.2",
     "concurrently": "^9.1.0",
     "cors": "^2.8.5",
