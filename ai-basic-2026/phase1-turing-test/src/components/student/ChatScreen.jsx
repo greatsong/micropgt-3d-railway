@@ -7,6 +7,29 @@ function formatTime(sec) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+const ANIMATIONS = `
+@keyframes wallGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(99, 102, 241, 0.15); }
+  50% { border-color: rgba(99, 102, 241, 0.35); }
+}
+`
+
 export default function ChatScreen({
   team,
   roundInfo,
@@ -26,6 +49,7 @@ export default function ChatScreen({
   const [fakeText, setFakeText] = useState('')
   const [answerSent, setAnswerSent] = useState(false)
   const [answerCountdown, setAnswerCountdown] = useState(null)
+  const [sentAnswerText, setSentAnswerText] = useState('')
   const chatEndRef = useRef(null)
 
   const role = roundInfo?.role || 'judge'
@@ -35,11 +59,12 @@ export default function ChatScreen({
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [judgeTurns, respondTurns, awaitingAnswer, incomingQuestion, previewAnswer])
+  }, [judgeTurns, respondTurns, awaitingAnswer, incomingQuestion, previewAnswer, answerSent])
 
   useEffect(() => {
     setAnswerDraft('')
     setAnswerSent(false)
+    setSentAnswerText('')
   }, [incomingQuestion?.turnNum])
 
   useEffect(() => {
@@ -58,7 +83,7 @@ export default function ChatScreen({
       setAnswerCountdown(left)
     }
     tick()
-    const id = setInterval(tick, 200)
+    const id = setInterval(tick, 500)
     return () => clearInterval(id)
   }, [awaitingAnswer, questionSentAt, roundInfo?.responseDelay])
 
@@ -72,213 +97,306 @@ export default function ChatScreen({
   function handleSendAnswer(e) {
     e?.preventDefault()
     if (!answerDraft.trim() || answerSent) return
-    onSubmitAnswer(answerDraft.trim())
+    const text = answerDraft.trim()
+    setSentAnswerText(text)
+    setAnswerDraft('')
+    onSubmitAnswer(text)
     setAnswerSent(true)
   }
 
-  // ── 공통 상단 바 ──
+  // ─── 공통 헤더 ───
   const header = (
     <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 16px',
-      background: 'linear-gradient(180deg, #111827 0%, #0a0e17 100%)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      padding: '10px 16px',
+      background: 'linear-gradient(180deg, #0d1117 0%, #080b12 100%)',
+      borderBottom: `1px solid ${role === 'respondent' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(99, 102, 241, 0.1)'}`,
       position: 'sticky', top: 0, zIndex: 10,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: role === 'judge' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-          border: role === 'judge' ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.8rem',
-        }}>{role === 'judge' ? '🔍' : '💬'}</div>
-        <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e2e8f0' }}>
-            {role === 'judge' ? '심판 — 사람인지 AI인지 판별하세요'
-              : role === 'respondent' ? '응답자 — 질문에 자연스럽게 답하세요'
-              : '관찰자 — 대화를 지켜보세요'}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: role === 'judge' ? 'rgba(99, 102, 241, 0.1)' : role === 'respondent' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+            border: `1px solid ${role === 'judge' ? 'rgba(99, 102, 241, 0.2)' : role === 'respondent' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(148, 163, 184, 0.2)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.8rem',
+          }}>
+            {role === 'judge' ? '🔍' : role === 'respondent' ? '🎭' : '👁️'}
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
+              {role === 'judge' ? '심문관' : role === 'respondent' ? '피심문자' : '관찰자'}
+            </div>
+            <div style={{ fontSize: '0.62rem', color: '#475569', marginTop: 1 }}>
+              {role === 'judge' ? '벽 너머 상대의 정체를 밝히세요'
+                : role === 'respondent' ? '자연스럽게 답해서 들키지 마세요'
+                : '다른 팀의 심문을 관찰 중'}
+            </div>
           </div>
         </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          padding: '4px 10px', borderRadius: 12,
-          background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)',
-        }}>
-          <span style={{ fontSize: '0.65rem', color: '#818cf8', fontWeight: 600 }}>R{roundInfo?.roundNum}</span>
-          <span style={{ fontSize: '0.55rem', color: '#475569' }}>·</span>
-          <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{roundInfo?.style}</span>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          {role === 'judge' && <div style={{ fontSize: '0.6rem', color: '#64748b' }}>{Math.min(currentTurn, totalTurns)}/{totalTurns}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
-            fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: '1rem',
+            padding: '3px 8px', borderRadius: 6,
+            background: 'rgba(255,255,255,0.04)',
+            fontSize: '0.6rem', color: '#475569',
+          }}>R{roundInfo?.roundNum} · {roundInfo?.style}</div>
+          {role === 'judge' && (
+            <div style={{
+              padding: '3px 8px', borderRadius: 6,
+              background: 'rgba(99, 102, 241, 0.08)',
+              fontSize: '0.6rem', color: '#818cf8', fontWeight: 600,
+            }}>{Math.min(currentTurn, totalTurns)}/{totalTurns}</div>
+          )}
+          <div style={{
+            fontVariantNumeric: 'tabular-nums', fontWeight: 800, fontSize: '1.05rem',
             color: isUrgent ? '#ef4444' : '#e2e8f0',
             animation: isUrgent ? 'pulse 1s ease-in-out infinite' : 'none',
+            textShadow: isUrgent ? '0 0 10px rgba(239,68,68,0.4)' : 'none',
           }}>{formatTime(remaining)}</div>
         </div>
       </div>
     </div>
   )
 
-  // ═══════════════════════════════════════════════════════
-  // ── 심판 UI ──
-  // ═══════════════════════════════════════════════════════
+  // ─── 턴 구분선 ───
+  const turnDivider = (turnNum) => (
+    <div style={{
+      textAlign: 'center', margin: '14px 0 6px',
+      fontSize: '0.58rem', color: '#334155', letterSpacing: '0.08em', fontWeight: 600,
+    }}>
+      ── 심문 {turnNum} ──
+    </div>
+  )
+
+  // ─── 미스터리 아바타 (벽 너머) ───
+  const mysteryAvatar = (
+    <div style={{
+      width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+      background: 'rgba(99, 102, 241, 0.06)',
+      border: '1px solid rgba(99, 102, 241, 0.15)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '0.7rem', color: '#475569',
+      boxShadow: '0 0 8px rgba(99, 102, 241, 0.08)',
+    }}>?</div>
+  )
+
+  // ─── 심문관 아바타 ───
+  const interrogatorAvatar = (
+    <div style={{
+      width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+      background: 'rgba(99, 102, 241, 0.06)',
+      border: '1px solid rgba(99, 102, 241, 0.15)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '0.65rem', color: '#818cf8',
+    }}>🔍</div>
+  )
+
+  // ─── 타이핑 점 ───
+  const typingDots = (
+    <div style={{
+      padding: '10px 16px', background: '#111827',
+      border: '1px solid rgba(99, 102, 241, 0.08)',
+      borderRadius: '16px 16px 16px 4px',
+      display: 'flex', alignItems: 'center', gap: 4,
+    }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: '#6366f1',
+          animation: `dotBounce 1.4s ease-in-out ${i * 0.16}s infinite`,
+        }} />
+      ))}
+    </div>
+  )
+
+  // ═══════════════════════════════════════════════
+  // ── 심판 / 관찰자 UI ──
+  // ═══════════════════════════════════════════════
   if (role === 'judge' || role === 'observer') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0e17' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: '100vh', background: '#080b12' }}>
+        <style>{ANIMATIONS}</style>
         {header}
 
-        {/* 상태 배너 */}
+        {/* 카운트다운 프로그레스 바 */}
         {awaitingAnswer && answerCountdown != null && (
-          <div style={{
-            padding: '8px 16px', background: 'rgba(99, 102, 241, 0.06)',
-            borderBottom: '1px solid rgba(99, 102, 241, 0.1)',
-            fontSize: '0.78rem', color: '#818cf8', textAlign: 'center',
-          }}>
-            ⏳ 벽 너머의 상대가 답변하는 중... <span style={{ fontWeight: 700 }}>{answerCountdown}초</span>
+          <div style={{ height: 3, background: 'rgba(99, 102, 241, 0.06)' }}>
+            <div style={{
+              height: '100%',
+              background: answerCountdown <= 3 ? '#ef4444' : '#6366f1',
+              width: `${((answerCountdown) / (roundInfo?.responseDelay || 15)) * 100}%`,
+              transition: 'width 0.3s linear, background 0.3s',
+            }} />
           </div>
         )}
 
         {/* 채팅 영역 */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{
+          flex: 1, overflowY: 'auto', padding: '12px 16px',
+          display: 'flex', flexDirection: 'column', gap: 2,
+        }}>
+          {/* 빈 상태 */}
           {judgeTurns.length === 0 && !awaitingAnswer && (
-            <div style={{ textAlign: 'center', padding: '36px 20px', color: '#64748b' }}>
+            <div style={{
+              textAlign: 'center', padding: '40px 20px', color: '#475569',
+              animation: 'fadeInUp 0.5s ease',
+            }}>
               <div style={{
-                width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
-                background: 'rgba(99, 102, 241, 0.08)', border: '2px dashed rgba(99, 102, 241, 0.2)',
+                width: 72, height: 72, borderRadius: '50%', margin: '0 auto 16px',
+                background: 'rgba(99, 102, 241, 0.05)',
+                border: '2px solid rgba(99, 102, 241, 0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.5rem', animation: 'pulse 3s ease-in-out infinite',
-              }}>?</div>
-              <p style={{ fontWeight: 600, marginBottom: 6, color: '#94a3b8', fontSize: '0.95rem' }}>
-                {role === 'observer' ? '대화를 관찰하세요' : '벽 너머의 상대에게 질문하세요'}
+                fontSize: '1.8rem',
+                animation: 'wallGlow 3s ease-in-out infinite',
+                boxShadow: '0 0 40px rgba(99, 102, 241, 0.06)',
+              }}>🔒</div>
+              <p style={{ fontWeight: 700, marginBottom: 8, color: '#94a3b8', fontSize: '0.95rem' }}>
+                {role === 'observer' ? '심문 관찰 대기 중' : '벽 너머에 누군가 있습니다'}
+              </p>
+              <p style={{ fontSize: '0.78rem', lineHeight: 1.6, maxWidth: 280, margin: '0 auto', color: '#475569' }}>
+                {role === 'judge'
+                  ? '질문을 보내 상대의 정체를 알아내세요. 사람일까, AI일까?'
+                  : '다른 팀의 대화가 시작되면 여기에 표시됩니다.'}
               </p>
               {role === 'judge' && (
                 <div style={{
-                  margin: '12px auto 0', maxWidth: 300, padding: '10px 14px', borderRadius: 10,
-                  background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.12)',
-                  fontSize: '0.72rem', color: '#94a3b8', textAlign: 'left', lineHeight: 1.6,
+                  margin: '16px auto 0', maxWidth: 300, padding: '10px 14px', borderRadius: 10,
+                  background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.08)',
+                  fontSize: '0.7rem', color: '#94a3b8', textAlign: 'left', lineHeight: 1.6,
                 }}>
-                  <span style={{ color: '#f87171', fontWeight: 700 }}>⚠️ 질문 규칙</span>
-                  <br />· 오늘 날씨, 선생님 이름 등 <span style={{ color: '#f87171' }}>AI가 알 수 없는 사실</span>을 묻지 마세요
+                  <span style={{ color: '#f87171', fontWeight: 700 }}>⚠️ 심문 규칙</span>
+                  <br />· 오늘 날씨, 선생님 이름 등 <span style={{ color: '#f87171' }}>AI가 답할 수 없는 사실</span> 금지
                   <br />· 전문 지식 등 <span style={{ color: '#f87171' }}>친구가 답할 수 없는 내용</span>도 금지
-                  <br />· 취미, 감정, 경험 등 누구나 답할 수 있는 질문을 하세요
+                  <br />· 취미, 감정, 경험 등 <span style={{ color: '#f87171' }}>누구나 답할 수 있는 질문</span>을 하세요
                 </div>
               )}
             </div>
           )}
 
+          {/* 대화 턴들 */}
           {judgeTurns.map((turn) => (
-            <div key={`j-${turn.turnNum}`} style={{ marginBottom: 8 }}>
-              <div style={{ textAlign: 'center', margin: '10px 0 6px', fontSize: '0.6rem', color: '#475569', letterSpacing: '0.05em' }}>
-                ── 턴 {turn.turnNum} ──
-              </div>
+            <div key={`j-${turn.turnNum}`} style={{ marginBottom: 4, animation: 'fadeInUp 0.3s ease' }}>
+              {turnDivider(turn.turnNum)}
+              {/* 내 질문 (오른쪽) */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
                 <div style={{
-                  maxWidth: '78%', padding: '10px 14px',
-                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff',
-                  borderRadius: '18px 18px 4px 18px', fontSize: '0.88rem', lineHeight: 1.5,
-                  boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+                  maxWidth: '80%', padding: '10px 14px',
+                  background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+                  color: '#fff', borderRadius: '16px 16px 4px 16px',
+                  fontSize: '0.85rem', lineHeight: 1.5,
+                  boxShadow: '0 2px 12px rgba(79,70,229,0.25)',
                 }}>{turn.question}</div>
               </div>
-              {turn.styledAnswer && (
+              {/* 벽 너머 답변 (왼쪽) */}
+              {turn.styledAnswer ? (
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                    background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.6rem', color: '#64748b',
-                  }}>?</div>
+                  {mysteryAvatar}
                   <div style={{
                     maxWidth: '75%', padding: '10px 14px',
-                    background: '#1e293b', color: '#e2e8f0',
-                    borderRadius: '18px 18px 18px 4px', fontSize: '0.88rem', lineHeight: 1.5,
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: '#111827', color: '#cbd5e1',
+                    borderRadius: '16px 16px 16px 4px',
+                    fontSize: '0.85rem', lineHeight: 1.5,
+                    border: '1px solid rgba(99, 102, 241, 0.06)',
                   }}>{turn.styledAnswer}</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                  {mysteryAvatar}
+                  {typingDots}
                 </div>
               )}
             </div>
           ))}
 
-          {awaitingAnswer && (
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginTop: 4 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.6rem', color: '#64748b',
-              }}>?</div>
-              <div style={{
-                padding: '10px 16px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '18px 18px 18px 4px', display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{ display: 'flex', gap: 3 }}>
-                  {[0,1,2].map(i => <span key={i} style={{ width:6,height:6,borderRadius:'50%',background:'#475569',animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#475569' }}>
-                  벽 너머에서 답변 중{answerCountdown != null && answerCountdown > 0 && <span style={{ color: '#818cf8', fontWeight: 600, marginLeft: 4 }}>{answerCountdown}초</span>}
-                </span>
-              </div>
+          {/* 카운트다운 텍스트 */}
+          {awaitingAnswer && answerCountdown != null && (
+            <div style={{
+              textAlign: 'center', padding: '6px', margin: '4px 0',
+              fontSize: '0.72rem', color: '#818cf8',
+            }}>
+              벽 너머에서 응답 중 · <span style={{
+                fontWeight: 700,
+                color: answerCountdown <= 3 ? '#ef4444' : '#818cf8',
+              }}>{answerCountdown}초</span>
             </div>
           )}
+
           <div ref={chatEndRef} />
         </div>
 
         {/* 질문 입력 */}
         {role === 'judge' && (
           <form onSubmit={handleSendQuestion} style={{
-            display: 'flex', gap: 8, padding: '10px 16px',
-            background: '#111827', borderTop: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex', gap: 8, padding: '10px 16px 14px',
+            background: '#0d1117', borderTop: '1px solid rgba(99, 102, 241, 0.06)',
           }}>
-            <input type="text" value={message}
-              onChange={(e) => { if (e.target.value.length <= 60) setMessage(e.target.value) }}
-              placeholder={currentTurn > totalTurns ? '모든 턴 완료' : awaitingAnswer ? '답변 대기 중...' : '벽 너머의 상대에게 질문하세요...'}
-              disabled={awaitingAnswer || currentTurn > totalTurns}
-              style={{
-                flex: 1, padding: '10px 16px', background: '#1e293b',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20,
-                color: '#e2e8f0', outline: 'none', fontSize: '0.88rem', fontFamily: 'inherit',
-              }} />
+            <div style={{ flex: 1, position: 'relative' }}>
+              <input type="text" value={message}
+                onChange={(e) => { if (e.target.value.length <= 60) setMessage(e.target.value) }}
+                placeholder={currentTurn > totalTurns ? '모든 심문 완료' : awaitingAnswer ? '응답 대기 중...' : '벽 너머에 질문을 보내세요...'}
+                disabled={awaitingAnswer || currentTurn > totalTurns}
+                style={{
+                  width: '100%', padding: '10px 40px 10px 14px',
+                  background: '#151d2e', border: '1px solid rgba(99, 102, 241, 0.08)',
+                  borderRadius: 16, color: '#e2e8f0', outline: 'none',
+                  fontSize: '0.85rem', fontFamily: 'inherit',
+                }} />
+              {message.length > 0 && (
+                <span style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  fontSize: '0.6rem', color: message.length >= 55 ? '#f87171' : '#475569',
+                }}>{message.length}/60</span>
+              )}
+            </div>
             <button type="submit"
               disabled={!message.trim() || awaitingAnswer || currentTurn > totalTurns}
               style={{
-                padding: '10px 18px', borderRadius: 20, border: 'none',
-                background: message.trim() && !awaitingAnswer ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#1e293b',
-                color: message.trim() && !awaitingAnswer ? '#fff' : '#475569',
-                fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', fontFamily: 'inherit',
-                boxShadow: message.trim() && !awaitingAnswer ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
-              }}>질문</button>
+                width: 44, height: 44, borderRadius: 14, border: 'none',
+                background: message.trim() && !awaitingAnswer ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#151d2e',
+                color: message.trim() && !awaitingAnswer ? '#fff' : '#334155',
+                fontWeight: 700, cursor: 'pointer', fontSize: '1rem',
+                boxShadow: message.trim() && !awaitingAnswer ? '0 2px 12px rgba(99,102,241,0.3)' : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}>↑</button>
           </form>
         )}
       </div>
     )
   }
 
-  // ═══════════════════════════════════════════════════════
-  // ── 응답자 UI ──
-  // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
+  // ── 응답자 (피심문자) UI ──
+  // ═══════════════════════════════════════════════
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0e17' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: '100vh', background: '#080b12' }}>
+      <style>{ANIMATIONS}</style>
       {header}
 
-      {/* 대화 히스토리 (응답자가 본 대화) */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-
-        {/* 빈 상태 — 질문 대기 */}
+      {/* 채팅 영역 — 전체 대화 맥락 */}
+      <div style={{
+        flex: 1, overflowY: 'auto', padding: '12px 16px',
+        display: 'flex', flexDirection: 'column', gap: 2,
+      }}>
+        {/* 빈 상태 */}
         {respondTurns.length === 0 && !incomingQuestion && !previewAnswer && (
-          <div style={{ textAlign: 'center', padding: '48px 20px', color: '#64748b' }}>
+          <div style={{
+            textAlign: 'center', padding: '40px 20px', color: '#475569',
+            animation: 'fadeInUp 0.5s ease',
+          }}>
             <div style={{
-              width: 64, height: 64, borderRadius: '50%', margin: '0 auto 16px',
-              background: 'rgba(34, 197, 94, 0.08)', border: '2px dashed rgba(34, 197, 94, 0.2)',
+              width: 72, height: 72, borderRadius: '50%', margin: '0 auto 16px',
+              background: 'rgba(16, 185, 129, 0.05)',
+              border: '2px solid rgba(16, 185, 129, 0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.5rem', animation: 'pulse 3s ease-in-out infinite',
-            }}>💬</div>
-            <p style={{ fontWeight: 600, marginBottom: 6, color: '#94a3b8', fontSize: '0.95rem' }}>
-              상대의 질문을 기다리는 중
+              fontSize: '1.8rem',
+              animation: 'wallGlow 3s ease-in-out infinite',
+              boxShadow: '0 0 40px rgba(16, 185, 129, 0.06)',
+            }}>🎭</div>
+            <p style={{ fontWeight: 700, marginBottom: 8, color: '#94a3b8', fontSize: '0.95rem' }}>
+              심문 대기 중
             </p>
-            <p style={{ fontSize: '0.8rem', lineHeight: 1.6, maxWidth: 280, margin: '0 auto' }}>
+            <p style={{ fontSize: '0.78rem', lineHeight: 1.6, maxWidth: 280, margin: '0 auto', color: '#475569' }}>
               상대 팀이 질문을 보내면 여기에 표시됩니다.
               <br />자연스럽게 답변해서 들키지 마세요!
             </p>
@@ -287,114 +405,198 @@ export default function ChatScreen({
 
         {/* 완료된 턴들 */}
         {respondTurns.map((turn) => (
-          <div key={`r-${turn.turnNum}`} style={{ marginBottom: 8 }}>
-            <div style={{ textAlign: 'center', margin: '10px 0 6px', fontSize: '0.6rem', color: '#475569', letterSpacing: '0.05em' }}>
-              ── 턴 {turn.turnNum} ──
-            </div>
-            {/* 상대 질문 (왼쪽) */}
+          <div key={`r-${turn.turnNum}`} style={{ marginBottom: 4 }}>
+            {turnDivider(turn.turnNum)}
+            {/* 심문관의 질문 (왼쪽) */}
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginBottom: 6 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.6rem', color: '#818cf8',
-              }}>🔍</div>
+              {interrogatorAvatar}
               <div style={{
                 maxWidth: '75%', padding: '10px 14px',
-                background: '#1e293b', color: '#e2e8f0',
-                borderRadius: '18px 18px 18px 4px', fontSize: '0.88rem', lineHeight: 1.5,
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: '#111827', color: '#cbd5e1',
+                borderRadius: '16px 16px 16px 4px',
+                fontSize: '0.85rem', lineHeight: 1.5,
+                border: '1px solid rgba(99, 102, 241, 0.06)',
               }}>{turn.question}</div>
             </div>
-            {/* 내/AI 답변 (오른쪽, 초록) */}
+            {/* 내/AI 답변 (오른쪽) */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <div style={{
-                maxWidth: '78%', padding: '10px 14px',
-                background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff',
-                borderRadius: '18px 18px 4px 18px', fontSize: '0.88rem', lineHeight: 1.5,
-                boxShadow: '0 2px 8px rgba(5,150,105,0.25)',
+                maxWidth: '80%', padding: '10px 14px',
+                background: 'linear-gradient(135deg, #059669, #047857)',
+                color: '#fff', borderRadius: '16px 16px 4px 16px',
+                fontSize: '0.85rem', lineHeight: 1.5,
+                boxShadow: '0 2px 12px rgba(5,150,105,0.2)',
               }}>{turn.styledAnswer}</div>
             </div>
           </div>
         ))}
 
+        {/* ── 진행 중인 턴: 사람 답변 차례 ── */}
+        {incomingQuestion && (
+          <div style={{ marginBottom: 4, animation: 'fadeInUp 0.3s ease' }}>
+            {turnDivider(incomingQuestion.turnNum)}
+            {/* 심문관의 질문 */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+              {interrogatorAvatar}
+              <div style={{
+                maxWidth: '75%', padding: '10px 14px',
+                background: '#111827', color: '#e2e8f0',
+                borderRadius: '16px 16px 16px 4px',
+                fontSize: '0.85rem', lineHeight: 1.5,
+                border: '1px solid rgba(99, 102, 241, 0.1)',
+                boxShadow: '0 0 12px rgba(99, 102, 241, 0.04)',
+                animation: 'borderPulse 2s ease-in-out infinite',
+              }}>{incomingQuestion.question}</div>
+            </div>
+            {/* 보낸 답변 미리보기 */}
+            {answerSent && sentAnswerText && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                <div style={{
+                  maxWidth: '80%', padding: '10px 14px',
+                  background: 'linear-gradient(135deg, rgba(5,150,105,0.5), rgba(4,120,87,0.5))',
+                  color: '#d1fae5', borderRadius: '16px 16px 4px 16px',
+                  fontSize: '0.85rem', lineHeight: 1.5,
+                  border: '1px solid rgba(16, 185, 129, 0.15)',
+                }}>
+                  {sentAnswerText}
+                  <div style={{ fontSize: '0.6rem', color: '#6ee7b7', marginTop: 3, textAlign: 'right' }}>
+                    ✓ 전송됨 · 말투 변환 중
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── 진행 중인 턴: AI 위장 모드 ── */}
+        {previewAnswer && (
+          <div style={{ marginBottom: 4, animation: 'fadeInUp 0.3s ease' }}>
+            {turnDivider(previewAnswer.turnNum)}
+            {/* 심문관의 질문 */}
+            {previewAnswer.question && (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, marginBottom: 6 }}>
+                {interrogatorAvatar}
+                <div style={{
+                  maxWidth: '75%', padding: '10px 14px',
+                  background: '#111827', color: '#e2e8f0',
+                  borderRadius: '16px 16px 16px 4px',
+                  fontSize: '0.85rem', lineHeight: 1.5,
+                  border: '1px solid rgba(99, 102, 241, 0.1)',
+                }}>{previewAnswer.question}</div>
+              </div>
+            )}
+            {/* AI 대리 답변 */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{
+                maxWidth: '80%', padding: '10px 14px',
+                background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(109,40,217,0.15))',
+                color: '#c4b5fd', borderRadius: '16px 16px 4px 16px',
+                fontSize: '0.85rem', lineHeight: 1.5,
+                border: '1px solid rgba(139, 92, 246, 0.15)',
+              }}>
+                <div style={{ fontSize: '0.6rem', color: '#a78bfa', marginBottom: 3, fontWeight: 700 }}>🤖 AI 대리 답변</div>
+                {previewAnswer.aiAnswer}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={chatEndRef} />
       </div>
 
-      {/* ── 현재 질문 + 답변 입력 (하단 고정) ── */}
+      {/* ── 하단 입력 영역 ── */}
       {previewAnswer ? (
-        /* AI 위장 모드 */
+        /* AI 위장 모드 — 타이핑하는 척 */
         <div style={{
-          background: '#111827', borderTop: '2px solid #8b5cf6', padding: '14px 16px',
-          boxShadow: '0 -8px 24px rgba(0,0,0,0.4)',
+          background: '#0d1117', borderTop: '1px solid rgba(139, 92, 246, 0.1)',
+          padding: '10px 16px 14px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#8b5cf6' }}>🎭 위장 모드</span>
-            <span style={{ fontSize: '0.65rem', color: '#475569' }}>— AI가 대신 답변합니다. 들키지 않게!</span>
+            <span style={{
+              padding: '2px 8px', borderRadius: 8,
+              background: 'rgba(139, 92, 246, 0.08)',
+              fontSize: '0.65rem', fontWeight: 700, color: '#a78bfa',
+            }}>🎭 위장 모드</span>
+            <span style={{ fontSize: '0.62rem', color: '#475569' }}>AI가 대신 답변합니다. 들키지 않게!</span>
           </div>
-          <div style={{
-            padding: '10px 14px', background: '#1e293b', borderRadius: 10,
-            border: '1px solid rgba(139,92,246,0.2)', marginBottom: 8,
-            fontSize: '0.85rem', color: '#c4b5fd', lineHeight: 1.5,
-          }}>{previewAnswer.aiAnswer}</div>
           <input type="text" value={fakeText}
             onChange={(e) => setFakeText(e.target.value)}
             placeholder="타이핑하는 척하세요..."
             style={{
-              width: '100%', padding: '8px 14px', background: '#1e293b',
-              border: '1px solid rgba(139,92,246,0.15)', borderRadius: 10,
+              width: '100%', padding: '10px 14px', background: '#151d2e',
+              border: '1px solid rgba(139, 92, 246, 0.08)', borderRadius: 12,
               color: '#64748b', outline: 'none', fontSize: '0.85rem', fontFamily: 'inherit',
             }} />
         </div>
-      ) : incomingQuestion ? (
-        /* 사람 턴 — 직접 답변 */
-        <div style={{
-          background: '#111827', borderTop: '2px solid #22c55e', padding: '14px 16px',
-          boxShadow: '0 -8px 24px rgba(0,0,0,0.4)',
+      ) : incomingQuestion && !answerSent ? (
+        /* 사람 턴 — 답변 입력 */
+        <form onSubmit={handleSendAnswer} style={{
+          display: 'flex', gap: 8, padding: '10px 16px 14px',
+          background: '#0d1117', borderTop: '1px solid rgba(16, 185, 129, 0.1)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#22c55e' }}>✍️ 답변 차례</span>
-            <span style={{ fontSize: '0.65rem', color: '#475569' }}>— 자연스럽게 답변하세요</span>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input type="text" value={answerDraft}
+              onChange={(e) => { if (e.target.value.length <= 60) setAnswerDraft(e.target.value) }}
+              placeholder="자연스럽게 답변하세요... (60자 이내)"
+              autoFocus
+              style={{
+                width: '100%', padding: '10px 40px 10px 14px', background: '#151d2e',
+                border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: 16,
+                color: '#e2e8f0', outline: 'none', fontSize: '0.85rem', fontFamily: 'inherit',
+              }} />
+            {answerDraft.length > 0 && (
+              <span style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                fontSize: '0.6rem', color: answerDraft.length >= 55 ? '#f87171' : '#475569',
+              }}>{answerDraft.length}/60</span>
+            )}
           </div>
-          <div style={{
-            padding: '10px 14px', background: '#1e293b', borderRadius: 10,
-            border: '1px solid rgba(34,197,94,0.15)', marginBottom: 10,
-            fontSize: '0.88rem', color: '#e2e8f0', lineHeight: 1.5,
-          }}>"{incomingQuestion.question}"</div>
-          {answerSent ? (
-            <div style={{ textAlign: 'center', padding: 10, color: '#22c55e', fontWeight: 600, fontSize: '0.85rem' }}>
-              ✅ 전송 완료! 말투 변환 후 전달됩니다
-            </div>
-          ) : (
-            <form onSubmit={handleSendAnswer} style={{ display: 'flex', gap: 8 }}>
-              <input type="text" value={answerDraft}
-                onChange={(e) => { if (e.target.value.length <= 60) setAnswerDraft(e.target.value) }}
-                placeholder="답변을 입력하세요... (60자 이내)"
-                autoFocus
-                style={{
-                  flex: 1, padding: '10px 14px', background: '#1e293b',
-                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                  color: '#e2e8f0', outline: 'none', fontSize: '0.88rem', fontFamily: 'inherit',
-                }} />
-              <button type="submit" disabled={!answerDraft.trim()}
-                style={{
-                  padding: '10px 16px', borderRadius: 10, border: 'none',
-                  background: answerDraft.trim() ? 'linear-gradient(135deg, #22c55e, #16a34a)' : '#1e293b',
-                  color: answerDraft.trim() ? '#fff' : '#475569',
-                  fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', fontFamily: 'inherit',
-                  boxShadow: answerDraft.trim() ? '0 2px 8px rgba(34,197,94,0.3)' : 'none',
-                }}>전송</button>
-            </form>
-          )}
+          <button type="submit" disabled={!answerDraft.trim()}
+            style={{
+              width: 44, height: 44, borderRadius: 14, border: 'none',
+              background: answerDraft.trim() ? 'linear-gradient(135deg, #10b981, #059669)' : '#151d2e',
+              color: answerDraft.trim() ? '#fff' : '#334155',
+              fontWeight: 700, cursor: 'pointer', fontSize: '1rem',
+              boxShadow: answerDraft.trim() ? '0 2px 12px rgba(16,185,129,0.3)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s',
+            }}>↑</button>
+        </form>
+      ) : answerSent ? (
+        /* 답변 전송 완료 */
+        <div style={{
+          padding: '12px 16px', background: '#0d1117',
+          borderTop: '1px solid rgba(16, 185, 129, 0.06)',
+          textAlign: 'center',
+        }}>
+          <span style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: 600 }}>
+            ✅ 답변 전송 완료
+          </span>
+          <span style={{ fontSize: '0.72rem', color: '#475569', marginLeft: 8 }}>
+            말투 변환 후 전달됩니다
+          </span>
         </div>
       ) : (
         /* 질문 대기 */
         <div style={{
-          padding: '14px 16px', background: '#111827',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          textAlign: 'center', fontSize: '0.8rem', color: '#475569',
+          padding: '14px 16px', background: '#0d1117',
+          borderTop: '1px solid rgba(255,255,255,0.03)',
+          textAlign: 'center',
         }}>
-          상대의 다음 질문을 기다리는 중...
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <span style={{ display: 'flex', gap: 3 }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  width: 5, height: 5, borderRadius: '50%',
+                  background: '#334155',
+                  animation: `dotBounce 1.4s ease-in-out ${i * 0.16}s infinite`,
+                }} />
+              ))}
+            </span>
+            <span style={{ fontSize: '0.78rem', color: '#475569' }}>
+              심문관의 다음 질문을 기다리는 중
+            </span>
+          </div>
         </div>
       )}
     </div>

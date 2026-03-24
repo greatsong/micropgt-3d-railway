@@ -89,6 +89,37 @@ export default function TeacherApp({ navigate }) {
     [session?.teams]
   )
 
+  // 아레나 매치 계산 (페어링 기반)
+  const arenaMatches = useMemo(() => {
+    if (!session?.teams?.length || !roundDetail?.pairings?.length) return { pairs: [], observers: [] }
+
+    const pairs = []
+    const observers = []
+    const usedIds = new Set()
+
+    for (const team of session.teams) {
+      if (usedIds.has(team.id)) continue
+      if (team.role === 'observer') {
+        observers.push(team)
+        usedIds.add(team.id)
+        continue
+      }
+      const meta = teamMeta.get(team.id)
+      if (meta?.partner) {
+        const partner = session.teams.find((t) => t.id === meta.partner)
+        if (partner && !usedIds.has(partner.id)) {
+          const judge = team.role === 'judge' ? team : partner
+          const respondent = team.role === 'judge' ? partner : team
+          pairs.push({ judge, respondent })
+          usedIds.add(team.id)
+          usedIds.add(partner.id)
+        }
+      }
+    }
+
+    return { pairs, observers }
+  }, [session?.teams, teamMeta, roundDetail?.pairings])
+
   useEffect(() => {
     if (!session?.id) return
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
@@ -482,33 +513,183 @@ export default function TeacherApp({ navigate }) {
         </aside>
 
         <main className="content-grid">
-          <section className="panel">
-            <div className="section-header">
-              <div>
-                <p className="eyebrow">TEAMS</p>
-                <h2>{session.teams.length}팀 참여 중</h2>
+          {/* ═══ 아레나 헤더 (라운드 진행 중) ═══ */}
+          {roundDetail && !currentResults && !finalResults && (
+            <div style={{
+              padding: '20px 24px', borderRadius: 12,
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))',
+              border: '1px solid rgba(99,102,241,0.12)',
+              textAlign: 'center', marginBottom: 4,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: roundDetail.round?.status === 'chatting' ? '#22c55e' : '#eab308',
+                  boxShadow: roundDetail.round?.status === 'chatting' ? '0 0 8px rgba(34,197,94,0.5)' : '0 0 8px rgba(234,179,8,0.5)',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }} />
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.1em' }}>
+                  {roundDetail.round?.status === 'chatting' ? '⚔️ ARENA — 대화 진행 중' : '🗳️ ARENA — 투표 진행 중'}
+                </span>
               </div>
-              <span className="muted">홀수 팀이면 1팀은 관찰 전용 심판으로 배정됩니다.</span>
+              <div style={{
+                fontSize: '2.5rem', fontWeight: 900, fontVariantNumeric: 'tabular-nums',
+                color: timerInfo?.remaining <= 30 ? '#ef4444' : '#e2e8f0',
+                textShadow: timerInfo?.remaining <= 30 ? '0 0 20px rgba(239,68,68,0.4)' : 'none',
+                lineHeight: 1, marginBottom: 6,
+              }}>
+                {formatDuration(timerInfo?.remaining ?? 0)}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 600 }}>
+                R{roundDetail.round?.round_number} · {roundDetail.round?.style_name} · {displayModel(roundDetail.round?.ai_model)}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 12 }}>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                  <span style={{ fontWeight: 700, color: '#94a3b8' }}>{arenaMatches.pairs.length}</span> 매치
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                  <span style={{ fontWeight: 700, color: '#94a3b8' }}>{liveCompletedTurns}</span> 턴 완료
+                </div>
+                {arenaMatches.observers.length > 0 && (
+                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                    <span style={{ fontWeight: 700, color: '#94a3b8' }}>{arenaMatches.observers.length}</span> 관찰자
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="team-grid">
-              {session.teams.map((team) => {
-                const progress = roundDetail?.teamProgress?.find((item) => item.id === team.id)
-                const relation = teamMeta.get(team.id)
-                const voteInfo = voteProgress[team.id]
-                const isLiveRound = roundDetail && !currentResults && !finalResults
-                const totalTurns = roundDetail?.round?.total_turns ?? settings.turns
-                const completedTurns = progress?.completedTurns ?? 0
+          )}
 
-                const handleCardClick = () => {
-                  if (isLiveRound) {
-                    selectTeamForLive(team.id, team.name)
-                  } else {
-                    selectTeam(team.id)
-                  }
-                }
+          {/* ═══ 매치 카드 그리드 (라운드 진행 중) ═══ */}
+          {roundDetail && !currentResults && !finalResults && arenaMatches.pairs.length > 0 && (
+            <section className="panel" style={{ padding: '16px 20px' }}>
+              <p className="eyebrow" style={{ marginBottom: 12 }}>MATCHES</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+                {arenaMatches.pairs.map((match, idx) => {
+                  const judgeProgress = roundDetail?.teamProgress?.find((t) => t.id === match.judge.id)
+                  const totalTurns = roundDetail?.round?.total_turns ?? settings.turns
+                  const completed = judgeProgress?.completedTurns ?? 0
+                  const pct = totalTurns > 0 ? Math.round((completed / totalTurns) * 100) : 0
+                  const judgeVote = voteProgress[match.judge.id]
+                  const respondentVote = voteProgress[match.respondent.id]
+                  const isVoting = roundDetail?.round?.status === 'voting'
 
-                return (
-                  <button key={team.id} className={`team-card ${selectedTeamId === team.id ? 'selected' : ''}`} onClick={handleCardClick}>
+                  return (
+                    <button key={idx} onClick={() => selectTeamForLive(match.judge.id, match.judge.name)}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '14px 16px', borderRadius: 10,
+                        background: 'var(--surface2, #1e293b)', border: '1px solid var(--border, rgba(255,255,255,0.06))',
+                        cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
+                        transition: 'border-color 0.2s',
+                      }}>
+                      {/* 매치 헤더 */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#475569', letterSpacing: '0.08em' }}>MATCH {idx + 1}</span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{completed}/{totalTurns}턴</span>
+                      </div>
+
+                      {/* 팀 대결 표시 */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        {/* 심판 */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: match.judge.color, flexShrink: 0 }} />
+                          <div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>{match.judge.name}</div>
+                            <div style={{ fontSize: '0.6rem', color: '#818cf8' }}>🔍 심문관</div>
+                          </div>
+                        </div>
+
+                        {/* 벽 아이콘 */}
+                        <div style={{
+                          padding: '4px 8px', borderRadius: 6,
+                          background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.12)',
+                          fontSize: '0.65rem', color: '#6366f1', fontWeight: 700, flexShrink: 0,
+                        }}>벽</div>
+
+                        {/* 응답자 */}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', textAlign: 'right' }}>
+                          <div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>{match.respondent.name}</div>
+                            <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 피심문자</div>
+                          </div>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: match.respondent.color, flexShrink: 0 }} />
+                        </div>
+                      </div>
+
+                      {/* 프로그레스 바 */}
+                      {!isVoting && (
+                        <div style={{ marginBottom: 6 }}>
+                          <div style={{
+                            height: 4, borderRadius: 2,
+                            background: 'rgba(99,102,241,0.1)',
+                            overflow: 'hidden',
+                          }}>
+                            <div style={{
+                              height: '100%', borderRadius: 2,
+                              background: pct >= 100 ? '#22c55e' : '#6366f1',
+                              width: `${pct}%`,
+                              transition: 'width 0.5s ease',
+                            }} />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 투표 상태 */}
+                      {isVoting && (
+                        <div style={{ display: 'flex', gap: 8, fontSize: '0.7rem' }}>
+                          <span style={{ color: judgeVote?.submitted ? '#22c55e' : '#64748b' }}>
+                            {match.judge.name}: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
+                          </span>
+                          <span style={{ color: respondentVote?.submitted ? '#22c55e' : '#64748b' }}>
+                            {match.respondent.name}: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* 점수 */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#475569', marginTop: 4 }}>
+                        <span>누적 {match.judge.total_score}점</span>
+                        <span>누적 {match.respondent.total_score}점</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* 관찰자 */}
+              {arenaMatches.observers.length > 0 && (
+                <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.08)' }}>
+                  {arenaMatches.observers.map((obs) => {
+                    const obsProgress = roundDetail?.teamProgress?.find((t) => t.id === obs.id)
+                    const obsMeta = teamMeta.get(obs.id)
+                    const targetName = obsMeta?.observerTarget ? teamNameById.get(obsMeta.observerTarget) : '?'
+                    return (
+                      <div key={obs.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: obs.color }} />
+                        <span style={{ fontWeight: 600, color: '#94a3b8' }}>👁️ {obs.name}</span>
+                        <span style={{ color: '#475569' }}>→ {targetName} 관찰 중</span>
+                        <span style={{ color: '#475569', marginLeft: 'auto' }}>{obsProgress?.completedTurns ?? 0}턴</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ═══ 팀 그리드 (라운드 없을 때) ═══ */}
+          {(!roundDetail || currentResults || finalResults) && !finalResults && !currentResults && (
+            <section className="panel">
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">TEAMS</p>
+                  <h2>{session.teams.length}팀 참여 중</h2>
+                </div>
+                <span className="muted">홀수 팀이면 1팀은 관찰 전용 심판으로 배정됩니다.</span>
+              </div>
+              <div className="team-grid">
+                {session.teams.map((team) => (
+                  <button key={team.id} className={`team-card ${selectedTeamId === team.id ? 'selected' : ''}`} onClick={() => selectTeam(team.id)}>
                     <div className="team-card-top" style={{ borderTop: `3px solid ${team.color}` }}>
                       <span className="team-dot" style={{ background: team.color }} />
                       <div>
@@ -516,80 +697,56 @@ export default function TeacherApp({ navigate }) {
                         <p className="muted">{team.members.join(' · ')}</p>
                       </div>
                     </div>
-                    <p className="team-relation">
-                      {team.role === 'observer'
-                        ? '👁️ 관찰자'
-                        : team.role === 'judge'
-                          ? '🔍 심판'
-                          : team.role === 'respondent'
-                            ? '💬 응답자'
-                            : '대기 중'}
-                    </p>
-                    {isLiveRound && roundDetail?.round?.status === 'chatting' && (
-                      <p className="team-progress" style={{ letterSpacing: 2, fontSize: '0.85rem' }}>
-                        {Array.from({ length: totalTurns }, (_, i) => i < completedTurns ? '●' : '○').join('')}
-                      </p>
-                    )}
-                    {isLiveRound && roundDetail?.round?.status === 'voting' && (
-                      <p className="team-progress">
-                        {voteInfo ? `투표 완료 ${voteInfo.votedCount}/${voteInfo.totalTurns}` : '투표 대기'}
-                      </p>
-                    )}
-                    {!isLiveRound && (
-                      <p className="team-progress">
-                        진행 턴 {completedTurns}/{totalTurns}
-                      </p>
-                    )}
-                    {!isLiveRound && voteInfo && <p className="team-progress">투표 {voteInfo.votedCount}/{voteInfo.totalTurns}</p>}
                     <p className="team-progress score-line">누적 {team.total_score}점</p>
                   </button>
-                )
-              })}
-            </div>
-          </section>
-
-          {roundDetail && !currentResults && !finalResults && (
-            <section className="panel">
-              <div className="section-header">
-                <div>
-                  <p className="eyebrow">🔴 LIVE</p>
-                  <h2>R{roundDetail.round.round_number} · {roundDetail.round.style_name} · {displayModel(roundDetail.round.ai_model)}</h2>
-                </div>
-                <span className="muted">{formatDuration(roundDetail.round.chat_time)} / 응답 {roundDetail.round.response_delay}초</span>
-              </div>
-              <div className="conversation-list">
-                {(roundDetail.teamProgress || []).map((team) => (
-                  <div key={team.id} className="conversation-item">
-                    <strong>{team.name}</strong>
-                    <span className="muted">{team.completedTurns}/{roundDetail.round.total_turns}턴 완료</span>
-                  </div>
                 ))}
               </div>
             </section>
           )}
 
+          {/* ═══ 라이브 채팅 뷰어 ═══ */}
           {selectedLiveTurns && !currentResults && !finalResults && (
             <section className="panel">
-              <p className="eyebrow">🔴 LIVE CHAT</p>
-              <h2>{selectedTeamName}</h2>
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">🔴 LIVE CHAT</p>
+                  <h2>{selectedTeamName}</h2>
+                </div>
+                <button className="ghost-button" onClick={() => { setSelectedLiveTurns(null); setSelectedTeamName('') }} style={{ fontSize: '0.75rem' }}>닫기</button>
+              </div>
               <div style={{ display: 'grid', gap: 8 }}>
                 {selectedLiveTurns.length === 0 && (
                   <p className="muted">아직 대화가 시작되지 않았습니다.</p>
                 )}
                 {selectedLiveTurns.map((turn) => (
                   <div key={turn.turn_number} style={{
-                    padding: '8px 12px', background: 'var(--surface2)',
-                    borderRadius: 8, border: '1px solid var(--border)'
+                    padding: '10px 14px', background: 'var(--surface2)',
+                    borderRadius: 10, border: '1px solid var(--border)',
                   }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 4 }}>턴 {turn.turn_number}</div>
-                    <div><strong>Q:</strong> {turn.question_text || '—'}</div>
-                    <div style={{ color: 'var(--muted)' }}><strong>A:</strong> {turn.styled_answer || '⏳ 대기 중'}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#475569', letterSpacing: '0.05em' }}>턴 {turn.turn_number}</span>
+                      {turn.respondent_type && (
+                        <span style={{
+                          fontSize: '0.55rem', padding: '1px 6px', borderRadius: 4,
+                          background: turn.respondent_type === 'human' ? 'rgba(34,197,94,0.1)' : 'rgba(99,102,241,0.1)',
+                          color: turn.respondent_type === 'human' ? '#22c55e' : '#818cf8',
+                          fontWeight: 600,
+                        }}>{turn.respondent_type === 'human' ? '사람' : 'AI'}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#e2e8f0', marginBottom: 4 }}>
+                      <span style={{ color: '#6366f1', fontWeight: 600 }}>Q</span> {turn.question_text || '—'}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+                      <span style={{ color: '#818cf8', fontWeight: 600 }}>A</span> {turn.styled_answer || '⏳ 대기 중'}
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
+          {/* ═══ 결과 ═══ */}
           {currentResults && (
             <>
               <section className="panel">
@@ -603,8 +760,9 @@ export default function TeacherApp({ navigate }) {
                 <div className="result-table">
                   {currentResults.standings.map((team) => (
                     <button key={team.teamId} className={`result-row ${selectedTeamId === team.teamId ? 'selected' : ''}`} onClick={() => selectTeam(team.teamId)}>
-                      <span>{team.rank}위</span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 800, minWidth: 36, color: team.rank <= 3 ? '#eab308' : '#64748b' }}>{team.rank}위</span>
                       <strong>{team.teamName}</strong>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#64748b' }}>{team.correct}/{team.total} 정답</span>
                       <span className="score-pill">{team.totalScore}점</span>
                     </button>
                   ))}
@@ -636,8 +794,19 @@ export default function TeacherApp({ navigate }) {
                       <>
                         <p><strong>질문</strong> {selectedTurnDetail.question}</p>
                         <p><strong>답변</strong> {selectedTurnDetail.styledAnswer}</p>
-                        <p><strong>실제</strong> {selectedTurnDetail.respondentType === 'human' ? '사람' : 'AI'}</p>
-                        <p><strong>투표</strong> {selectedTurnDetail.verdict === 'human' ? '사람' : selectedTurnDetail.verdict === 'ai' ? 'AI' : '미투표'}</p>
+                        <p>
+                          <strong>실제</strong>{' '}
+                          <span style={{ color: selectedTurnDetail.respondentType === 'human' ? '#22c55e' : '#818cf8', fontWeight: 600 }}>
+                            {selectedTurnDetail.respondentType === 'human' ? '🧑 사람' : '🤖 AI'}
+                          </span>
+                        </p>
+                        <p>
+                          <strong>투표</strong>{' '}
+                          <span style={{ color: selectedTurnDetail.isCorrect ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                            {selectedTurnDetail.verdict === 'human' ? '사람' : selectedTurnDetail.verdict === 'ai' ? 'AI' : '미투표'}
+                            {selectedTurnDetail.isCorrect ? ' ✅' : ' ❌'}
+                          </span>
+                        </p>
                       </>
                     ) : (
                       <p className="muted">토론할 턴을 선택하세요.</p>
@@ -648,20 +817,29 @@ export default function TeacherApp({ navigate }) {
             </>
           )}
 
+          {/* ═══ 최종 순위 ═══ */}
           {finalResults && (
             <section className="panel">
-              <div className="section-header">
-                <div>
-                  <p className="eyebrow">🏆 FINAL</p>
-                  <h2>공동 순위 적용</h2>
-                </div>
+              <div style={{
+                textAlign: 'center', padding: '20px 0 16px',
+                background: 'linear-gradient(135deg, rgba(234,179,8,0.06), rgba(239,68,68,0.04))',
+                borderRadius: 10, marginBottom: 12,
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: 6 }}>🏆</div>
+                <p className="eyebrow" style={{ color: '#eab308' }}>FINAL STANDINGS</p>
+                <h2>최종 순위</h2>
               </div>
               <div className="result-table">
-                {finalResults.finalStandings.map((team) => (
-                  <div key={team.teamId} className="result-row static">
-                    <span>{team.rank}위</span>
-                    <strong>{team.teamName}</strong>
-                    <span className="score-pill">{team.totalScore}점</span>
+                {finalResults.finalStandings.map((team, i) => (
+                  <div key={team.teamId} className="result-row static" style={{
+                    background: i === 0 ? 'rgba(234,179,8,0.06)' : 'transparent',
+                    borderLeft: i === 0 ? '3px solid #eab308' : 'none',
+                  }}>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900, minWidth: 40, color: team.rank === 1 ? '#eab308' : team.rank === 2 ? '#94a3b8' : team.rank === 3 ? '#cd7f32' : '#475569' }}>
+                      {team.rank === 1 ? '🥇' : team.rank === 2 ? '🥈' : team.rank === 3 ? '🥉' : `${team.rank}위`}
+                    </span>
+                    <strong style={{ fontSize: '1rem' }}>{team.teamName}</strong>
+                    <span className="score-pill" style={{ fontSize: '0.9rem' }}>{team.totalScore}점</span>
                   </div>
                 ))}
               </div>

@@ -76,6 +76,11 @@ export default function TeamPage({ navigate }) {
 
     socket.on('observer:question-seen', ({ turnNum, question }) => {
       pendingQuestionsRef.current[turnNum] = question
+      // 관찰자도 질문 즉시 표시 (답변은 나중에 채워짐)
+      setJudgeTurns((prev) => {
+        if (prev.find(t => t.turnNum === turnNum)) return prev
+        return [...prev, { turnNum, question, styledAnswer: null }]
+      })
     })
 
     socket.on('timer:tick', ({ remaining: seconds }) => setRemaining(seconds))
@@ -85,13 +90,14 @@ export default function TeamPage({ navigate }) {
       setPreviewAnswer(null)
     })
 
-    socket.on('turn:ai-answer-preview', ({ turnNum, aiAnswer }) => {
-      setPreviewAnswer({ turnNum, aiAnswer })
+    socket.on('turn:ai-answer-preview', ({ turnNum, question, aiAnswer }) => {
+      setPreviewAnswer({ turnNum, question, aiAnswer })
       setIncomingQuestion(null)
     })
 
     socket.on('respondent:answer-accepted', () => {
-      setIncomingQuestion(null)
+      // incomingQuestion 유지 — 응답자가 보낸 답변이 채팅에 계속 보이도록
+      // turn:respondent-view에서 정리됨
       setJudgeNotice('응답 접수! 딜레이 후 전달됩니다.')
     })
 

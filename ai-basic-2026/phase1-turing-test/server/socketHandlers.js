@@ -123,6 +123,7 @@ export function registerSocketHandlers(io, db) {
     })
 
     socket.on('judge:send-question', ({ sessionId, teamId, message }) => {
+      try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.soloObserver?.id === teamId) return
@@ -249,6 +250,7 @@ export function registerSocketHandlers(io, db) {
         if (partner) {
           io.to(`session:${sessionId}:team:${partner.id}:respondent`).emit('turn:ai-answer-preview', {
             turnNum,
+            question: message,
             aiAnswer: answer,
             deadline: questionSentAt + roundState.responseDelay * 1000,
           })
@@ -278,9 +280,11 @@ export function registerSocketHandlers(io, db) {
 
       const cancelDelivery = getTimer(io, sessionId).scheduleDelivery(questionSentAt, roundState.responseDelay, deliverAiAnswer)
       roundState.deliveryCancels.push(cancelDelivery)
+      } catch (err) { console.error('[judge:send-question]', err.message) }
     })
 
     socket.on('respondent:send-answer', async ({ sessionId, teamId, message }) => {
+      try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
 
@@ -313,6 +317,7 @@ export function registerSocketHandlers(io, db) {
       }
 
       socket.emit('respondent:answer-accepted', { turnNum })
+      } catch (err) { console.error('[respondent:send-answer]', err.message) }
     })
 
     socket.on('round:force-end-chat', ({ sessionId }) => {
