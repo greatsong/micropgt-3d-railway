@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/ — Railway Docker에서 pre-built dist 사용
 .env
 .env.local
 .DS_Store
