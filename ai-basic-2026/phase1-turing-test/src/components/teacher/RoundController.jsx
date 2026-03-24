@@ -2,12 +2,10 @@ import { useState } from 'react'
 import { formatTime } from '../../utils/socket.js'
 
 const STYLES = [
-  { id: '급식체', label: '급식체 (~ㅋㅋ)' },
-  { id: '고양이체', label: '고양이체 (~냥)' },
-  { id: '뉴스체', label: '뉴스체 (~한다)' },
-  { id: '아기체', label: '아기체 (~쥬)' },
-  { id: '존댓말체', label: '존댓말체 (~입니다)' },
-  { id: '장난체', label: '장난체 (~이지롱)' },
+  { id: '자연스러운대화', label: '자연스러운 대화' },
+  { id: '임함체', label: '-임/-함 체' },
+  { id: '사극체', label: '사극 말투' },
+  { id: 'AI체', label: 'AI체 (이모지)' },
 ]
 
 const AI_MODELS = [

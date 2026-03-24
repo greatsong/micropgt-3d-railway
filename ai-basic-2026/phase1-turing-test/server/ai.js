@@ -39,7 +39,7 @@ function getAnthropic() {
 // ── 말투 변환 (항상 Claude Haiku) ────────────────────────────────────────
 /**
  * @param {string} text - 원본 텍스트
- * @param {string} style - 말투 이름 (급식체, 고양이체, ...)
+ * @param {string} style - 말투 이름 (자연스러운대화, 임함체, 사극체, AI체)
  * @returns {Promise<string>} 변환된 텍스트
  */
 export async function styleTransform(text, style) {
@@ -110,13 +110,15 @@ function buildSystemPrompt(style) {
   const styleInfo = STYLE_PROMPTS[style]
   const styleDesc = styleInfo ? styleInfo.description : style
   const styleInstr = styleInfo ? styleInfo.instruction : ''
+  const noEmoji = style !== 'AI체'
   return `너는 튜링 테스트에 참여 중인 대화 상대야. 고등학생과 자연스럽게 대화하는 것처럼 답변해줘.
 
 중요한 규칙:
 1. 답변은 ${styleDesc}로 작성해. ${styleInstr}
-2. 짧고 자연스럽게 답변해 (1~3문장).
+2. 반드시 1문장, 최대 2문장으로만 답변해. 50자 이내로 짧게.
 3. 너무 완벽하거나 형식적이지 않게, 실제 학생처럼.
-4. 질문에만 답하고, 설명이나 추가 질문은 하지 마.`
+4. 질문에만 답하고, 설명이나 추가 질문은 하지 마.
+${noEmoji ? '5. 이모지(😊🎉 등)를 절대 사용하지 마. 텍스트만.' : '5. 이모지를 자연스럽게 사용해.'}`
 }
 
 // ── Claude (Anthropic SDK) ────────────────────────────────────────────────
@@ -124,7 +126,7 @@ async function generateWithClaude(question, systemPrompt) {
   const client = getAnthropic()
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 200,
+    max_tokens: 80,
     system: systemPrompt,
     messages: [{ role: 'user', content: question }],
   })

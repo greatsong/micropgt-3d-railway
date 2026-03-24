@@ -30,6 +30,7 @@ export default function TeamPage({ navigate }) {
   const [questionDraft, setQuestionDraft] = useState('')
   const [awaitingAnswer, setAwaitingAnswer] = useState(false)
   const [judgeNotice, setJudgeNotice] = useState('')
+  const [questionSentAt, setQuestionSentAt] = useState(null)
 
   // 응답 (답변하는 쪽) 상태
   const [incomingQuestion, setIncomingQuestion] = useState(null)
@@ -102,11 +103,16 @@ export default function TeamPage({ navigate }) {
     })
 
     socket.on('turn:answer-delivered', ({ turnNum, styledAnswer }) => {
-      setJudgeTurns((prev) => [
-        ...prev,
-        { turnNum, question: pendingQuestionsRef.current[turnNum] || `턴 ${turnNum}`, styledAnswer },
-      ])
+      // 이미 추가된 질문에 답변 채우기
+      setJudgeTurns((prev) => {
+        const exists = prev.find((t) => t.turnNum === turnNum)
+        if (exists) {
+          return prev.map((t) => t.turnNum === turnNum ? { ...t, styledAnswer } : t)
+        }
+        return [...prev, { turnNum, question: pendingQuestionsRef.current[turnNum] || `턴 ${turnNum}`, styledAnswer }]
+      })
       setAwaitingAnswer(false)
+      setQuestionSentAt(null)
       setQuestionDraft('')
       setJudgeNotice('')
       setPreviewAnswer(null)
@@ -149,7 +155,10 @@ export default function TeamPage({ navigate }) {
     const nextTurn = judgeTurns.length + 1
     if (!msg || awaitingAnswer || roundInfo?.isSoloJudge) return
     pendingQuestionsRef.current[nextTurn] = msg
+    // 질문 즉시 화면에 표시 (답변은 null)
+    setJudgeTurns((prev) => [...prev, { turnNum: nextTurn, question: msg, styledAnswer: null }])
     setAwaitingAnswer(true)
+    setQuestionSentAt(Date.now())
     socketRef.current?.emit('judge:send-question', {
       sessionId, teamId: Number(teamId), message: msg,
     })
@@ -223,6 +232,7 @@ export default function TeamPage({ navigate }) {
         judgeTurns={judgeTurns}
         respondTurns={respondTurns}
         awaitingAnswer={awaitingAnswer}
+        questionSentAt={questionSentAt}
         incomingQuestion={incomingQuestion}
         previewAnswer={previewAnswer}
         judgeNotice={judgeNotice}

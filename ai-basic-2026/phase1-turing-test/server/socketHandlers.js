@@ -1,4 +1,4 @@
-import { createRound, getPartner, pairingsToRecords } from './matchmaking.js'
+import { createRound, getPartner, getRole, pairingsToRecords } from './matchmaking.js'
 import { generateAIResponseWithTimeout, styleTransform } from './ai.js'
 import { getTimer } from './timer.js'
 import { buildSharedRankings } from './utils.js'
@@ -127,6 +127,8 @@ export function registerSocketHandlers(io, db) {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.soloObserver?.id === teamId) return
+      // 응답 팀은 질문 불가
+      if (getRole(roundState.pairs, teamId) === 'respondent') return
       if (roundState.teamAwaitingAnswer[teamId]) return
 
       const turnIndex = roundState.teamCurrentTurn[teamId]
@@ -585,13 +587,17 @@ function revealResults(io, db, sessionId, roundState) {
 }
 
 function checkAllTurnsComplete(io, db, sessionId, roundState) {
-  const allComplete = Object.values(roundState.teamCurrentTurn).every((count) => count >= roundState.totalTurns)
+  // 심판 팀만 턴 완료 체크 (응답 팀은 질문하지 않음)
+  const judgeTeamIds = roundState.pairs.map(([judge]) => judge.id)
+  const allComplete = judgeTeamIds.every((id) => (roundState.teamCurrentTurn[id] || 0) >= roundState.totalTurns)
   if (!allComplete) return
   getTimer(io, sessionId).forceEnd()
   endChatPhase(io, db, sessionId)
 }
 
 function buildRoundStartedPayload(roundState, teamId) {
+  const isSoloJudge = roundState.soloObserver?.id === teamId
+  const role = isSoloJudge ? 'observer' : (getRole(roundState.pairs, teamId) || 'judge')
   return {
     roundId: roundState.roundId,
     roundNum: roundState.roundNum,
@@ -602,9 +608,10 @@ function buildRoundStartedPayload(roundState, teamId) {
     responseDelay: roundState.responseDelay,
     voteTime: roundState.voteTime,
     pointValue: roundState.pointValue,
+    role,
     partnerTeamId: getPartner(roundState.pairs, teamId)?.id ?? null,
-    isSoloJudge: roundState.soloObserver?.id === teamId,
-    observerTargetTeamId: roundState.soloObserver?.id === teamId ? roundState.observerTargetTeamId : null,
+    isSoloJudge,
+    observerTargetTeamId: isSoloJudge ? roundState.observerTargetTeamId : null,
     currentTurnIndex: roundState.teamCurrentTurn[teamId] || 0,
   }
 }

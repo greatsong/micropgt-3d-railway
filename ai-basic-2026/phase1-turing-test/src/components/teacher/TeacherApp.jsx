@@ -15,11 +15,11 @@ const aiModelOptions = [
 ]
 
 const defaultSettings = {
-  style: '고양이체',
+  style: '자연스러운대화',
   aiModel: 'claude',
   turns: 8,
   chatTime: 300,
-  responseDelay: 30,
+  responseDelay: 15,
   voteTime: 120,
   pointValue: 1,
 }

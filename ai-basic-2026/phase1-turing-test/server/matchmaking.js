@@ -27,12 +27,11 @@ export function createRound(teams, totalTurns) {
   const humanTurns = Math.floor(totalTurns / 2)
   const aiTurns = totalTurns - humanTurns
 
-  // 각 팀에 턴 순서 배정
+  // 심판 팀(첫번째)에만 턴 순서 배정 — 응답 팀(두번째)은 질문하지 않음
   const teamTurns = {}
 
-  for (const [teamA, teamB] of pairs) {
-    teamTurns[teamA.id] = generateTurnOrder(humanTurns, aiTurns)
-    teamTurns[teamB.id] = generateTurnOrder(humanTurns, aiTurns)
+  for (const [judgeTeam, _respondentTeam] of pairs) {
+    teamTurns[judgeTeam.id] = generateTurnOrder(humanTurns, aiTurns)
   }
 
   let observerTargetTeamId = null
@@ -60,6 +59,20 @@ function generateTurnOrder(humanCount, aiCount) {
     ...Array(aiCount).fill('ai'),
   ]
   return shuffle(order)
+}
+
+/**
+ * 팀의 역할 조회
+ * @param {Array} pairs - [[judgeTeam, respondentTeam], ...]
+ * @param {number} teamId
+ * @returns {'judge'|'respondent'|null}
+ */
+export function getRole(pairs, teamId) {
+  for (const [judge, respondent] of pairs) {
+    if (judge.id === teamId) return 'judge'
+    if (respondent.id === teamId) return 'respondent'
+  }
+  return null
 }
 
 /**
