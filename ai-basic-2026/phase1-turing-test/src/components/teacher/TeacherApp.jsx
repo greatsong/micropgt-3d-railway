@@ -407,7 +407,7 @@ export default function TeacherApp({ navigate }) {
             <p className="muted">세션 ID: <strong>{session.id}</strong></p>
             <p className="join-url">{joinUrl}</p>
             <div className="mini-callout">
-              <span>QR 대신 링크만 복사해도 바로 참여할 수 있습니다.</span>
+              <span>위 링크를 학생에게 공유하세요.</span>
             </div>
           </section>
 
