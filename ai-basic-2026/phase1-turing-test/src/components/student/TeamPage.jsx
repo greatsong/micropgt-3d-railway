@@ -34,6 +34,7 @@ export default function TeamPage({ navigate }) {
   // 응답 (답변하는 쪽) 상태
   const [incomingQuestion, setIncomingQuestion] = useState(null)
   const [previewAnswer, setPreviewAnswer] = useState(null)
+  const [respondTurns, setRespondTurns] = useState([])
 
   // 투표 + 결과 상태
   const [voteSubmitted, setVoteSubmitted] = useState(false)
@@ -68,6 +69,7 @@ export default function TeamPage({ navigate }) {
       setRoundResults(null)
       setFinalResults(null)
       setJudgeNotice('')
+      setRespondTurns([])
       pendingQuestionsRef.current = {}
     })
 
@@ -90,6 +92,13 @@ export default function TeamPage({ navigate }) {
     socket.on('respondent:answer-accepted', () => {
       setIncomingQuestion(null)
       setJudgeNotice('응답 접수! 딜레이 후 전달됩니다.')
+    })
+
+    // 응답자로서 본 대화 (상대가 질문 → 내/AI 답변 결과)
+    socket.on('turn:respondent-view', ({ turnNum, question, styledAnswer }) => {
+      setRespondTurns((prev) => [...prev, { turnNum, question, styledAnswer }])
+      setPreviewAnswer(null)
+      setIncomingQuestion(null)
     })
 
     socket.on('turn:answer-delivered', ({ turnNum, styledAnswer }) => {
@@ -212,6 +221,7 @@ export default function TeamPage({ navigate }) {
         roundInfo={roundInfo}
         remaining={remaining}
         judgeTurns={judgeTurns}
+        respondTurns={respondTurns}
         awaitingAnswer={awaitingAnswer}
         incomingQuestion={incomingQuestion}
         previewAnswer={previewAnswer}

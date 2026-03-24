@@ -12,6 +12,7 @@ export default function ChatScreen({
   roundInfo,
   remaining,
   judgeTurns,
+  respondTurns = [],
   awaitingAnswer,
   incomingQuestion,
   previewAnswer,
@@ -103,7 +104,7 @@ export default function ChatScreen({
 
       {/* ── 채팅 히스토리 ── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {judgeTurns.length === 0 && !awaitingAnswer && (
+        {judgeTurns.length === 0 && respondTurns.length === 0 && !awaitingAnswer && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8, animation: 'bounceIn 0.6s ease-out' }}>🔍</div>
             <p style={{ fontWeight: 600, marginBottom: 4 }}>상대에게 질문을 보내세요!</p>
@@ -115,9 +116,18 @@ export default function ChatScreen({
           </div>
         )}
 
+        {/* 내가 질문한 대화 */}
+        {judgeTurns.length > 0 && (
+          <div style={{
+            textAlign: 'center', margin: '4px 0', padding: '3px 10px',
+            fontSize: '0.65rem', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.08em',
+          }}>
+            🔍 내가 질문한 대화
+          </div>
+        )}
+
         {judgeTurns.map((turn) => (
-          <div key={turn.turnNum}>
-            {/* 턴 구분선 */}
+          <div key={`j-${turn.turnNum}`}>
             <div style={{ textAlign: 'center', margin: '8px 0 4px', fontSize: '0.7rem', color: 'var(--muted)' }}>
               턴 {turn.turnNum}
             </div>
@@ -148,6 +158,50 @@ export default function ChatScreen({
             </div>
           </div>
         ))}
+
+        {/* 상대가 질문한 대화 (응답자 뷰) */}
+        {respondTurns.length > 0 && (
+          <>
+            <div style={{
+              textAlign: 'center', margin: '12px 0 4px', padding: '3px 10px',
+              fontSize: '0.65rem', color: 'var(--respond)', fontWeight: 700, letterSpacing: '0.08em',
+            }}>
+              💬 상대가 질문한 대화
+            </div>
+            {respondTurns.map((turn) => (
+              <div key={`r-${turn.turnNum}`}>
+                <div style={{ textAlign: 'center', margin: '8px 0 4px', fontSize: '0.7rem', color: 'var(--muted)' }}>
+                  턴 {turn.turnNum}
+                </div>
+
+                {/* 상대 질문 (왼쪽) */}
+                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 4 }}>
+                  <div style={{
+                    maxWidth: '75%', padding: '10px 14px',
+                    background: 'var(--surface2)', color: 'var(--text)',
+                    borderRadius: '16px 16px 16px 4px',
+                    fontSize: '0.9rem', lineHeight: 1.5,
+                    border: '1px solid var(--border)',
+                  }}>
+                    {turn.question}
+                  </div>
+                </div>
+
+                {/* 내/AI 답변 (오른쪽, 녹색 계열) */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{
+                    maxWidth: '75%', padding: '10px 14px',
+                    background: 'var(--respond)', color: '#fff',
+                    borderRadius: '16px 16px 4px 16px',
+                    fontSize: '0.9rem', lineHeight: 1.5,
+                  }}>
+                    {turn.styledAnswer}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
 
         {/* 답변 대기 중 로딩 */}
         {awaitingAnswer && (

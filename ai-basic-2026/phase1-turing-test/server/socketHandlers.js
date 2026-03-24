@@ -423,10 +423,22 @@ export function registerSocketHandlers(io, db) {
 function finalizeTurnDelivery(io, db, sessionId, roundState, payload) {
   const { sourceTeamId, sourceTurnId, observerTurnId, turnNum, styledAnswer } = payload
 
+  // 심판(질문자)에게 답변 전달
   io.to(`session:${sessionId}:team:${sourceTeamId}:judge`).emit('turn:answer-delivered', {
     turnNum,
     styledAnswer,
   })
+
+  // 응답자(파트너)에게도 대화 내역 전달 — 맥락을 볼 수 있게
+  const turn = db.prepare('SELECT question_text FROM turns WHERE id = ?').get(sourceTurnId)
+  const partner = getPartner(roundState.pairs, sourceTeamId)
+  if (partner) {
+    io.to(`session:${sessionId}:team:${partner.id}`).emit('turn:respondent-view', {
+      turnNum,
+      question: turn?.question_text || '',
+      styledAnswer,
+    })
+  }
 
   if (observerTurnId && roundState.soloObserver) {
     io.to(`session:${sessionId}:team:${roundState.soloObserver.id}:judge`).emit('turn:answer-delivered', {
