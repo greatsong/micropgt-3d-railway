@@ -116,6 +116,16 @@ export default function TeacherApp({ navigate }) {
       setSelectedTeamName('')
       setNotice(`라운드 ${payload.roundNum} 시작`)
       setTimeout(() => setNotice(''), 3000)
+      // 팀 역할 정보 병합
+      if (payload.teams) {
+        setSession((prev) => prev ? {
+          ...prev,
+          teams: prev.teams.map((t) => {
+            const roundTeam = payload.teams.find((rt) => rt.id === t.id)
+            return roundTeam ? { ...t, role: roundTeam.role } : t
+          })
+        } : prev)
+      }
       void refreshRoundData(session.id, payload.roundId)
       void refreshRounds(session.id)
     })
@@ -297,7 +307,7 @@ export default function TeacherApp({ navigate }) {
       <div className="page-shell center-shell">
         <div className="panel auth-panel">
           <p className="eyebrow">🔐 AUTH</p>
-          <h1>AI를 찾아라!</h1>
+          <h1>이미테이션 게임</h1>
           <p className="muted">교사용 PIN을 입력해 게임을 시작하세요.</p>
           <input
             className="field"
@@ -347,7 +357,7 @@ export default function TeacherApp({ navigate }) {
       <header className="topbar">
         <div className="headline-block">
           <p className="eyebrow">🎮 DASHBOARD</p>
-          <h1>AI를 찾아라!</h1>
+          <h1>이미테이션 게임</h1>
           <p className="muted hero-copy">질문 → 위장 → 판별, 매 턴이 심리전!</p>
         </div>
         <div className="topbar-actions">
@@ -507,11 +517,13 @@ export default function TeacherApp({ navigate }) {
                       </div>
                     </div>
                     <p className="team-relation">
-                      {relation?.observerTarget
-                        ? `관찰 심판 → ${teamNameById.get(relation.observerTarget) || relation.observerTarget}`
-                        : relation?.partner
-                          ? `↔ ${teamNameById.get(relation.partner) || relation.partner}`
-                          : '대기 중'}
+                      {team.role === 'observer'
+                        ? '👁️ 관찰자'
+                        : team.role === 'judge'
+                          ? '🔍 심판'
+                          : team.role === 'respondent'
+                            ? '💬 응답자'
+                            : '대기 중'}
                     </p>
                     {isLiveRound && roundDetail?.round?.status === 'chatting' && (
                       <p className="team-progress" style={{ letterSpacing: 2, fontSize: '0.85rem' }}>

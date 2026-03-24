@@ -116,9 +116,8 @@ export function registerSocketHandlers(io, db) {
           id: team.id,
           name: team.name,
           color: team.color,
-          partnerTeamId: getPartner(pairs, team.id)?.id ?? null,
+          role: soloObserver?.id === team.id ? 'observer' : (getRole(pairs, team.id) || 'judge'),
           isSoloJudge: soloObserver?.id === team.id,
-          observerTargetTeamId: soloObserver?.id === team.id ? observerTargetTeamId : null,
         })),
       })
     })

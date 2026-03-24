@@ -55,6 +55,18 @@ export default function TeamGrid({ teams, phase, teamProgress, voteProgress, rou
                     : team.members}
                 </div>
 
+                {/* 역할 배지 (라운드 진행 중) */}
+                {phase === 'chatting' && team.role && (
+                  <div style={{
+                    display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+                    fontSize: '0.7rem', fontWeight: 700, marginBottom: 6,
+                    background: team.role === 'judge' ? 'rgba(99,102,241,0.15)' : team.role === 'respondent' ? 'rgba(34,197,94,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: team.role === 'judge' ? '#818cf8' : team.role === 'respondent' ? '#4ade80' : '#f59e0b',
+                  }}>
+                    {team.role === 'judge' ? '🔍 심판' : team.role === 'respondent' ? '💬 응답자' : '👁️ 관찰'}
+                  </div>
+                )}
+
                 {phase === 'chatting' && prog && (
                   <>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '6px' }}>
