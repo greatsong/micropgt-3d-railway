@@ -54,11 +54,16 @@ export async function styleTransform(text, style) {
       messages: [
         {
           role: 'user',
-          content: `다음 텍스트를 ${styleInfo.description}로 변환해줘. 내용은 바꾸지 말고 말투만 바꿔줘. 변환된 텍스트만 출력해 (설명 없이).\n\n${styleInfo.instruction}\n\n원본: "${text}"`,
+          content: `다음 텍스트를 ${styleInfo.description}로 변환해줘. 내용은 바꾸지 말고 말투만 바꿔줘. 변환된 텍스트만 출력해 (설명 없이, 따옴표로 감싸지 마).\n\n${styleInfo.instruction}\n\n원본: ${text}`,
         },
       ],
     })
-    return message.content[0]?.text?.trim() || text
+    let result = message.content[0]?.text?.trim() || text
+    // LLM이 따옴표로 감싸는 경우 제거 (사람/AI 판별 단서 방지)
+    if ((result.startsWith('"') && result.endsWith('"')) || (result.startsWith("'") && result.endsWith("'"))) {
+      result = result.slice(1, -1)
+    }
+    return result
   } catch (err) {
     console.error('[AI] 말투 변환 실패:', err.message)
     return text
