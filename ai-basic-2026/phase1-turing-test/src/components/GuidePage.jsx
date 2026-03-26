@@ -165,7 +165,7 @@ function OverviewTab() {
         <p style={paraStyle}>
           1950년 앨런 튜링이 제안한 "이미테이션 게임"을 교실에서 체험합니다.
           심문관은 벽 너머의 상대에게 질문을 보내 사람인지 AI인지 판별하고,
-          피심문자는 자연스럽게 답변해서 들키지 않아야 합니다.
+          플레이어는 자연스럽게 답변해서 들키지 않아야 합니다.
         </p>
         <p style={paraStyle}>
           모든 답변은 <strong style={{ color: '#818cf8' }}>같은 말투</strong>로 변환되어 전달되므로,
@@ -200,8 +200,8 @@ function OverviewTab() {
         <h2 style={headingStyle}>전체 흐름</h2>
         <FlowStep num="1" icon="📋" title="팀 등록" desc="교사가 세션을 만들고, 학생들이 팀을 등록합니다." />
         <FlowStep num="2" icon="⚙️" title="라운드 설정" desc="교사가 말투, AI 모델, 턴 수, 시간 등을 설정합니다." />
-        <FlowStep num="3" icon="🎲" title="매칭 & 역할 배정" desc="자동으로 팀 페어링 + 심문관/피심문자 역할이 배정됩니다." />
-        <FlowStep num="4" icon="💬" title="심문 채팅" desc="심문관이 질문 → 피심문자(사람 또는 AI)가 답변. 같은 말투로 변환됩니다." />
+        <FlowStep num="3" icon="🎲" title="매칭 & 역할 배정" desc="자동으로 팀 페어링 + 심문관/플레이어 역할이 배정됩니다." />
+        <FlowStep num="4" icon="💬" title="심문 채팅" desc="심문관이 질문 → 플레이어(사람 또는 AI)가 답변. 같은 말투로 변환됩니다." />
         <FlowStep num="5" icon="🗳️" title="투표" desc="각 턴의 상대가 사람이었는지 AI였는지 투표합니다." />
         <FlowStep num="6" icon="🎯" title="결과 공개" desc="정답 공개 + 점수 계산. 다음 라운드 또는 최종 순위 발표!" />
       </div>
@@ -317,7 +317,7 @@ function TeacherTab() {
         <h2 style={headingStyle}>아레나 — 매치 카드</h2>
         <p style={paraStyle}>
           라운드가 시작되면 메인 영역에 <strong style={{ color: '#818cf8' }}>매치 카드</strong>가 표시됩니다.
-          각 카드는 심문관과 피심문자의 대결을 보여줍니다.
+          각 카드는 심문관과 플레이어의 대결을 보여줍니다.
         </p>
         <div style={{
           padding: '14px 16px', background: '#0f172a', borderRadius: 8,
@@ -329,7 +329,7 @@ function TeacherTab() {
 │ MATCH 1                    3/8턴   │
 │                                     │
 │ 🔍 알파팀  ←── 벽 ──→  🎭 베타팀   │
-│   심문관                 피심문자   │
+│   심문관                 플레이어   │
 │                                     │
 │ ▓▓▓▓▓░░░░░░░ 37%                   │
 │ 누적 3점              누적 5점      │
@@ -378,8 +378,8 @@ function StudentTab() {
       </div>
 
       <div style={cardStyle}>
-        <p style={labelStyle}>🎭 SUBJECT</p>
-        <h2 style={headingStyle}>피심문자 역할</h2>
+        <p style={labelStyle}>🎭 PLAYER</p>
+        <h2 style={headingStyle}>플레이어 역할</h2>
         <p style={paraStyle}>
           질문에 자연스럽게 답변해서 <strong style={{ color: '#34d399' }}>사람임을 증명</strong>하세요. 들키면 상대 팀 점수!
         </p>

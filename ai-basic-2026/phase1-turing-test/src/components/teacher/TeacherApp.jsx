@@ -612,8 +612,8 @@ export default function TeacherApp({ navigate }) {
                         {/* 응답자 */}
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', textAlign: 'right' }}>
                           <div>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>피심문자</div>
-                            <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 SUBJECT</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>플레이어</div>
+                            <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 PLAYER</div>
                           </div>
                           <span style={{ width: 12, height: 12, borderRadius: '50%', background: match.respondent.color, flexShrink: 0, border: '2px solid rgba(255,255,255,0.15)' }} />
                         </div>
@@ -644,7 +644,7 @@ export default function TeacherApp({ navigate }) {
                             심문관: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                           <span style={{ color: respondentVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            피심문자: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
+                            플레이어: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                         </div>
                       )}

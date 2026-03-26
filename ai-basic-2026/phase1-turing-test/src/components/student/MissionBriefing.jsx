@@ -41,8 +41,8 @@ const ROLE_DATA = {
   },
   respondent: {
     icon: '📡',
-    codename: 'SUBJECT',
-    title: '당신은 피심문자입니다',
+    codename: 'PLAYER',
+    title: '당신은 플레이어입니다',
     mission: '인간처럼 답하라. 들키면 끝이다',
     color: C.green,
     borderColor: C.greenBorder,
