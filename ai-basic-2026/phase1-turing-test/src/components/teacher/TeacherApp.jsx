@@ -468,13 +468,13 @@ export default function TeacherApp({ navigate }) {
               {[60, 120, 180].map((value) => <option key={value} value={value}>{Math.round(value / 60)}분</option>)}
             </select>
 
-            <label className="field-label">정답 점수</label>
+            <label className="field-label">정답 점수 {settings.pointValue === 0 && <span style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 600, marginLeft: 4 }}>연습 라운드</span>}</label>
             <input
               className="field"
               type="number"
-              min="1"
+              min="0"
               value={settings.pointValue}
-              onChange={(event) => setSettings((prev) => ({ ...prev, pointValue: Number(event.target.value) || 1 }))}
+              onChange={(event) => setSettings((prev) => ({ ...prev, pointValue: Math.max(0, Number(event.target.value) || 0) }))}
             />
 
             <button className="primary-button" onClick={startRound}>라운드 시작</button>
@@ -805,7 +805,11 @@ export default function TeacherApp({ navigate }) {
                     <p className="eyebrow">🎯 RESULTS</p>
                     <h2>R{currentResults.roundNum} · {currentResults.style} · {displayModel(currentResults.aiModel)}</h2>
                   </div>
-                  <span className="muted">정답 1개당 {currentResults.pointValue}점</span>
+                  <span className="muted">
+                    {currentResults.pointValue > 0
+                      ? `정답 1개당 ${currentResults.pointValue}점`
+                      : '연습 라운드 (0점)'}
+                  </span>
                 </div>
                 <div className="result-table">
                   {currentResults.standings.map((team) => (
@@ -867,33 +871,105 @@ export default function TeacherApp({ navigate }) {
             </>
           )}
 
-          {/* ═══ 최종 순위 ═══ */}
+          {/* ═══ 최종 순위 + 통계 대시보드 ═══ */}
           {finalResults && (
-            <section className="panel">
-              <div style={{
-                textAlign: 'center', padding: '20px 0 16px',
-                background: 'linear-gradient(135deg, rgba(234,179,8,0.06), rgba(239,68,68,0.04))',
-                borderRadius: 10, marginBottom: 12,
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 6 }}>🏆</div>
-                <p className="eyebrow" style={{ color: '#eab308' }}>FINAL STANDINGS</p>
-                <h2>최종 순위</h2>
-              </div>
-              <div className="result-table">
-                {finalResults.finalStandings.map((team, i) => (
-                  <div key={team.teamId} className="result-row static" style={{
-                    background: i === 0 ? 'rgba(234,179,8,0.06)' : 'transparent',
-                    borderLeft: i === 0 ? '3px solid #eab308' : 'none',
-                  }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: 900, minWidth: 40, color: team.rank === 1 ? '#eab308' : team.rank === 2 ? '#94a3b8' : team.rank === 3 ? '#cd7f32' : '#475569' }}>
-                      {team.rank === 1 ? '🥇' : team.rank === 2 ? '🥈' : team.rank === 3 ? '🥉' : `${team.rank}위`}
-                    </span>
-                    <strong style={{ fontSize: '1rem' }}>{team.teamName}</strong>
-                    <span className="score-pill" style={{ fontSize: '0.9rem' }}>{team.totalScore}점</span>
+            <>
+              <section className="panel">
+                <div style={{
+                  textAlign: 'center', padding: '20px 0 16px',
+                  background: 'linear-gradient(135deg, rgba(234,179,8,0.06), rgba(239,68,68,0.04))',
+                  borderRadius: 10, marginBottom: 12,
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: 6 }}>🏆</div>
+                  <p className="eyebrow" style={{ color: '#eab308' }}>FINAL STANDINGS</p>
+                  <h2>최종 순위</h2>
+                </div>
+                <div className="result-table">
+                  {finalResults.finalStandings.map((team, i) => (
+                    <div key={team.teamId} className="result-row static" style={{
+                      background: team.teamId === finalResults.mvpTeamId ? 'rgba(234,179,8,0.08)' : i === 0 ? 'rgba(234,179,8,0.04)' : 'transparent',
+                      borderLeft: team.rank === 1 ? '3px solid #eab308' : 'none',
+                    }}>
+                      <span style={{ fontSize: '1.2rem', fontWeight: 900, minWidth: 40, color: team.rank === 1 ? '#eab308' : team.rank === 2 ? '#94a3b8' : team.rank === 3 ? '#cd7f32' : '#475569' }}>
+                        {team.rank === 1 ? '🥇' : team.rank === 2 ? '🥈' : team.rank === 3 ? '🥉' : `${team.rank}위`}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ fontSize: '1rem' }}>
+                          {team.teamName}
+                          {team.teamId === finalResults.mvpTeamId && <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#eab308', fontWeight: 700 }}>⭐ MVP</span>}
+                        </strong>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
+                          정답률 {team.accuracy ?? 0}% · {team.totalCorrect ?? 0}/{team.totalTurns ?? 0}
+                        </div>
+                      </div>
+                      <span className="score-pill" style={{ fontSize: '0.9rem' }}>{team.totalScore}점</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* ── 라운드별 학급 통계 ── */}
+              {finalResults.roundStats?.length > 0 && (
+                <section className="panel">
+                  <p className="eyebrow">📊 ROUND STATS</p>
+                  <h2 style={{ marginBottom: 14 }}>라운드별 학급 정답률</h2>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {finalResults.roundStats.map((r) => (
+                      <div key={r.roundNum} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 14px', borderRadius: 8,
+                        background: 'var(--surface2, #1e293b)', border: '1px solid var(--border, rgba(255,255,255,0.06))',
+                      }}>
+                        <div style={{ minWidth: 40, fontWeight: 700, color: '#d4a574', fontSize: '0.85rem' }}>R{r.roundNum}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 4 }}>
+                            {r.style} · {displayModel(r.aiModel)}
+                            {r.pointValue === 0 && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.65rem', fontWeight: 600 }}>연습</span>}
+                          </div>
+                          <div style={{ height: 6, borderRadius: 3, background: 'rgba(99,102,241,0.1)', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%', borderRadius: 3,
+                              background: r.accuracy >= 70 ? '#22c55e' : r.accuracy >= 40 ? '#f59e0b' : '#ef4444',
+                              width: `${r.accuracy}%`, transition: 'width 0.5s ease',
+                            }} />
+                          </div>
+                        </div>
+                        <div style={{ minWidth: 50, textAlign: 'right', fontWeight: 700, fontSize: '0.9rem', color: r.accuracy >= 70 ? '#22c55e' : r.accuracy >= 40 ? '#f59e0b' : '#ef4444' }}>
+                          {r.accuracy}%
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#475569', minWidth: 40, textAlign: 'right' }}>
+                          {r.totalCorrect}/{r.totalTurns}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
+              )}
+
+              {/* ── 전체 통계 ── */}
+              {finalResults.overallStats && (
+                <section className="panel">
+                  <p className="eyebrow">📈 OVERALL</p>
+                  <h2 style={{ marginBottom: 14 }}>전체 통계</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    {[
+                      { label: '전체 정답률', value: `${finalResults.overallStats.accuracy}%`, color: '#818cf8' },
+                      { label: 'AI 식별률', value: `${finalResults.overallStats.aiAiRate}%`, color: '#22c55e' },
+                      { label: '사람 식별률', value: `${finalResults.overallStats.humanHumanRate}%`, color: '#f59e0b' },
+                      { label: '전체 턴', value: `${finalResults.overallStats.totalCorrect}/${finalResults.overallStats.totalTurns}`, color: '#64748b' },
+                    ].map((s) => (
+                      <div key={s.label} style={{
+                        textAlign: 'center', padding: '14px 10px', borderRadius: 10,
+                        background: 'var(--surface2, #1e293b)', border: '1px solid var(--border, rgba(255,255,255,0.06))',
+                      }}>
+                        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: s.color, marginBottom: 4 }}>{s.value}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
           )}
         </main>
       </div>

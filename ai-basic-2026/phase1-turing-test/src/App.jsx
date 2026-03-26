@@ -4,11 +4,13 @@ import TeacherApp from './components/teacher/TeacherApp.jsx'
 import JoinPage from './components/student/JoinPage.jsx'
 import TeamPage from './components/student/TeamPage.jsx'
 import GuidePage from './components/GuidePage.jsx'
+import StudentGuidePage from './components/student/StudentGuidePage.jsx'
 
 function resolveRoute() {
   const pathname = stripBase(window.location.pathname)
   if (pathname.startsWith('/teacher')) return 'teacher'
   if (pathname.startsWith('/team')) return 'team'
+  if (pathname.startsWith('/student-guide')) return 'student-guide'
   if (pathname.startsWith('/guide')) return 'guide'
   return 'join'
 }
@@ -34,6 +36,10 @@ export default function App() {
 
   if (route === 'team') {
     return <TeamPage navigate={navigate} />
+  }
+
+  if (route === 'student-guide') {
+    return <StudentGuidePage navigate={navigate} />
   }
 
   if (route === 'guide') {

@@ -47,7 +47,7 @@ export function registerSocketHandlers(io, db) {
         roundNum,
         style,
         aiModel || 'claude',
-        pointValue || 1,
+        pointValue ?? 1,
         turns,
         chatTime,
         responseDelay,
@@ -95,7 +95,7 @@ export function registerSocketHandlers(io, db) {
         chatTime,
         responseDelay,
         voteTime,
-        pointValue: pointValue || 1,
+        pointValue: pointValue ?? 1,
         pairs,
         soloObserver,
         observerTargetTeamId,
@@ -399,12 +399,34 @@ export function registerSocketHandlers(io, db) {
       ).all(sessionId)
       const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(sessionId)
 
+      // ── 라운드별 학급 전체 통계 ──
+      const roundStats = rounds.map((round) => {
+        const allRoundTurns = db.prepare('SELECT * FROM turns WHERE round_id = ?').all(round.id)
+        const totalCorrect = allRoundTurns.filter((t) => t.is_correct).length
+        const totalTurns = allRoundTurns.length
+        return {
+          roundNum: round.round_number,
+          style: round.style_name,
+          aiModel: round.ai_model,
+          pointValue: round.point_value,
+          totalCorrect,
+          totalTurns,
+          accuracy: totalTurns > 0 ? Math.round((totalCorrect / totalTurns) * 100) : 0,
+        }
+      })
+
+      // ── 팀별 최종 성적 (팀별 정답률 포함) ──
       const finalStandings = teams.map((team) => {
         const members = JSON.parse(team.members || '[]')
+        let totalCorrectAll = 0
+        let totalTurnsAll = 0
+
         const roundResults = rounds.map((round) => {
           const turns = db.prepare('SELECT * FROM turns WHERE round_id = ? AND team_id = ?').all(round.id, team.id)
           const correct = turns.filter((turn) => turn.is_correct).length
           const earned = correct * round.point_value
+          totalCorrectAll += correct
+          totalTurnsAll += turns.length
           return {
             roundNum: round.round_number,
             style: round.style_name,
@@ -423,6 +445,9 @@ export function registerSocketHandlers(io, db) {
           members,
           roundResults,
           totalScore: roundResults.reduce((sum, round) => sum + round.earned, 0),
+          totalCorrect: totalCorrectAll,
+          totalTurns: totalTurnsAll,
+          accuracy: totalTurnsAll > 0 ? Math.round((totalCorrectAll / totalTurnsAll) * 100) : 0,
         }
       }).sort((a, b) => {
         if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore
@@ -430,6 +455,15 @@ export function registerSocketHandlers(io, db) {
       })
 
       const standings = buildSharedRankings(finalStandings, 'totalScore')
+
+      // ── MVP: 정답률 1위 (동률 시 총점 높은 팀) ──
+      const mvpTeam = [...finalStandings]
+        .filter((t) => t.totalTurns > 0)
+        .sort((a, b) => {
+          if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy
+          return b.totalScore - a.totalScore
+        })[0] || null
+
       const allTurns = db.prepare(`
         SELECT t.* FROM turns t
         JOIN rounds r ON r.id = t.round_id
@@ -437,8 +471,10 @@ export function registerSocketHandlers(io, db) {
       `).all(sessionId)
 
       io.to(`session:${sessionId}`).emit('tournament:final', {
-        finalStandings: standings.map((standing) => ({ ...standing, roundResults: standing.roundResults, members: standing.members })),
+        finalStandings: standings,
         allRoundResults: rounds,
+        roundStats,
+        mvpTeamId: mvpTeam?.teamId ?? null,
         overallStats: calcStats(allTurns),
       })
 
