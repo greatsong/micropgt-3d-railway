@@ -83,6 +83,8 @@ export default function DashboardPage() {
     // 재연결 시 join_dashboard를 다시 emit하기 위해 인증 정보를 ref로 유지
     const roomCodeRef = useRef('');
     const passwordRef = useRef('');
+    // Fix 7: handleConnect에서 등록한 onConnect 핸들러 참조 저장 → 전체 제거 대신 특정 핸들러만 off
+    const dashConnectHandlerRef = useRef(null);
 
     // 소켓 연결 및 이벤트 핸들러 등록 — 인증 성공 후 유지
     useEffect(() => {
@@ -269,13 +271,17 @@ export default function DashboardPage() {
 
         const socket = connectSocket();
 
-        // 인증 관련 일회성 핸들러 — 매 시도마다 교체
-        socket.off('connect');
+        // Fix 7: 인증 관련 일회성 핸들러 — 전체 제거 대신 이전 핸들러만 off
+        if (dashConnectHandlerRef.current) {
+            socket.off('connect', dashConnectHandlerRef.current);
+            dashConnectHandlerRef.current = null;
+        }
         socket.off('auth_error');
 
         const onConnect = () => {
             socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
         };
+        dashConnectHandlerRef.current = onConnect;
 
         const onAuthError = (data) => {
             // 소켓은 유지하고 에러 메시지만 표시 — 재시도 가능

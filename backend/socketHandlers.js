@@ -11,6 +11,11 @@ function sanitize(str, maxLen = 50) {
   return str.replace(/[<>&"']/g, '').trim().slice(0, maxLen);
 }
 
+// Fix 5: 좌표값 유효성 검사 헬퍼
+function isValidCoord(v) {
+  return typeof v === 'number' && isFinite(v) && Math.abs(v) < 1000;
+}
+
 function safeHandler(name, handler) {
   return (...args) => {
     try { handler(...args); }
@@ -57,16 +62,21 @@ export function registerSocketHandlers(io) {
 
       socket.join(roomCode);
       const room = getRoomState(roomCode);
+      // Fix 2: 이미 입장한 소켓이면 student_joined 브로드캐스트 생략 (재연결 복구는 유지)
+      const alreadyInRoom = room.students.has(socket.id);
       room.students.set(socket.id, studentInfo);
 
-      console.log(`🚀 ${studentName} → 방 [${roomCode}] 입장 (${room.students.size}명)`);
+      console.log(`🚀 ${studentName} → 방 [${roomCode}] 입장 (${room.students.size}명)${alreadyInRoom ? ' [재입장]' : ''}`);
 
-      io.to(roomCode).emit('student_joined', {
-        student: studentInfo,
-        totalCount: room.students.size,
-      });
+      if (!alreadyInRoom) {
+        io.to(roomCode).emit('student_joined', {
+          student: studentInfo,
+          totalCount: room.students.size,
+        });
+        broadcastRoomUpdate(io, roomCode);
+      }
 
-      // 레이스 상태도 포함하여 재연결 시 복구 가능하게 함
+      // room_state는 항상 발행 — 페이지 이동/재연결 복구용
       socket.emit('room_state', {
         students: Array.from(room.students.values()),
         roomCode,
@@ -75,8 +85,6 @@ export function registerSocketHandlers(io) {
         raceBalls: room.raceBalls || {},
         mapLevel: room.mapLevel || 2,
       });
-
-      broadcastRoomUpdate(io, roomCode);
     }));
 
     // ▸ 교사 관제탑 입장 (비밀번호 인증)
@@ -133,7 +141,10 @@ export function registerSocketHandlers(io) {
       const student = room.students.get(socket.id);
       if (!student) return;
 
-      student.position = payload.position;
+      // Fix 5: 좌표값 검증 (NaN/Infinity/문자열 차단)
+      const pos = payload.position;
+      if (!pos || !isValidCoord(pos.x) || !isValidCoord(pos.y) || !isValidCoord(pos.z)) return;
+      student.position = { x: pos.x, y: pos.y, z: pos.z };
 
       socket.to(currentRoom).emit('word_moved', {
         studentId: socket.id,
@@ -154,7 +165,19 @@ export function registerSocketHandlers(io) {
       student.role = payload.role ?? student.role;
       student.sliderValue_Q = payload.sliderValue_Q ?? student.sliderValue_Q;
       student.sliderValue_K = payload.sliderValue_K ?? student.sliderValue_K;
-      student.attentionWeights = payload.attentionWeights ?? student.attentionWeights;
+      // Fix 6: attentionWeights 크기 제한 (최대 20×20) — 대용량 payload 차단
+      if (payload.attentionWeights !== undefined) {
+        const w = payload.attentionWeights;
+        if (
+          Array.isArray(w) && w.length <= 20 &&
+          w.every(row =>
+            Array.isArray(row) && row.length <= 20 &&
+            row.every(v => typeof v === 'number' && isFinite(v))
+          )
+        ) {
+          student.attentionWeights = w;
+        }
+      }
       student.selectedWord = payload.selectedWord ?? student.selectedWord;
       student.sentenceName = payload.sentenceName ?? student.sentenceName;
       student.headCount = payload.headCount ?? student.headCount;
@@ -239,10 +262,13 @@ export function registerSocketHandlers(io) {
       console.log(`🏁 스테이지 ${room.gpStage || '?'} 시작! 방 [${roomCode}] 맵레벨=${mapLevel} — ${Object.keys(room.raceTeams).length}팀`);
 
       if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
-      room.raceInterval = setInterval(() => {
+      // Fix 1: let intervalId 클로저로 선언 → r이 null이어도 clearInterval 보장
+      let intervalId;
+      intervalId = setInterval(() => {
         const r = rooms.get(roomCode);
         if (!r || r.racePhase !== 'racing') {
-          clearInterval(r?.raceInterval);
+          clearInterval(intervalId);
+          if (r) r.raceInterval = null;
           return;
         }
 
@@ -335,13 +361,15 @@ export function registerSocketHandlers(io) {
               let countdown = 5;
               io.to(roomCode).emit('gp_countdown', { seconds: countdown, nextStage: r.gpStage + 1 });
 
-              const countdownInterval = setInterval(() => {
+              // Fix 4: 카운트다운 인터벌을 room에 저장 → reset_race에서 취소 가능
+              if (r.countdownInterval) { clearInterval(r.countdownInterval); r.countdownInterval = null; }
+              r.countdownInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
                   io.to(roomCode).emit('gp_countdown', { seconds: countdown, nextStage: r.gpStage + 1 });
                 } else {
-                  clearInterval(countdownInterval);
                   const rm = rooms.get(roomCode);
+                  if (rm?.countdownInterval) { clearInterval(rm.countdownInterval); rm.countdownInterval = null; }
                   if (!rm || !rm.gpActive) return;
                   rm.gpStage++;
                   startStageRace(roomCode, rm.gpStage); // level 1,2,3 = stage 1,2,3
@@ -385,13 +413,14 @@ export function registerSocketHandlers(io) {
           }
         }
       }, 33);
+      room.raceInterval = intervalId;
     }
 
     // 교사: 일반 레이스 시작 (단일 맵)
     socket.on('start_race', safeHandler('start_race', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
       if (!room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
 
       room.gpActive = false;
@@ -405,7 +434,7 @@ export function registerSocketHandlers(io) {
     socket.on('start_gp', safeHandler('start_gp', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
       if (!room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
 
       room.gpActive = true;
@@ -423,8 +452,10 @@ export function registerSocketHandlers(io) {
     socket.on('reset_race', safeHandler('reset_race', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
       if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
+      // Fix 4: 카운트다운 인터벌도 취소
+      if (room.countdownInterval) { clearInterval(room.countdownInterval); room.countdownInterval = null; }
       room.racePhase = 'setup';
       room.raceBalls = {};
       room.raceFinished = {};
@@ -444,7 +475,7 @@ export function registerSocketHandlers(io) {
     socket.on('send_quiz', safeHandler('send_quiz', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
 
       const quiz = {
         id: `quiz_${Date.now()}`,
@@ -496,7 +527,7 @@ export function registerSocketHandlers(io) {
     socket.on('reveal_quiz_results', safeHandler('reveal_quiz_results', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
       if (!room.activeQuiz) return;
 
       const answers = Object.values(room.quizAnswers);
@@ -539,7 +570,7 @@ export function registerSocketHandlers(io) {
     socket.on('cancel_quiz', safeHandler('cancel_quiz', () => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
-      if (room.teacherId && !isTeacher(socket.id, currentRoom)) return;
+      if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
       room.activeQuiz = null;
       room.quizAnswers = {};
       io.to(currentRoom).emit('quiz_cancelled');
