@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { lossFunctionByLevel } from '@/lib/lossFunction';
 import styles from './RacingBall.module.css';
 
-export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
+export default function RacingBall({ teamName, color, ballData, isMyTeam, hideLabel = false }) {
     const meshRef = useRef();
     const glowRef = useRef();
 
@@ -71,24 +71,26 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
                 />
             </mesh>
 
-            {/* HTML 라벨 (WebGL 텍스트 대신 DOM 오버레이) */}
-            <Html
-                position={[ballData.x, ballData.y + 0.6, ballData.z]}
-                center
-                className={styles.htmlNoPointer}
-            >
-                <div className={styles.labelWrap}>
-                    <div
-                        className={styles.teamName}
-                        style={{ color: isEscaped ? '#ff4444' : isLocalMin ? '#f97316' : color }}
-                    >
-                        {emoji} {teamName || 'Unknown'}
+            {/* HTML 라벨: hideLabel=true이면 숨김 (지형뷰에서 내 공 라벨 겹침 방지) */}
+            {!hideLabel && (
+                <Html
+                    position={[ballData.x, ballData.y + 0.6, ballData.z]}
+                    center
+                    className={styles.htmlNoPointer}
+                >
+                    <div className={styles.labelWrap}>
+                        <div
+                            className={styles.teamName}
+                            style={{ color: isEscaped ? '#ff4444' : isLocalMin ? '#f97316' : color }}
+                        >
+                            {emoji} {teamName || 'Unknown'}
+                        </div>
+                        <div className={styles.lossLabel}>
+                            Loss: {ballData.loss?.toFixed(3) || '?'}
+                        </div>
                     </div>
-                    <div className={styles.lossLabel}>
-                        Loss: {ballData.loss?.toFixed(3) || '?'}
-                    </div>
-                </div>
-            </Html>
+                </Html>
+            )}
 
             {/* 궤적 선 */}
             {ballData.trail && ballData.trail.length > 1 && (

@@ -1,5 +1,103 @@
+/* Canvas를 감싸는 relative wrapper — 토글 버튼 절대 배치 기준점 */
+.wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
 .canvas {
     width: 100%;
     height: 100%;
     border-radius: var(--radius-md);
+}
+
+/* ── 카메라 전환 토글 버튼 ── */
+.camToggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(15, 23, 42, 0.82);
+    border: 1px solid rgba(124, 92, 252, 0.35);
+    border-radius: 20px;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    z-index: 10;
+    pointer-events: auto;
+    user-select: none;
+    font-family: inherit;
+}
+
+.camToggle:hover {
+    background: rgba(124, 92, 252, 0.22);
+    border-color: rgba(124, 92, 252, 0.65);
+    color: #e2e8f0;
+}
+
+/* 추적 모드가 활성화됐을 때 (overview가 아닐 때) */
+.camToggleActive {
+    background: rgba(124, 92, 252, 0.28);
+    border-color: #7c5cfc;
+    color: #c4b5fd;
+}
+
+.camToggleActive:hover {
+    background: rgba(124, 92, 252, 0.4);
+}
+
+.camIcon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.camLabel {
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+
+.camHint {
+    font-size: 0.65rem;
+    color: #64748b;
+    border-left: 1px solid rgba(100, 116, 139, 0.4);
+    padding-left: 6px;
+    margin-left: 2px;
+}
+
+.camToggleActive .camHint {
+    color: #a78bfa;
+    border-left-color: rgba(167, 139, 250, 0.4);
+}
+
+/* ── 카메라 모드 안내 배지 (하단 중앙) ── */
+.camModeBadge {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(124, 92, 252, 0.35);
+    border-radius: 20px;
+    color: #a78bfa;
+    font-size: 0.75rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    white-space: nowrap;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
