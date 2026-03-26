@@ -9,7 +9,7 @@ import useIsMobile from '@/lib/useIsMobile';
 import { useClassStore } from '@/stores/useClassStore';
 import { useRaceStore, TEAM_COLORS, calcGpPoints } from '@/stores/useRaceStore';
 import { getSocket, connectSocket } from '@/lib/socket';
-import { lossFunctionByLevel, gradientByLevel, MAP_LEVELS } from '@/lib/lossFunction';
+import { lossFunctionByLevel, gradientByLevel, MAP_LEVELS, GLOBAL_MINIMA } from '@/lib/lossFunction';
 import s from './page.module.css';
 
 const GradientRaceScene = dynamic(
@@ -258,7 +258,12 @@ export default function Week5Page() {
                 if (ball.trail.length > 200) ball.trail.shift();
                 if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) ball.status = 'escaped';
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-                if (speed < 0.001 && ball.trail.length > 30) ball.status = 'converged';
+                // Fix 12: 솔로 모드도 서버와 동일한 converged/local_minimum 판정
+                if (speed < 0.001 && ball.trail.length > 30) {
+                    const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
+                    const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
+                    ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
+                }
             }
 
             updateBalls({ ...localBalls });
@@ -270,12 +275,16 @@ export default function Week5Page() {
                         teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
                         finalLoss: b.loss, status: b.status,
                     }))
+                    // Fix 12: converged > local_minimum > escaped 정렬
                     .sort((a, b) => {
-                        if (a.status === 'escaped' && b.status !== 'escaped') return 1;
-                        if (b.status === 'escaped' && a.status !== 'escaped') return -1;
+                        const order = { converged: 0, local_minimum: 1, escaped: 2 };
+                        const ao = order[a.status] ?? 1;
+                        const bo = order[b.status] ?? 1;
+                        if (ao !== bo) return ao - bo;
                         return a.finalLoss - b.finalLoss;
                     })
-                    .map((r, i) => ({ ...r, rank: i + 1, points: r.status === 'escaped' ? 0 : Math.max(0, 2 - i) }));
+                    // converged만 포인트, local_minimum·escaped = 0점
+                    .map((r, i) => ({ ...r, rank: i + 1, points: r.status === 'converged' ? Math.max(0, 2 - i) : 0 }));
 
                 soloStageResultsRef.current[stage - 1] = res;
                 addStageResult(stage - 1, res);
@@ -506,8 +515,15 @@ export default function Week5Page() {
                                         {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
                                     </span>
                                     <span className={s.resultName}>{r.teamName}</span>
-                                    <span className={s.resultLoss} style={{ color: r.status === 'escaped' ? '#f43f5e' : '#10b981' }}>
-                                        {r.status === 'escaped' ? '이탈 (0pt)' : `${r.points || 0}pt`}
+                                    {/* Fix 12: local_minimum 결과 포인트 표시 */}
+                                    <span className={s.resultLoss} style={{
+                                        color: r.status === 'escaped' ? '#f43f5e'
+                                            : r.status === 'local_minimum' ? '#f97316'
+                                            : '#10b981',
+                                    }}>
+                                        {r.status === 'escaped' ? '💥 이탈 (0pt)'
+                                            : r.status === 'local_minimum' ? '🏔️ 로컬 미니마 (0pt)'
+                                            : `🏁 ${r.points || 0}pt`}
                                     </span>
                                 </div>
                             ))}
@@ -550,10 +566,13 @@ export default function Week5Page() {
                                 <span className={s.liveLabel}>상태</span>
                                 <span className={s.liveValue} style={{
                                     color: myBall.status === 'escaped' ? '#f43f5e' :
+                                        myBall.status === 'local_minimum' ? '#f97316' :
                                         myBall.status === 'converged' ? '#10b981' : '#fbbf24',
                                 }}>
-                                    {myBall.status === 'escaped' ? '💥 발산! (이탈)' :
-                                        myBall.status === 'converged' ? '🏁 수렴!' : '🏎️ 질주 중'}
+                                    {/* Fix 12: local_minimum 상태 텍스트 추가 */}
+                                    {myBall.status === 'escaped' ? '💥 발산! 학습률을 줄여보세요' :
+                                        myBall.status === 'local_minimum' ? '🏔️ 로컬 미니마! 어떻게 탈출할까요?' :
+                                        myBall.status === 'converged' ? '🏁 글로벌 최솟값 도달!' : '🏎️ 질주 중'}
                                 </span>
                             </div>
                         </div>
@@ -588,6 +607,13 @@ export default function Week5Page() {
                                 <span className={s.escapedHint}>다음 스테이지에서는 회복 기회가 있습니다!</span>
                             </div>
                         )}
+                        {/* Fix 12: 로컬 미니마 안내 박스 */}
+                        {myBall.status === 'local_minimum' && (
+                            <div className={s.escapedBox} style={{ borderColor: '#f97316', background: 'rgba(249,115,22,0.1)' }}>
+                                🏔️ 로컬 최솟값에 갇혔어요!<br />
+                                <span className={s.escapedHint}>어떻게 탈출할 수 있을까요? 모멘텀과 학습률을 생각해보세요.</span>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -610,8 +636,10 @@ export default function Week5Page() {
                                     <div key={entry.teamId}
                                         className={`${s.leaderboardItem} ${entry.teamId === myTeamId ? s.leaderboardItemMine : ''}`}
                                         style={entry.status === 'escaped' ? { opacity: 0.5 } : undefined}>
+                                        {/* Fix 12: local_minimum 아이콘 추가 */}
                                         <span className={s.leaderboardRank}>
                                             {entry.status === 'escaped' ? '💥' :
+                                                entry.status === 'local_minimum' ? '🏔️' :
                                                 entry.status === 'converged' ? '🏁' :
                                                     idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
                                         </span>

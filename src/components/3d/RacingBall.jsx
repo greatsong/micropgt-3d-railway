@@ -20,6 +20,7 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
 
     const isEscaped = ballData?.status === 'escaped';
     const isConverged = ballData?.status === 'converged';
+    const isLocalMin = ballData?.status === 'local_minimum'; // Fix 11
 
     useFrame((state, delta) => {
         if (!meshRef.current) return;
@@ -38,7 +39,12 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
     if (!ballData) return null;
 
     const ballSize = isMyTeam ? 0.25 : 0.18;
-    const emoji = isEscaped ? '💥' : isConverged ? '🏁' : '🏎️';
+    // Fix 11: racing=팀색, converged=초록, local_minimum=주황, escaped=빨강
+    const ballColor = isEscaped ? new THREE.Color('#ff4444')
+        : isLocalMin ? new THREE.Color('#f97316')
+        : isConverged ? new THREE.Color('#10b981')
+        : parsedColor;
+    const emoji = isEscaped ? '💥' : isLocalMin ? '🏔️' : isConverged ? '🏁' : '🏎️';
 
     return (
         <group>
@@ -46,9 +52,9 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
             <mesh ref={glowRef} position={[ballData.x, ballData.y + 0.15, ballData.z]}>
                 <sphereGeometry args={[ballSize * 2, 12, 12]} />
                 <meshBasicMaterial
-                    color={isEscaped ? '#ff0000' : parsedColor}
+                    color={ballColor}
                     transparent
-                    opacity={isEscaped ? 0.3 : 0.12}
+                    opacity={isEscaped ? 0.3 : isLocalMin ? 0.25 : 0.12}
                     depthWrite={false}
                 />
             </mesh>
@@ -57,9 +63,9 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
             <mesh ref={meshRef} position={[ballData.x, ballData.y + 0.15, ballData.z]}>
                 <sphereGeometry args={[ballSize, 16, 16]} />
                 <meshStandardMaterial
-                    color={isEscaped ? '#ff4444' : parsedColor}
-                    emissive={isEscaped ? new THREE.Color('#ff0000') : parsedColor}
-                    emissiveIntensity={isEscaped ? 2.0 : isConverged ? 0.3 : 0.8}
+                    color={ballColor}
+                    emissive={isEscaped ? new THREE.Color('#ff0000') : isLocalMin ? new THREE.Color('#f97316') : parsedColor}
+                    emissiveIntensity={isEscaped ? 2.0 : isLocalMin ? 1.5 : isConverged ? 0.3 : 0.8}
                     roughness={0.2}
                     metalness={0.9}
                 />
@@ -74,7 +80,7 @@ export default function RacingBall({ teamName, color, ballData, isMyTeam }) {
                 <div className={styles.labelWrap}>
                     <div
                         className={styles.teamName}
-                        style={{ color: isEscaped ? '#ff4444' : color }}
+                        style={{ color: isEscaped ? '#ff4444' : isLocalMin ? '#f97316' : color }}
                     >
                         {emoji} {teamName || 'Unknown'}
                     </div>
