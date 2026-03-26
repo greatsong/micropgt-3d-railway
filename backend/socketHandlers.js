@@ -635,12 +635,17 @@ export function registerSocketHandlers(io) {
             clearInterval(room.raceInterval);
             room.raceInterval = null;
           }
+          if (room.countdownInterval) {
+            clearInterval(room.countdownInterval);
+            room.countdownInterval = null;
+          }
         }
 
         if (room.students.size === 0 && !room.teacherId) {
           // 방 삭제 전 남은 소켓에 알림 (클라이언트 localStorage 정리용)
           io.to(currentRoom).emit('room_deleted', { roomCode: currentRoom });
           if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
+          if (room.countdownInterval) { clearInterval(room.countdownInterval); room.countdownInterval = null; }
           rooms.delete(currentRoom);
           console.log(`🗑️ 빈 방 삭제: [${currentRoom}]`);
         }
