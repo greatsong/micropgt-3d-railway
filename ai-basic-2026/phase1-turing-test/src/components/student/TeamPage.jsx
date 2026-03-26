@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiGet } from '../../utils/api.js'
 import { createSocket } from '../../utils/socket.js'
 import ChatScreen from './ChatScreen.jsx'
+import MissionBriefing from './MissionBriefing.jsx'
 import VotePanel from './VotePanel.jsx'
 import ScoreBoard from './ScoreBoard.jsx'
 import WaitingScreen from './WaitingScreen.jsx'
@@ -37,6 +38,9 @@ export default function TeamPage({ navigate }) {
   const [previewAnswer, setPreviewAnswer] = useState(null)
   const [respondTurns, setRespondTurns] = useState([])
 
+  // 미션 브리핑
+  const [showBriefing, setShowBriefing] = useState(false)
+
   // 투표 + 결과 상태
   const [voteSubmitted, setVoteSubmitted] = useState(false)
   const [roundResults, setRoundResults] = useState(null)
@@ -65,6 +69,7 @@ export default function TeamPage({ navigate }) {
     socket.on('round:started', (payload) => {
       setRoundInfo(payload)
       setPhase('chat')
+      setShowBriefing(true)
       setRemaining(payload.chatTime)
       setJudgeTurns([])
       setQuestionDraft('')
@@ -236,20 +241,31 @@ export default function TeamPage({ navigate }) {
   // ── 채팅 페이즈 ──
   if (phase === 'chat') {
     return (
-      <ChatScreen
-        team={team}
-        roundInfo={roundInfo}
-        remaining={remaining}
-        judgeTurns={judgeTurns}
-        respondTurns={respondTurns}
-        awaitingAnswer={awaitingAnswer}
-        questionSentAt={questionSentAt}
-        incomingQuestion={incomingQuestion}
-        previewAnswer={previewAnswer}
-        judgeNotice={judgeNotice}
-        onSendQuestion={sendQuestion}
-        onSubmitAnswer={submitAnswer}
-      />
+      <>
+        <ChatScreen
+          team={team}
+          roundInfo={roundInfo}
+          remaining={remaining}
+          judgeTurns={judgeTurns}
+          respondTurns={respondTurns}
+          awaitingAnswer={awaitingAnswer}
+          questionSentAt={questionSentAt}
+          incomingQuestion={incomingQuestion}
+          previewAnswer={previewAnswer}
+          judgeNotice={judgeNotice}
+          onSendQuestion={sendQuestion}
+          onSubmitAnswer={submitAnswer}
+        />
+        {showBriefing && (
+          <MissionBriefing
+            role={roundInfo?.role || 'judge'}
+            style={roundInfo?.style || ''}
+            roundNum={roundInfo?.roundNum || 1}
+            turns={roundInfo?.totalTurns || roundInfo?.turns || 0}
+            onDismiss={() => setShowBriefing(false)}
+          />
+        )}
+      </>
     )
   }
 

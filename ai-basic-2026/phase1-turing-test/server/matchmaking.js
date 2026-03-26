@@ -1,9 +1,11 @@
 /**
- * 매칭 알고리즘 (설계서 Section 10)
+ * 매칭 알고리즘 — 역할 순환 보장
  *
- * - 팀을 2개씩 페어링 (라운드마다 셔플)
- * - 각 팀별 턴 순서 생성: 사람/AI 정확히 반반, 랜덤 순서
- * - 홀수 팀: 마지막 팀은 관찰 전용 심판
+ * 원칙:
+ * 1. 이전 심판 → 이번에 반드시 응답자 (또는 관찰자)
+ * 2. 이전 응답자 → 이번에 반드시 심판 (또는 관찰자)
+ * 3. 이전 관찰자 → 절대 연속 관찰자 금지, 심판 우선 배정
+ * 4. 홀수 팀: 관찰자를 그룹 균형 맞춰 선택
  */
 
 import { shuffle } from './utils.js'
@@ -16,43 +18,75 @@ import { shuffle } from './utils.js'
  * @returns {{ pairs, soloObserver, observerTargetTeamId, teamTurns }}
  */
 export function createRound(teams, totalTurns, previousRoles = {}) {
-  const shuffled = shuffle(teams)
+  const all = shuffle([...teams])
 
-  // 관찰자 결정: 이전에 관찰자였던 팀은 우선 제외
+  // ── 1단계: 이전 역할별 분류 ──
+  const prevJudges = all.filter((t) => previousRoles[t.id] === 'judge')
+  const prevRespondents = all.filter((t) => previousRoles[t.id] === 'respondent')
+  const prevObservers = all.filter((t) => previousRoles[t.id] === 'observer')
+  const prevNone = all.filter((t) => !previousRoles[t.id])
+
+  // ── 2단계: 홀수 팀이면 관찰자 1명 선택 ──
+  // 핵심: 관찰자를 뽑은 뒤 "이번 심판 후보"와 "이번 응답자 후보"가 같은 수가 되어야 한다
+  //   이번 심판 후보(wantJudge) = 이전 응답자 + 이전 관찰자 + 신규
+  //   이번 응답자 후보(wantRespondent) = 이전 심판
+  //   → jCount <= (N-1)/2 이면 wantJudge 풀에서, 아니면 wantRespondent 풀에서 관찰자를 뽑으면 균형
   let soloObserver = null
-  if (shuffled.length % 2 === 1) {
-    const prevObserverIdx = shuffled.findIndex((t) => previousRoles[t.id] === 'observer')
-    if (prevObserverIdx === -1) {
-      // 이전 관찰자 없음 → 마지막 팀
-      soloObserver = shuffled.pop()
+  if (all.length % 2 === 1) {
+    const candidates = all.filter((t) => previousRoles[t.id] !== 'observer')
+    if (candidates.length === 0) {
+      // 극히 예외: 모두 이전 관찰자 → 아무나
+      soloObserver = all[all.length - 1]
     } else {
-      // 이전 관찰자가 아닌 팀 중 마지막 팀을 관찰자로
-      const candidates = shuffled.filter((t) => previousRoles[t.id] !== 'observer')
-      if (candidates.length > 0 && candidates.length % 2 === 0) {
-        // 관찰자 제외 후 짝수가 되면 아무나 선택
-        soloObserver = shuffled.pop()
+      const jCount = prevJudges.length
+      const halfFloor = Math.floor((all.length - 1) / 2)
+
+      let picked = null
+      if (jCount <= halfFloor) {
+        // 이전 심판이 적거나 같음 → 비-심판 풀(wantJudge)에서 관찰자를 뽑아 균형
+        picked = candidates.find((t) => previousRoles[t.id] === 'respondent')
+            || candidates.find((t) => !previousRoles[t.id])
+            || candidates.find((t) => previousRoles[t.id] !== 'judge')
       } else {
-        soloObserver = shuffled.pop()
+        // 이전 심판이 많음 → 심판 풀(wantRespondent)에서 관찰자를 뽑아 균형
+        picked = candidates.find((t) => previousRoles[t.id] === 'judge')
       }
+      soloObserver = picked || candidates[candidates.length - 1]
+    }
+
+    const obsIdx = all.findIndex((t) => t.id === soloObserver.id)
+    if (obsIdx !== -1) all.splice(obsIdx, 1)
+  }
+
+  // ── 3단계: 역할 순환 페어링 ──
+  // "이번에 심판이 되어야 할 팀" vs "이번에 응답자가 되어야 할 팀"으로 분리
+  const wantJudge = []     // 이전 응답자/관찰자/신규 → 이번에 심판
+  const wantRespondent = [] // 이전 심판 → 이번에 응답자
+
+  for (const t of all) {
+    if (previousRoles[t.id] === 'judge') {
+      wantRespondent.push(t)
+    } else {
+      wantJudge.push(t)
     }
   }
 
   const pairs = []
-  for (let i = 0; i < shuffled.length - 1; i += 2) {
-    const a = shuffled[i]
-    const b = shuffled[i + 1]
-    // 역할 순환: 이전에 심판이었던 팀은 이번에 응답자로
-    const aWasJudge = previousRoles[a.id] === 'judge'
-    const bWasJudge = previousRoles[b.id] === 'judge'
-    if (aWasJudge && !bWasJudge) {
-      pairs.push([b, a]) // a를 응답자로, b를 심판으로
-    } else if (bWasJudge && !aWasJudge) {
-      pairs.push([a, b]) // b를 응답자로, a를 심판으로
-    } else {
-      // 둘 다 같은 역할이었거나 첫 라운드 → 셔플 순서 유지
-      pairs.push([a, b])
-    }
+
+  // 이상적 매칭: wantJudge에서 심판, wantRespondent에서 응답자
+  while (wantJudge.length > 0 && wantRespondent.length > 0) {
+    pairs.push([wantJudge.pop(), wantRespondent.pop()])
   }
+
+  // 남은 팀끼리 (같은 역할이었던 팀들 — 불가피한 경우)
+  const leftover = [...wantJudge, ...wantRespondent]
+  shuffle(leftover)
+  for (let i = 0; i < leftover.length - 1; i += 2) {
+    pairs.push([leftover[i], leftover[i + 1]])
+  }
+
+  // 페어 순서 셔플 (매치 번호 예측 방지)
+  shuffle(pairs)
 
   const humanTurns = Math.floor(totalTurns / 2)
   const aiTurns = totalTurns - humanTurns
