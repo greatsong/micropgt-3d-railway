@@ -55,7 +55,26 @@ export function registerSocketHandlers(io, db) {
       )
 
       const roundId = Number(roundInsert.lastInsertRowid)
-      const { pairs, soloObserver, observerTargetTeamId, teamTurns } = createRound(teams, turns)
+
+      // 이전 라운드 역할 조회 (역할 순환용)
+      const previousRoles = {}
+      if (roundNum > 1) {
+        const prevRound = db.prepare(
+          'SELECT id FROM rounds WHERE session_id = ? AND round_number = ?'
+        ).get(sessionId, roundNum - 1)
+        if (prevRound) {
+          const prevPairings = db.prepare(
+            'SELECT team_a_id, team_b_id, observer_team_id FROM pairings WHERE round_id = ?'
+          ).all(prevRound.id)
+          for (const p of prevPairings) {
+            previousRoles[p.team_a_id] = 'judge'
+            previousRoles[p.team_b_id] = 'respondent'
+            if (p.observer_team_id) previousRoles[p.observer_team_id] = 'observer'
+          }
+        }
+      }
+
+      const { pairs, soloObserver, observerTargetTeamId, teamTurns } = createRound(teams, turns, previousRoles)
 
       const insertPairing = db.prepare(
         'INSERT INTO pairings (round_id, team_a_id, team_b_id, observer_team_id) VALUES (?, ?, ?, ?)'
@@ -361,7 +380,7 @@ export function registerSocketHandlers(io, db) {
       const turns = db.prepare(
         'SELECT * FROM turns WHERE round_id = ? AND team_id = ? ORDER BY turn_number'
       ).all(targetRoundId, teamId)
-      io.to(`session:${sessionId}`).emit('round:conversation-detail', { teamId, turns })
+      io.to(`session:${sessionId}:teacher`).emit('round:conversation-detail', { teamId, turns })
     })
 
     socket.on('teacher:get-live-turns', ({ sessionId, teamId, roundId }) => {

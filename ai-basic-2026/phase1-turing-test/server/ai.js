@@ -46,15 +46,30 @@ export async function styleTransform(text, style) {
   const styleInfo = STYLE_PROMPTS[style]
   if (!styleInfo) return text
 
+  // 입력 글자수 기준 max_tokens 산정 (짧은 입력 → 적은 토큰)
+  const inputLen = text.length
+  const maxTokens = Math.min(120, Math.max(30, Math.ceil(inputLen * 2.5)))
+
   try {
     const client = getAnthropic()
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: maxTokens,
       messages: [
         {
           role: 'user',
-          content: `다음 텍스트를 ${styleInfo.description}로 변환해줘. 내용은 바꾸지 말고 말투만 바꿔줘. 변환된 텍스트만 출력해 (설명 없이, 따옴표로 감싸지 마).\n\n${styleInfo.instruction}\n\n원본: ${text}`,
+          content: `말투만 바꿔줘. 아래 규칙을 반드시 지켜.
+
+규칙:
+1. 원본의 의미와 길이를 최대한 유지해. 원본이 짧으면 결과도 짧아야 해.
+2. 내용을 추가하거나 늘리지 마. 설명, 해석, 코멘트 절대 금지.
+3. "답변이 짧다", "이해를 못했다" 같은 메타 코멘트 절대 금지.
+4. 변환된 텍스트만 출력해. 따옴표로 감싸지 마.
+
+말투: ${styleInfo.description}
+${styleInfo.instruction}
+
+원본: ${text}`,
         },
       ],
     })
@@ -62,6 +77,13 @@ export async function styleTransform(text, style) {
     // LLM이 따옴표로 감싸는 경우 제거 (사람/AI 판별 단서 방지)
     if ((result.startsWith('"') && result.endsWith('"')) || (result.startsWith("'") && result.endsWith("'"))) {
       result = result.slice(1, -1)
+    }
+    // 안전장치: 변환 결과가 원본 대비 지나치게 길면 원본 그대로 반환
+    // (잘라내면 메타 코멘트 조각이 남을 수 있으므로 원본 fallback)
+    const maxLen = inputLen <= 5 ? Math.max(inputLen * 5, 20) : Math.max(inputLen * 3, 30)
+    if (result.length > maxLen) {
+      console.warn(`[AI] 말투 변환 길이 초과 (${inputLen}→${result.length}, 한도 ${maxLen}), 원본 반환`)
+      return text
     }
     return result
   } catch (err) {

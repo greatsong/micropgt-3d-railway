@@ -1,12 +1,17 @@
 import { io } from 'socket.io-client'
 import { SOCKET_PATH } from '../config.js'
 
-/** 새 소켓 인스턴스 생성 */
+/** 새 소켓 인스턴스 생성 (재연결 강화) */
 export function createSocket() {
   return io(window.location.origin, {
     path: SOCKET_PATH,
     autoConnect: true,
     transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 20,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000,
   })
 }
 

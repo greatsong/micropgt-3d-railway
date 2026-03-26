@@ -562,6 +562,7 @@ export default function TeacherApp({ navigate }) {
           )}
 
           {/* ═══ 매치 카드 그리드 (라운드 진행 중) ═══ */}
+          {/* 학생이 프로젝터를 통해 매칭을 알 수 없도록 팀 이름 익명 처리 */}
           {roundDetail && !currentResults && !finalResults && arenaMatches.pairs.length > 0 && (
             <section className="panel" style={{ padding: '16px 20px' }}>
               <p className="eyebrow" style={{ marginBottom: 12 }}>MATCHES</p>
@@ -576,7 +577,7 @@ export default function TeacherApp({ navigate }) {
                   const isVoting = roundDetail?.round?.status === 'voting'
 
                   return (
-                    <button key={idx} onClick={() => selectTeamForLive(match.judge.id, match.judge.name)}
+                    <button key={idx} onClick={() => selectTeamForLive(match.judge.id, `매치 ${idx + 1}`)}
                       style={{
                         display: 'block', width: '100%', textAlign: 'left',
                         padding: '14px 16px', borderRadius: 10,
@@ -590,14 +591,14 @@ export default function TeacherApp({ navigate }) {
                         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{completed}/{totalTurns}턴</span>
                       </div>
 
-                      {/* 팀 대결 표시 */}
+                      {/* 팀 대결 표시 — 익명 */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                         {/* 심판 */}
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: match.judge.color, flexShrink: 0 }} />
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: match.judge.color, flexShrink: 0, border: '2px solid rgba(255,255,255,0.15)' }} />
                           <div>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>{match.judge.name}</div>
-                            <div style={{ fontSize: '0.6rem', color: '#818cf8' }}>🔍 심문관</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>심문관</div>
+                            <div style={{ fontSize: '0.6rem', color: '#818cf8' }}>🔍 INTERROGATOR</div>
                           </div>
                         </div>
 
@@ -611,10 +612,10 @@ export default function TeacherApp({ navigate }) {
                         {/* 응답자 */}
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', textAlign: 'right' }}>
                           <div>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>{match.respondent.name}</div>
-                            <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 피심문자</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>피심문자</div>
+                            <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 SUBJECT</div>
                           </div>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: match.respondent.color, flexShrink: 0 }} />
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: match.respondent.color, flexShrink: 0, border: '2px solid rgba(255,255,255,0.15)' }} />
                         </div>
                       </div>
 
@@ -636,40 +637,37 @@ export default function TeacherApp({ navigate }) {
                         </div>
                       )}
 
-                      {/* 투표 상태 */}
+                      {/* 투표 상태 — 익명 */}
                       {isVoting && (
                         <div style={{ display: 'flex', gap: 8, fontSize: '0.7rem' }}>
                           <span style={{ color: judgeVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            {match.judge.name}: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
+                            심문관: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                           <span style={{ color: respondentVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            {match.respondent.name}: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
+                            피심문자: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                         </div>
                       )}
 
-                      {/* 점수 */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#475569', marginTop: 4 }}>
-                        <span>누적 {match.judge.total_score}점</span>
-                        <span>누적 {match.respondent.total_score}점</span>
+                      {/* 진행률 텍스트 */}
+                      <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: 4, textAlign: 'center' }}>
+                        {pct >= 100 ? '모든 교신 완료' : `${pct}% 진행`}
                       </div>
                     </button>
                   )
                 })}
               </div>
 
-              {/* 관찰자 */}
+              {/* 관찰자 — 익명 */}
               {arenaMatches.observers.length > 0 && (
                 <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.08)' }}>
-                  {arenaMatches.observers.map((obs) => {
+                  {arenaMatches.observers.map((obs, idx) => {
                     const obsProgress = roundDetail?.teamProgress?.find((t) => t.id === obs.id)
-                    const obsMeta = teamMeta.get(obs.id)
-                    const targetName = obsMeta?.observerTarget ? teamNameById.get(obsMeta.observerTarget) : '?'
                     return (
                       <div key={obs.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: obs.color }} />
-                        <span style={{ fontWeight: 600, color: '#94a3b8' }}>👓 {obs.name}</span>
-                        <span style={{ color: '#475569' }}>→ {targetName} 관찰 중</span>
+                        <span style={{ fontWeight: 600, color: '#94a3b8' }}>👓 관찰자 {idx + 1}</span>
+                        <span style={{ color: '#475569' }}>→ 매치 1 감청 중</span>
                         <span style={{ color: '#475569', marginLeft: 'auto' }}>{obsProgress?.completedTurns ?? 0}턴</span>
                       </div>
                     )

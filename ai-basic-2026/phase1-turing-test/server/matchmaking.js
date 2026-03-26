@@ -12,17 +12,47 @@ import { shuffle } from './utils.js'
  * 라운드 데이터 생성
  * @param {Array} teams - 팀 배열 [{id, name, ...}]
  * @param {number} totalTurns - 총 턴 수 (짝수 권장)
+ * @param {Object} previousRoles - 이전 라운드 역할 { teamId: 'judge'|'respondent'|'observer' }
  * @returns {{ pairs, soloObserver, observerTargetTeamId, teamTurns }}
  */
-export function createRound(teams, totalTurns) {
+export function createRound(teams, totalTurns, previousRoles = {}) {
   const shuffled = shuffle(teams)
-  const pairs = []
 
-  for (let i = 0; i < shuffled.length - 1; i += 2) {
-    pairs.push([shuffled[i], shuffled[i + 1]])
+  // 관찰자 결정: 이전에 관찰자였던 팀은 우선 제외
+  let soloObserver = null
+  if (shuffled.length % 2 === 1) {
+    const prevObserverIdx = shuffled.findIndex((t) => previousRoles[t.id] === 'observer')
+    if (prevObserverIdx === -1) {
+      // 이전 관찰자 없음 → 마지막 팀
+      soloObserver = shuffled.pop()
+    } else {
+      // 이전 관찰자가 아닌 팀 중 마지막 팀을 관찰자로
+      const candidates = shuffled.filter((t) => previousRoles[t.id] !== 'observer')
+      if (candidates.length > 0 && candidates.length % 2 === 0) {
+        // 관찰자 제외 후 짝수가 되면 아무나 선택
+        soloObserver = shuffled.pop()
+      } else {
+        soloObserver = shuffled.pop()
+      }
+    }
   }
 
-  const soloObserver = shuffled.length % 2 === 1 ? shuffled[shuffled.length - 1] : null
+  const pairs = []
+  for (let i = 0; i < shuffled.length - 1; i += 2) {
+    const a = shuffled[i]
+    const b = shuffled[i + 1]
+    // 역할 순환: 이전에 심판이었던 팀은 이번에 응답자로
+    const aWasJudge = previousRoles[a.id] === 'judge'
+    const bWasJudge = previousRoles[b.id] === 'judge'
+    if (aWasJudge && !bWasJudge) {
+      pairs.push([b, a]) // a를 응답자로, b를 심판으로
+    } else if (bWasJudge && !aWasJudge) {
+      pairs.push([a, b]) // b를 응답자로, a를 심판으로
+    } else {
+      // 둘 다 같은 역할이었거나 첫 라운드 → 셔플 순서 유지
+      pairs.push([a, b])
+    }
+  }
 
   const humanTurns = Math.floor(totalTurns / 2)
   const aiTurns = totalTurns - humanTurns

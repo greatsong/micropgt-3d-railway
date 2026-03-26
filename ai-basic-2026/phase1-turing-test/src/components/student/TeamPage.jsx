@@ -57,6 +57,11 @@ export default function TeamPage({ navigate }) {
     socketRef.current = socket
     socket.emit('team:join', { sessionId, teamId: Number(teamId) })
 
+    // 재연결 시 자동으로 팀 재합류
+    socket.on('connect', () => {
+      socket.emit('team:join', { sessionId, teamId: Number(teamId) })
+    })
+
     socket.on('round:started', (payload) => {
       setRoundInfo(payload)
       setPhase('chat')
