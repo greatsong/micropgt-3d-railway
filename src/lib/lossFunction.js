@@ -42,13 +42,21 @@ export const MAP_LEVELS = [
     { level: 3, name: '악마의 지형', emoji: '🌋', description: '안장점과 좁은 계곡... 실제 딥러닝의 세계!', difficulty: '고급' },
 ];
 
-// ── Level 1: 완만한 포물면 (초급) ──
+// ── Level 1: 완만한 언덕 + 로컬 함정 (초급) ──
+// 글로벌 최솟값: (0,0) / 로컬 함정: (-3,-3)
 function lossLevel1(x, z) {
-    return 0.15 * (x * x + z * z);
+    const bowl = 0.15 * (x * x + z * z);
+    const localTrap = -0.6 * Math.exp(-((x + 3) * (x + 3) + (z + 3) * (z + 3)) / 1.5);
+    return bowl + localTrap + 0.6;
 }
 
 function gradientLevel1(x, z) {
-    return { gx: 0.3 * x, gz: 0.3 * z };
+    let gx = 0.3 * x;
+    let gz = 0.3 * z;
+    const expL = Math.exp(-((x + 3) * (x + 3) + (z + 3) * (z + 3)) / 1.5);
+    gx += -0.6 * expL * (-2 * (x + 3) / 1.5);
+    gz += -0.6 * expL * (-2 * (z + 3) / 1.5);
+    return { gx, gz };
 }
 
 // ── Level 3: 악마의 지형 (고급) ──
@@ -144,3 +152,10 @@ export function gradientByLevel(x, z, level) {
     if (level === 3) return gradientLevel3(x, z);
     return gradient(x, z); // Level 2 = 기존 맵
 }
+
+// Fix 9 (클라이언트): 솔로 모드 수렴 판정용 글로벌 최솟값 위치
+export const GLOBAL_MINIMA = {
+    1: { x: 0, z: 0 },   // Level 1: 포물면 꼭짓점
+    2: { x: 0, z: 2 },   // Level 2: 글로벌 최솟값
+    3: { x: 1, z: 2 },   // Level 3: 글로벌 최솟값
+};

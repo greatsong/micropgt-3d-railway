@@ -1,5 +1,5 @@
 import { rooms, getRoomState, isTeacher, broadcastRoomUpdate } from './roomManager.js';
-import { getWordPosition, lossFunction, gradient, lossFunctionByLevel, gradientByLevel } from './gameLogic.js';
+import { getWordPosition, lossFunction, gradient, lossFunctionByLevel, gradientByLevel, GLOBAL_MINIMA } from './gameLogic.js';
 
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
 if (!TEACHER_PASSWORD) console.warn('⚠️ TEACHER_PASSWORD 환경변수가 설정되지 않았습니다. 교사 인증이 작동하지 않습니다.');
@@ -292,7 +292,8 @@ export function registerSocketHandlers(io) {
           if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) {
             ball.status = 'escaped';
             r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: NaN, status: 'escaped', time: Date.now() - r.raceStartTime };
-            io.to(roomCode).emit('race_alert', { teamId, teamName: r.raceTeams[teamId]?.name, message: '🚨 공 이탈! 수치 오류(NaN) 발생!' });
+            // Fix 10: 직접 힌트 대신 사고를 유도하는 간접 질문
+            io.to(roomCode).emit('race_alert', { teamId, teamName: r.raceTeams[teamId]?.name, message: `🚨 공이 날아가 버렸어요! 무엇이 너무 커졌을까요? (팀: ${r.raceTeams[teamId]?.name})` });
             continue;
           }
 
@@ -304,13 +305,26 @@ export function registerSocketHandlers(io) {
           if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) {
             ball.status = 'escaped';
             r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: ball.loss, status: 'escaped', time: Date.now() - r.raceStartTime };
-            io.to(roomCode).emit('race_alert', { teamId, teamName: r.raceTeams[teamId]?.name, message: '🚨 공 이탈! 학습률이 너무 큽니다!' });
+            // Fix 10: 간접 질문형 힌트 — 직접 "학습률을 낮추세요" 금지
+            io.to(roomCode).emit('race_alert', { teamId, teamName: r.raceTeams[teamId]?.name, message: `💨 공이 맵을 벗어났어요! 어떤 파라미터를 조절하면 좋을까요? (팀: ${r.raceTeams[teamId]?.name})` });
           }
 
           const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
           if (speed < 0.001 && ball.trail.length > 30) {
-            ball.status = 'converged';
-            r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: ball.loss, status: 'converged', time: Date.now() - r.raceStartTime };
+            // Fix 9: 글로벌 최솟값까지 거리로 converged / local_minimum 구분
+            const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
+            const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
+            if (distToGlobal < 0.8) {
+              ball.status = 'converged';
+              r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: ball.loss, status: 'converged', time: Date.now() - r.raceStartTime };
+            } else {
+              ball.status = 'local_minimum';
+              r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: ball.loss, status: 'local_minimum', time: Date.now() - r.raceStartTime };
+              io.to(roomCode).emit('race_alert', {
+                teamId, teamName: r.raceTeams[teamId]?.name,
+                message: `🏔️ 공이 멈췄어요. 정말 최솟값에 도달했을까요? (팀: ${r.raceTeams[teamId]?.name})`,
+              });
+            }
           }
         }
 
@@ -323,9 +337,12 @@ export function registerSocketHandlers(io) {
           r.raceInterval = null;
 
           const results = Object.values(r.raceFinished)
+            // Fix 9: converged(0) > local_minimum(1) > escaped(2) 순 정렬, 같은 카테고리는 loss 기준
             .sort((a, b) => {
-              if (a.status === 'escaped' && b.status !== 'escaped') return 1;
-              if (b.status === 'escaped' && a.status !== 'escaped') return -1;
+              const order = { converged: 0, local_minimum: 1, escaped: 2 };
+              const ao = order[a.status] ?? 1;
+              const bo = order[b.status] ?? 1;
+              if (ao !== bo) return ao - bo;
               return a.finalLoss - b.finalLoss;
             })
             .map((res, i) => ({ ...res, rank: i + 1 }));
@@ -338,10 +355,11 @@ export function registerSocketHandlers(io) {
 
             // 포인트 계산
             const totalT = Object.keys(r.raceTeams).length;
+            // Fix 9: converged만 포인트 획득 — local_minimum·escaped = 0점 (교육적 정확성)
             const stagePoints = results.map(res => ({
               teamId: res.teamId,
               teamName: res.teamName,
-              points: res.status === 'escaped' ? 0 : Math.max(0, totalT - res.rank + 1),
+              points: res.status === 'converged' ? Math.max(0, totalT - res.rank + 1) : 0,
               rank: res.rank,
               finalLoss: res.finalLoss,
               status: res.status,
@@ -386,7 +404,8 @@ export function registerSocketHandlers(io) {
                   if (!combined[res.teamId]) {
                     combined[res.teamId] = { teamId: res.teamId, teamName: res.teamName, totalPoints: 0, stageRanks: [0, 0, 0] };
                   }
-                  const pts = res.status === 'escaped' ? 0 : Math.max(0, t - res.rank + 1);
+                  // Fix 9: converged만 포인트 (local_minimum·escaped = 0)
+                  const pts = res.status === 'converged' ? Math.max(0, t - res.rank + 1) : 0;
                   combined[res.teamId].totalPoints += pts;
                   combined[res.teamId].stageRanks[si] = res.rank;
                 }
