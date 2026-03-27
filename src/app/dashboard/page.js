@@ -484,9 +484,11 @@ export default function DashboardPage() {
                         <>
                             {/* 맵 선택 */}
                             {[
-                                { level: 1, emoji: '⛳', label: '초급' },
-                                { level: 2, emoji: '🏔️', label: '중급' },
-                                { level: 3, emoji: '🌋', label: '고급' },
+                                { level: 1, emoji: '⛳', label: '완만한 언덕' },
+                                { level: 2, emoji: '🏔️', label: '함정 지형' },
+                                { level: 3, emoji: '🌋', label: '악마의 지형' },
+                                { level: 4, emoji: '🌊', label: '긴 계곡' },
+                                { level: 5, emoji: '🎯', label: '함정 미로' },
                             ].map(m => (
                                 <button
                                     key={m.level}
