@@ -76,6 +76,7 @@ export default function Week5Page() {
     const [isParamsSet, setIsParamsSet] = useState(false);
     const [alerts, setAlerts] = useState([]);
     const [isSoloMode, setIsSoloMode] = useState(false);
+    const [pendingSoloStage, setPendingSoloStage] = useState(null); // { stage, myId, botId }
     const [showDeepDive, setShowDeepDive] = useState(false);
     const [raceMode, setRaceMode] = useState('competition'); // 'practice' | 'competition'
     const soloIntervalRef = useRef(null);
@@ -283,8 +284,9 @@ export default function Week5Page() {
                 allDone = false;
 
                 const grad = gradientByLevel(ball.x, ball.z, level);
-                ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx;
-                ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz;
+                // 서버와 동일하게 그래디언트 0.4배 스케일
+                ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * 0.4;
+                ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * 0.4;
                 ball.vx = Math.max(-10, Math.min(10, ball.vx));
                 ball.vz = Math.max(-10, Math.min(10, ball.vz));
                 ball.x += ball.vx;
@@ -295,10 +297,10 @@ export default function Week5Page() {
                 if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) { ball.status = 'escaped'; continue; }
                 if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
                 if (ball.trail.length > 200) ball.trail.shift();
-                if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) ball.status = 'escaped';
+                if (Math.abs(ball.x) > 20 || Math.abs(ball.z) > 20 || ball.y > 15) ball.status = 'escaped';
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-                // Fix 12: 솔로 모드도 서버와 동일한 converged/local_minimum 판정
-                if (speed < 0.001 && ball.trail.length > 30) {
+                // 서버와 동일한 converged/local_minimum 판정 (최소 5초 = trail 150)
+                if (speed < 0.001 && ball.trail.length > 150) {
                     const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
                     const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
                     ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
@@ -330,16 +332,7 @@ export default function Week5Page() {
 
                 if (stage < 3) {
                     setRacePhase('stageResult');
-                    let cd = 5;
-                    setGpCountdown(cd);
-                    const cdInterval = setInterval(() => {
-                        cd--;
-                        setGpCountdown(cd);
-                        if (cd <= 0) {
-                            clearInterval(cdInterval);
-                            runSoloStage(stage + 1, myId, botId);
-                        }
-                    }, 1000);
+                    setPendingSoloStage({ stage: stage + 1, myId, botId });
                 } else {
                     // 종합 결과 계산
                     const combined = {};
@@ -471,8 +464,8 @@ export default function Week5Page() {
                     </div>
                 )}
 
-                {/* ── 파라미터 설정 ── */}
-                {racePhase === 'setup' && !isParamsSet && (
+                {/* ── 파라미터 설정 — setup이거나, 레이싱 중인데 아직 미참여 학생 ── */}
+                {!isParamsSet && (racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)) && (
                     <div className={`glass-card ${s.inputCard}`}>
                         <label className="label-cosmic">🎛️ 하이퍼파라미터 설정</label>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 12 }}>
@@ -585,18 +578,32 @@ export default function Week5Page() {
                                 </div>
                             ))}
                         </div>
-                        {gpCountdown > 0 && gpStage < 3 && (
-                            <div style={{
-                                textAlign: 'center', marginTop: 16, padding: '12px',
-                                background: 'rgba(124,92,252,0.1)', borderRadius: 12,
-                                border: '1px solid rgba(124,92,252,0.3)',
-                            }}>
-                                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#a78bfa' }}>
-                                    {gpCountdown}
+                        {isSoloMode && pendingSoloStage && (
+                            <div style={{ marginTop: 16 }}>
+                                <label className="label-cosmic" style={{ marginBottom: 8 }}>🎛️ 다음 스테이지 파라미터 조정</label>
+                                <div className={s.paramRow}>
+                                    <span className={s.paramLabel}>학습률</span>
+                                    <input type="range" className="slider-cosmic" min={0.01} max={1.5} step={0.01}
+                                        value={myLearningRate} onChange={(e) => setMyLearningRate(parseFloat(e.target.value))} />
+                                    <span className={s.paramValue}>{myLearningRate.toFixed(2)}</span>
                                 </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                                    다음 스테이지까지...
+                                <div className={s.paramRow}>
+                                    <span className={s.paramLabel}>모멘텀</span>
+                                    <input type="range" className="slider-cosmic" min={0} max={0.99} step={0.01}
+                                        value={myMomentum} onChange={(e) => setMyMomentum(parseFloat(e.target.value))} />
+                                    <span className={s.paramValue}>{myMomentum.toFixed(2)}</span>
                                 </div>
+                                <button
+                                    className={`btn-nova ${s.submitBtn}`}
+                                    style={{ marginTop: 10, width: '100%' }}
+                                    onClick={() => {
+                                        const { stage, myId, botId } = pendingSoloStage;
+                                        setPendingSoloStage(null);
+                                        runSoloStage(stage, myId, botId);
+                                    }}
+                                >
+                                    🚀 Stage {pendingSoloStage.stage} 시작!
+                                </button>
                             </div>
                         )}
                     </div>

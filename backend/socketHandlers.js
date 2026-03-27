@@ -286,8 +286,9 @@ export function registerSocketHandlers(io) {
           allDone = false;
 
           const grad = gradientByLevel(ball.x, ball.z, r.mapLevel);
-          ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx;
-          ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz;
+          // 그래디언트 0.4배 스케일 — 공 속도 조절로 게임 5~10초 유지
+          ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * 0.4;
+          ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * 0.4;
           ball.vx = Math.max(-10, Math.min(10, ball.vx));
           ball.vz = Math.max(-10, Math.min(10, ball.vz));
 
@@ -309,7 +310,7 @@ export function registerSocketHandlers(io) {
           }
           if (ball.trail.length > 200) ball.trail.shift();
 
-          if (Math.abs(ball.x) > 12 || Math.abs(ball.z) > 12 || ball.y > 10) {
+          if (Math.abs(ball.x) > 20 || Math.abs(ball.z) > 20 || ball.y > 15) {
             ball.status = 'escaped';
             r.raceFinished[teamId] = { teamId, teamName: r.raceTeams[teamId]?.name, finalLoss: ball.loss, status: 'escaped', time: Date.now() - r.raceStartTime };
             // Fix 10: 간접 질문형 힌트 — 직접 "학습률을 낮추세요" 금지
@@ -317,7 +318,7 @@ export function registerSocketHandlers(io) {
           }
 
           const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-          if (speed < 0.001 && ball.trail.length > 30) {
+          if (speed < 0.001 && ball.trail.length > 150) {
             // Fix 9: 글로벌 최솟값까지 거리로 converged / local_minimum 구분
             const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
             const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);

@@ -9,6 +9,7 @@ import SpaceBackground from './SpaceBackground';
 import { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import styles from './GradientRaceScene.module.css';
+import { GLOBAL_MINIMA, lossFunctionByLevel } from '@/lib/lossFunction';
 
 // ── 카메라 모드 정의 ──
 // overview  : 조감도 — 기존 OrbitControls (자유 시점)
@@ -87,12 +88,13 @@ export default function GradientRaceScene() {
     const balls     = useRaceStore((s) => s.balls);
     const myTeamId  = useRaceStore((s) => s.myTeamId);
     const racePhase = useRaceStore((s) => s.racePhase);
+    const mapLevel  = useRaceStore((s) => s.mapLevel);
     const [visible, setVisible] = useState(true);
     const [camMode, setCamMode] = useState('overview');
 
     const myBall    = myTeamId ? balls[myTeamId] : null;
-    // 내 팀 ID가 있을 때만 토글 표시 (학생 전용 — 대시보드 교사에는 숨김)
-    const showToggle = !!myTeamId;
+    // 레이싱 중이고 공이 있을 때 카메라 토글 표시
+    const showToggle = racePhase === 'racing' && Object.keys(balls).length > 0;
 
     // 탭 숨김/표시 감지 → 렌더링 일시정지
     useEffect(() => {
@@ -162,7 +164,7 @@ export default function GradientRaceScene() {
                 })}
 
                 {/* 최저점 마커 */}
-                <GoalMarker />
+                <GoalMarker mapLevel={mapLevel} />
 
                 {/* 카메라 컨트롤: 조감도 = OrbitControls, 추적뷰 = FollowCamera */}
                 {camMode === 'overview' ? (
@@ -216,10 +218,14 @@ function DeltaClamp() {
 }
 
 // 글로벌 미니멈 근처 마커 (Level 2 기준 0,2 위치)
-function GoalMarker() {
+function GoalMarker({ mapLevel = 2 }) {
+    const minima = GLOBAL_MINIMA[mapLevel] || GLOBAL_MINIMA[2];
+    const gx = minima.x;
+    const gz = minima.z;
+    const gy = lossFunctionByLevel(gx, gz, mapLevel);
     return (
         <group>
-            <mesh position={[0, 1.2, 2]}>
+            <mesh position={[gx, gy + 0.5, gz]}>
                 <octahedronGeometry args={[0.3, 0]} />
                 <meshStandardMaterial
                     color="#fbbf24"
@@ -229,12 +235,12 @@ function GoalMarker() {
                     metalness={1}
                 />
             </mesh>
-            <mesh position={[0, 0.7, 2]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh position={[gx, gy + 0.05, gz]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.4, 0.6, 32]} />
                 <meshBasicMaterial
                     color="#fbbf24"
                     transparent
-                    opacity={0.3}
+                    opacity={0.5}
                     side={2}
                 />
             </mesh>
