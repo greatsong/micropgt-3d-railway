@@ -221,6 +221,12 @@ export function registerSocketHandlers(io) {
       io.to(currentRoom).emit('race_teams_updated', {
         teams: room.raceTeams,
       });
+
+      // 레이스 진행 중이면 해당 팀 공의 파라미터도 즉시 업데이트 (실시간 조절 반영)
+      if (room.raceBalls && room.raceBalls[teamId] && room.raceBalls[teamId].status === 'racing') {
+        room.raceBalls[teamId].lr = room.raceTeams[teamId].learningRate;
+        room.raceBalls[teamId].momentum = room.raceTeams[teamId].momentum;
+      }
     }));
 
     // ── 단일 스테이지 레이스 시작 (내부 헬퍼) ──
@@ -257,6 +263,7 @@ export function registerSocketHandlers(io) {
         startTime: room.raceStartTime,
         mapLevel,
         gpStage: room.gpStage || 0,
+        raceMode: room.raceMode || 'competition',
       });
 
       console.log(`🏁 스테이지 ${room.gpStage || '?'} 시작! 방 [${roomCode}] 맵레벨=${mapLevel} — ${Object.keys(room.raceTeams).length}팀`);
@@ -436,7 +443,9 @@ export function registerSocketHandlers(io) {
     }
 
     // 교사: 일반 레이스 시작 (단일 맵)
-    socket.on('start_race', safeHandler('start_race', () => {
+    // payload.mode: 'practice' (연습) | 'competition' (본 게임, 기본값)
+    // payload.level: 맵 레벨 (1~3, 기본값: 팀 설정 or 2)
+    socket.on('start_race', safeHandler('start_race', (payload) => {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!isTeacher(socket.id, currentRoom)) return; // Fix 3
@@ -444,9 +453,11 @@ export function registerSocketHandlers(io) {
 
       room.gpActive = false;
       room.gpStage = 0;
-      const firstTeam = Object.values(room.raceTeams)[0];
-      const mapLevel = firstTeam?.mapLevel || 2;
-      startStageRace(currentRoom, mapLevel);
+      const mode = payload?.mode || 'competition';
+      const level = payload?.level || (Object.values(room.raceTeams)[0]?.mapLevel || 2);
+      room.raceMode = mode;
+      console.log(`🏁 레이스 모드: ${mode} (Level ${level}) 방 [${currentRoom}]`);
+      startStageRace(currentRoom, level);
     }));
 
     // 교사: Grand Prix 시작 (3스테이지 순차)

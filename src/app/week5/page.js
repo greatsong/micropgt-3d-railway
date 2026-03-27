@@ -77,7 +77,9 @@ export default function Week5Page() {
     const [alerts, setAlerts] = useState([]);
     const [isSoloMode, setIsSoloMode] = useState(false);
     const [showDeepDive, setShowDeepDive] = useState(false);
+    const [raceMode, setRaceMode] = useState('competition'); // 'practice' | 'competition'
     const soloIntervalRef = useRef(null);
+    const paramThrottleRef = useRef(null);
 
     // ── Socket 이벤트 ──
     useEffect(() => {
@@ -110,6 +112,7 @@ export default function Week5Page() {
             updateBalls(data.balls);
             if (data.mapLevel) setMapLevel(data.mapLevel);
             if (data.gpStage) setGpStage(data.gpStage);
+            if (data.raceMode) setRaceMode(data.raceMode);
         };
         const handleRaceTick = (data) => updateBalls(data.balls);
         const handleRaceAlert = (data) => {
@@ -124,6 +127,7 @@ export default function Week5Page() {
             reset();
             setIsParamsSet(false);
             setAlerts([]);
+            setRaceMode('competition');
         };
 
         // GP 전용 이벤트
@@ -210,6 +214,24 @@ export default function Week5Page() {
         // 솔로 GP: 스테이지 1부터 시작
         runSoloStage(1, myId, botId);
     }, [studentName, myLearningRate, myMomentum]);
+
+    // ── 레이스 중 파라미터 실시간 전송 (throttle 300ms) ──
+    useEffect(() => {
+        if (racePhase !== 'racing' || !myTeamId || isSoloMode) return;
+        if (paramThrottleRef.current) clearTimeout(paramThrottleRef.current);
+        paramThrottleRef.current = setTimeout(() => {
+            const socket = getSocket();
+            if (socket?.connected) {
+                socket.emit('set_race_params', {
+                    teamId: myTeamId,
+                    teamName: studentName || '익명',
+                    learningRate: myLearningRate,
+                    momentum: myMomentum,
+                });
+            }
+        }, 300);
+        return () => { if (paramThrottleRef.current) clearTimeout(paramThrottleRef.current); };
+    }, [myLearningRate, myMomentum, racePhase, myTeamId, isSoloMode]);
 
     const soloStageResultsRef = useRef([[], [], []]);
 
@@ -409,8 +431,26 @@ export default function Week5Page() {
                             <span className="badge-glow online">
                                 {racePhase === 'racing' ? '🏁 레이싱' : racePhase === 'finished' ? '🏆 완료' : '⏳ 대기'}
                             </span>
+                            {racePhase === 'racing' && (
+                                <span style={{
+                                    fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px',
+                                    borderRadius: 20,
+                                    background: raceMode === 'practice' ? 'rgba(59,130,246,0.18)' : 'rgba(251,191,36,0.18)',
+                                    border: `1px solid ${raceMode === 'practice' ? '#3b82f6' : '#fbbf24'}`,
+                                    color: raceMode === 'practice' ? '#60a5fa' : '#fbbf24',
+                                }}>
+                                    {raceMode === 'practice' ? '🔵 연습 게임' : '🏆 본 게임'}
+                                </span>
+                            )}
                             <span className={s.statusText}>{teamCount}팀 참가</span>
                         </div>
+                        {racePhase === 'racing' && (
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: 6, marginBottom: 0 }}>
+                                {raceMode === 'practice'
+                                    ? '🔵 자유롭게 실험해보세요! 결과는 순위에 반영되지 않아요.'
+                                    : '🏆 연습에서 배운 전략을 활용하세요!'}
+                            </p>
+                        )}
                     </div>
                 )}
 
@@ -601,6 +641,42 @@ export default function Week5Page() {
                             </div>
                         )}
 
+                        {/* 레이스 중 실시간 파라미터 조절 (멀티플레이 전용) */}
+                        {!isSoloMode && (
+                            <div style={{
+                                marginTop: 12, padding: '10px 12px', borderRadius: 10,
+                                background: 'rgba(124,92,252,0.08)',
+                                border: '1px solid rgba(124,92,252,0.2)',
+                            }}>
+                                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a78bfa', marginBottom: 8 }}>
+                                    🎛️ 실시간 파라미터 조절
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)', minWidth: 52 }}>학습률</span>
+                                    <input type="range" className="slider-cosmic" min={0.01} max={1.5} step={0.01}
+                                        value={myLearningRate}
+                                        onChange={(e) => setMyLearningRate(parseFloat(e.target.value))}
+                                        style={{ flex: 1 }} />
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: myLearningRate > 0.8 ? '#f43f5e' : '#10b981', minWidth: 34, textAlign: 'right' }}>
+                                        {myLearningRate.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)', minWidth: 52 }}>모멘텀</span>
+                                    <input type="range" className="slider-cosmic" min={0} max={0.99} step={0.01}
+                                        value={myMomentum}
+                                        onChange={(e) => setMyMomentum(parseFloat(e.target.value))}
+                                        style={{ flex: 1 }} />
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a78bfa', minWidth: 34, textAlign: 'right' }}>
+                                        {myMomentum.toFixed(2)}
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: '0.63rem', color: 'var(--text-dim)', margin: '6px 0 0', opacity: 0.7 }}>
+                                    슬라이더 변경 시 300ms 후 서버에 자동 반영됩니다
+                                </p>
+                            </div>
+                        )}
+
                         {myBall.status === 'escaped' && (
                             <div className={s.escapedBox}>
                                 💥 학습률이 너무 커서 발산했습니다!<br />
@@ -617,8 +693,8 @@ export default function Week5Page() {
                     </div>
                 )}
 
-                {/* 실시간 리더보드 */}
-                {racePhase === 'racing' && Object.keys(balls).length > 1 && (
+                {/* 실시간 리더보드 (연습 모드에서는 비표시) */}
+                {racePhase === 'racing' && Object.keys(balls).length > 1 && raceMode !== 'practice' && (
                     <div className={`glass-card ${s.leaderboardCard}`}>
                         <label className="label-cosmic">📊 실시간 순위</label>
                         <div className={s.leaderboardList}>
@@ -727,7 +803,14 @@ export default function Week5Page() {
                 {/* 일반 모드 결과 */}
                 {racePhase === 'finished' && !gpActive && results.length > 0 && (
                     <div className={`glass-card ${s.resultCard}`}>
-                        <label className="label-cosmic">🏆 레이스 결과</label>
+                        <label className="label-cosmic" style={{ color: raceMode === 'practice' ? '#60a5fa' : undefined }}>
+                            {raceMode === 'practice' ? '🔵 연습 게임 결과 (순위 참고용)' : '🏆 레이스 결과'}
+                        </label>
+                        {raceMode === 'practice' && (
+                            <p style={{ fontSize: '0.72rem', color: '#60a5fa', marginBottom: 10, marginTop: 4 }}>
+                                이 결과는 순위에 반영되지 않아요. 어떤 파라미터가 잘 작동했나요?
+                            </p>
+                        )}
                         <div className={s.resultList}>
                             {results.map((r) => (
                                 <div key={r.teamId}
