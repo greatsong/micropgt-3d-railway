@@ -260,6 +260,7 @@ export function registerSocketHandlers(io) {
 
       io.to(roomCode).emit('race_started', {
         balls: room.raceBalls,
+        teams: room.raceTeams,
         startTime: room.raceStartTime,
         mapLevel,
         gpStage: room.gpStage || 0,
@@ -479,6 +480,17 @@ export function registerSocketHandlers(io) {
       startStageRace(currentRoom, 1); // 스테이지 1 = Level 1 (초급)
     }));
 
+    // 교사: 맵 선택 브로드캐스트 — 학생이 파라미터 세팅 전 맵 확인용
+    socket.on('teacher_set_map', safeHandler('teacher_set_map', (payload) => {
+      if (!currentRoom) return;
+      const room = getRoomState(currentRoom);
+      if (!isTeacher(socket.id, currentRoom)) return;
+      const level = payload?.level || 2;
+      room.mapLevel = level;
+      io.to(currentRoom).emit('map_selected', { level });
+      console.log(`🗺️ 교사가 맵 선택: Level ${level} 방 [${currentRoom}]`);
+    }));
+
     // 교사: 레이스 리셋
     socket.on('reset_race', safeHandler('reset_race', () => {
       if (!currentRoom) return;
@@ -494,7 +506,7 @@ export function registerSocketHandlers(io) {
       room.gpStage = 0;
       room.gpStageResults = [[], [], []];
       room.gpFinalResults = [];
-      io.to(currentRoom).emit('race_reset');
+      io.to(currentRoom).emit('race_reset', { teams: room.raceTeams });
       console.log(`🔄 레이스 리셋! 방 [${currentRoom}]`);
     }));
 

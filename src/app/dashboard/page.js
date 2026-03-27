@@ -67,6 +67,13 @@ export default function DashboardPage() {
     const [isConnected, setIsConnected] = useState(false);
     const [activeWeek, setActiveWeek] = useState(3);
     const [attentionStates, setAttentionStates] = useState({});
+    const [selectedMap, setSelectedMap] = useState(2); // 교사 선택 맵 레벨
+
+    const handleSelectMap = (level) => {
+        setSelectedMap(level);
+        const socket = getSocket();
+        if (socket) socket.emit('teacher_set_map', { level });
+    };
 
     // 퀴즈 시스템
     const [showQuizPanel, setShowQuizPanel] = useState(false);
@@ -314,21 +321,21 @@ export default function DashboardPage() {
         }
     };
 
-    // 연습 게임: Level 1, 순위 비표시, 자유 실험
+    // 연습 게임: 선택한 맵, 순위 비표시
     const handleStartPractice = () => {
         const socket = getSocket();
-        if (socket) socket.emit('start_race', { mode: 'practice', level: 1 });
+        if (socket) socket.emit('start_race', { mode: 'practice', level: selectedMap });
     };
 
-    // 본 게임: Level 2, 순위 표시
+    // 본 게임: 선택한 맵, 순위 표시
     const handleStartCompetition = () => {
         const socket = getSocket();
-        if (socket) socket.emit('start_race', { mode: 'competition', level: 2 });
+        if (socket) socket.emit('start_race', { mode: 'competition', level: selectedMap });
     };
 
     const handleStartGP = () => {
         const socket = getSocket();
-        if (socket) socket.emit('start_gp');
+        if (socket) socket.emit('start_gp', { startLevel: selectedMap });
     };
 
     const handleResetRace = () => {
@@ -460,13 +467,35 @@ export default function DashboardPage() {
                 <div className={s.topRight}>
                     {activeWeek === 5 && (
                         <>
+                            {/* 맵 선택 */}
+                            {[
+                                { level: 1, emoji: '⛳', label: '초급' },
+                                { level: 2, emoji: '🏔️', label: '중급' },
+                                { level: 3, emoji: '🌋', label: '고급' },
+                            ].map(m => (
+                                <button
+                                    key={m.level}
+                                    className={`btn-nova ${s.btnSmall}`}
+                                    onClick={() => handleSelectMap(m.level)}
+                                    style={{
+                                        borderColor: selectedMap === m.level ? '#a78bfa' : 'rgba(255,255,255,0.15)',
+                                        background: selectedMap === m.level ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
+                                        fontWeight: selectedMap === m.level ? 700 : 400,
+                                    }}
+                                >
+                                    <span>{m.emoji} {m.label}</span>
+                                </button>
+                            ))}
+                            {/* 구분선 */}
+                            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1.2rem' }}>|</span>
+                            {/* 모드별 시작 */}
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleStartPractice}
                                 disabled={racePhase === 'racing' || racePhase === 'stageResult'}
                                 style={{ borderColor: '#3b82f666', background: 'rgba(59,130,246,0.12)' }}
                             >
-                                <span>🔵 연습 시작</span>
+                                <span>🔵 연습</span>
                             </button>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
@@ -474,14 +503,14 @@ export default function DashboardPage() {
                                 disabled={racePhase === 'racing' || racePhase === 'stageResult'}
                                 style={{ borderColor: '#fbbf2466', background: 'rgba(251,191,36,0.12)' }}
                             >
-                                <span>🏆 본 게임 ({raceTeamCount}팀)</span>
+                                <span>🏆 본게임 ({raceTeamCount}팀)</span>
                             </button>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleStartGP}
                                 disabled={racePhase === 'racing' || racePhase === 'stageResult'}
                             >
-                                <span>🏎️ GP 시작</span>
+                                <span>🏎️ GP</span>
                             </button>
                             {gpActive && gpStage > 0 && (
                                 <span style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 700, padding: '0 4px' }}>

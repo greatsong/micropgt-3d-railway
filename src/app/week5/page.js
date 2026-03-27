@@ -111,6 +111,7 @@ export default function Week5Page() {
         const handleRaceStarted = (data) => {
             setRacePhase('racing');
             updateBalls(data.balls);
+            if (data.teams) setTeams(data.teams); // 리셋 후 이름 복구
             if (data.mapLevel) setMapLevel(data.mapLevel);
             if (data.gpStage) setGpStage(data.gpStage);
             if (data.raceMode) setRaceMode(data.raceMode);
@@ -124,11 +125,12 @@ export default function Week5Page() {
             setRacePhase('finished');
             setResults(data.results);
         };
-        const handleRaceReset = () => {
+        const handleRaceReset = (data) => {
             reset();
             setIsParamsSet(false);
             setAlerts([]);
             setRaceMode('competition');
+            if (data?.teams) setTeams(data.teams); // 리셋 후 기존 팀 목록 유지
         };
 
         // GP 전용 이벤트
@@ -151,6 +153,11 @@ export default function Week5Page() {
             addNotification('🏆 Grand Prix 종료! 종합 순위 발표!');
         };
 
+        const handleMapSelected = (data) => {
+            if (data?.level) setMapLevel(data.level);
+        };
+
+        socket.on('map_selected', handleMapSelected);
         socket.on('race_teams_updated', handleTeamsUpdated);
         socket.on('race_started', handleRaceStarted);
         socket.on('race_tick', handleRaceTick);
@@ -165,6 +172,7 @@ export default function Week5Page() {
         return () => {
             socket.off('connect', handleConnect);
             socket.off('room_state', handleRoomState);
+            socket.off('map_selected', handleMapSelected);
             socket.off('race_teams_updated', handleTeamsUpdated);
             socket.off('race_started', handleRaceStarted);
             socket.off('race_tick', handleRaceTick);
@@ -468,8 +476,28 @@ export default function Week5Page() {
                 {!isParamsSet && (racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)) && (
                     <div className={`glass-card ${s.inputCard}`}>
                         <label className="label-cosmic">🎛️ 하이퍼파라미터 설정</label>
+                        {/* 교사가 선택한 맵 표시 */}
+                        {(() => {
+                            const mapInfo = MAP_LEVELS.find(m => m.level === mapLevel);
+                            return mapInfo ? (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: 8,
+                                    padding: '8px 12px', borderRadius: 10, marginBottom: 10,
+                                    background: 'rgba(124,92,252,0.12)',
+                                    border: '1px solid rgba(124,92,252,0.3)',
+                                }}>
+                                    <span style={{ fontSize: '1.3rem' }}>{mapInfo.emoji}</span>
+                                    <div>
+                                        <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#a78bfa' }}>
+                                            다음 맵: {mapInfo.name} ({mapInfo.difficulty})
+                                        </div>
+                                        <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>{mapInfo.description}</div>
+                                    </div>
+                                </div>
+                            ) : null;
+                        })()}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 12 }}>
-                            이 파라미터로 3개 스테이지 모두 도전합니다. 신중하게 선택하세요!
+                            파라미터를 정하고 제출하세요. 교사가 시작하면 바로 레이스가 시작됩니다!
                         </p>
 
                         {/* 프리셋 버튼 */}
