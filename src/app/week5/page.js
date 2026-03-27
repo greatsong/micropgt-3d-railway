@@ -163,6 +163,11 @@ export default function Week5Page() {
             if (data.teams) setTeams(data.teams);
             if (data.mapLevel) setMapLevel(data.mapLevel);
             setIsParamsSet(false); // 파라미터 슬라이더 다시 표시
+            // 서버가 자동 등록한 내 공이 있으면 myTeamId 설정 (내 공 하이라이트)
+            const myId = getSocket()?.id;
+            if (myId && data.balls?.[myId]) {
+                setMyTeamId(myId);
+            }
         };
 
         socket.on('race_prepare', handleRacePrepare);
@@ -458,7 +463,9 @@ export default function Week5Page() {
                     <div className={`glass-card ${s.statusCard}`}>
                         <div className={s.statusRow}>
                             <span className="badge-glow online">
-                                {racePhase === 'racing' ? '🏁 레이싱' : racePhase === 'finished' ? '🏆 완료' : '⏳ 대기'}
+                                {racePhase === 'racing' ? '🏁 레이싱'
+                                    : racePhase === 'preparing' ? '🎯 출발 위치 확인 중'
+                                    : racePhase === 'finished' ? '🏆 완료' : '⏳ 대기'}
                             </span>
                             {racePhase === 'racing' && (
                                 <span style={{
@@ -483,8 +490,8 @@ export default function Week5Page() {
                     </div>
                 )}
 
-                {/* ── 파라미터 설정 — setup이거나, preparing이거나, 레이싱 중인데 아직 미참여 학생 ── */}
-                {!isParamsSet && (racePhase === 'setup' || racePhase === 'preparing' || (racePhase === 'racing' && !myTeamId)) && (
+                {/* ── 파라미터 설정 — preparing 중엔 항상 표시 (위치 보고 조정), setup/racing 미참여엔 미제출 시 표시 ── */}
+                {(racePhase === 'preparing' || (!isParamsSet && (racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)))) && (
                     <div className={`glass-card ${s.inputCard}`}>
                         <label className="label-cosmic">🎛️ 하이퍼파라미터 설정</label>
                         {/* 교사가 선택한 맵 표시 */}
@@ -514,8 +521,10 @@ export default function Week5Page() {
                                 border: '1px solid rgba(16,185,129,0.3)',
                                 fontSize: '0.78rem', color: '#10b981',
                             }}>
-                                🎯 3D 화면에서 내 공 위치를 확인하고 파라미터를 조정하세요!<br/>
-                                교사가 시작 버튼을 누르면 바로 레이스가 시작됩니다.
+                                👆 <strong>3D 화면에서 내 공 위치를 확인</strong>하세요!<br/>
+                                시작 위치에 따라 파라미터를 조정하고<br/>
+                                <strong style={{ color: '#fbbf24' }}>✅ 파라미터 확정</strong> 버튼을 누르세요.<br/>
+                                <span style={{ opacity: 0.7 }}>교사가 시작 버튼을 누르면 바로 레이스가 시작됩니다.</span>
                             </div>
                         )}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 12 }}>
@@ -574,12 +583,24 @@ export default function Week5Page() {
                         </p>
 
                         <div className={s.submitBtnRow}>
-                            <button className={`btn-nova ${s.submitBtn}`} onClick={handleSoloPractice}>
-                                🎮 혼자 GP 연습
-                            </button>
+                            {racePhase !== 'preparing' && (
+                                <button className={`btn-nova ${s.submitBtn}`} onClick={handleSoloPractice}>
+                                    🎮 혼자 GP 연습
+                                </button>
+                            )}
                             {roomCode && (
-                                <button className={`btn-nova ${s.submitBtn}`} onClick={handleSubmitParams}>
-                                    🏎️ 수업 참가
+                                <button
+                                    className={`btn-nova ${s.submitBtn}`}
+                                    onClick={handleSubmitParams}
+                                    style={racePhase === 'preparing' ? {
+                                        width: '100%',
+                                        background: isParamsSet ? 'rgba(251,191,36,0.18)' : 'rgba(16,185,129,0.18)',
+                                        borderColor: isParamsSet ? '#fbbf24' : '#10b981',
+                                    } : {}}
+                                >
+                                    {racePhase === 'preparing'
+                                        ? (isParamsSet ? '🔄 파라미터 업데이트' : '✅ 파라미터 확정')
+                                        : '🏎️ 수업 참가'}
                                 </button>
                             )}
                         </div>

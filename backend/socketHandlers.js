@@ -516,15 +516,31 @@ export function registerSocketHandlers(io) {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!isTeacher(socket.id, currentRoom)) return;
-      if (!room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
+      // 방에 학생이 한 명도 없으면 준비 불가
+      if (!room.students || room.students.size === 0) return;
 
       const level = payload?.level || room.mapLevel || 2;
       room.mapLevel = level;
       room.racePhase = 'preparing';
       room.raceBalls = {};
       room.raceFinished = {};
+      if (!room.raceTeams) room.raceTeams = {};
 
-      // 각 팀 개별 랜덤 위치 배치 (교육적으로 다양한 위치)
+      // 방에 있는 모든 학생을 raceTeams에 자동 등록 (params 미제출 학생 포함)
+      for (const [socketId, student] of room.students.entries()) {
+        if (!room.raceTeams[socketId]) {
+          room.raceTeams[socketId] = {
+            id: socketId,
+            name: student.studentName || '익명',
+            color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
+            learningRate: 0.1,
+            momentum: 0.9,
+            memberId: socketId,
+          };
+        }
+      }
+
+      // 각 팀 개별 랜덤 위치 배치 (교육적으로 다양한 시작점)
       for (const [teamId, team] of Object.entries(room.raceTeams)) {
         const angle = Math.random() * Math.PI * 2;
         const radius = 5 + Math.random() * 3;
