@@ -195,6 +195,23 @@ export default function Week5Page() {
         setIsParamsSet(true);
     }, [studentName, myLearningRate, myMomentum, teams]);
 
+    // ── 솔로 → 전체 레이싱 참여 ──
+    const handleJoinCompetition = useCallback(() => {
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        reset();
+        setIsSoloMode(false);
+        setIsParamsSet(false);
+        // 소켓 재연결 및 방 참여
+        const socket = getSocket();
+        if (!socket.connected) connectSocket();
+        if (socket.connected && roomCode) {
+            socket.emit('join_class', {
+                roomCode,
+                studentName: studentName || '익명',
+            });
+        }
+    }, [reset, roomCode, studentName]);
+
     // ── 혼자 연습 모드 (GP 3스테이지) ──
     const handleSoloPractice = useCallback(() => {
         setIsSoloMode(true);
@@ -797,6 +814,22 @@ export default function Week5Page() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* 솔로 연습 후 전체 레이싱 참여 버튼 */}
+                        {isSoloMode && (
+                            <div style={{ marginTop: 16, textAlign: 'center' }}>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 10 }}>
+                                    연습 완료! 이제 친구들과 진짜 레이싱에 도전해보세요 🚀
+                                </p>
+                                <button
+                                    className={`btn-nova ${s.submitBtn}`}
+                                    onClick={handleJoinCompetition}
+                                    style={{ background: 'linear-gradient(135deg, #7c5cfc, #a78bfa)', width: '100%' }}
+                                >
+                                    🏆 전체 레이싱 참여하기
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
