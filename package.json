@@ -5,7 +5,7 @@
   "type": "module",
   "description": "MicroGPT 3D Learning Lab - Railway 배포용 통합 서버",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "node --env-file=.env server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint"
