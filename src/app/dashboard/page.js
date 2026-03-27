@@ -314,9 +314,16 @@ export default function DashboardPage() {
         }
     };
 
-    const handleStartRace = () => {
+    // 연습 게임: Level 1, 순위 비표시, 자유 실험
+    const handleStartPractice = () => {
         const socket = getSocket();
-        if (socket) socket.emit('start_race');
+        if (socket) socket.emit('start_race', { mode: 'practice', level: 1 });
+    };
+
+    // 본 게임: Level 2, 순위 표시
+    const handleStartCompetition = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('start_race', { mode: 'competition', level: 2 });
     };
 
     const handleStartGP = () => {
@@ -455,10 +462,26 @@ export default function DashboardPage() {
                         <>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
+                                onClick={handleStartPractice}
+                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
+                                style={{ borderColor: '#3b82f666', background: 'rgba(59,130,246,0.12)' }}
+                            >
+                                <span>🔵 연습 시작</span>
+                            </button>
+                            <button
+                                className={`btn-nova ${s.btnSmall}`}
+                                onClick={handleStartCompetition}
+                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
+                                style={{ borderColor: '#fbbf2466', background: 'rgba(251,191,36,0.12)' }}
+                            >
+                                <span>🏆 본 게임 ({raceTeamCount}팀)</span>
+                            </button>
+                            <button
+                                className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleStartGP}
                                 disabled={racePhase === 'racing' || racePhase === 'stageResult'}
                             >
-                                <span>🏎️ GP 시작 ({raceTeamCount}팀)</span>
+                                <span>🏎️ GP 시작</span>
                             </button>
                             {gpActive && gpStage > 0 && (
                                 <span style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 700, padding: '0 4px' }}>
