@@ -139,6 +139,13 @@ export default function DashboardPage() {
         };
 
         // 레이싱 이벤트
+        const onRacePrepare = (data) => {
+            setRacePhase('preparing');
+            if (data.teams) setTeams(data.teams);
+            if (data.mapLevel) setMapLevel(data.mapLevel);
+            updateBalls(data.balls);
+            addNotification(`🎯 준비 완료! ${Object.keys(data.teams || {}).length}팀 위치 배치`);
+        };
         const onRaceTeamsUpdated = (data) => setTeams(data.teams);
         const onRaceStarted = (data) => {
             setRacePhase('racing');
@@ -223,6 +230,7 @@ export default function DashboardPage() {
         socket.on('student_left', onStudentLeft);
         socket.on('word_registered', onWordRegistered);
         socket.on('word_moved', onWordMoved);
+        socket.on('race_prepare', onRacePrepare);
         socket.on('race_teams_updated', onRaceTeamsUpdated);
         socket.on('race_started', onRaceStarted);
         socket.on('race_tick', onRaceTick);
@@ -247,6 +255,7 @@ export default function DashboardPage() {
             socket.off('student_left', onStudentLeft);
             socket.off('word_registered', onWordRegistered);
             socket.off('word_moved', onWordMoved);
+            socket.off('race_prepare', onRacePrepare);
             socket.off('race_teams_updated', onRaceTeamsUpdated);
             socket.off('race_started', onRaceStarted);
             socket.off('race_tick', onRaceTick);
@@ -327,7 +336,13 @@ export default function DashboardPage() {
         if (socket) socket.emit('start_race', { mode: 'practice', level: selectedMap });
     };
 
-    // 본 게임: 선택한 맵, 순위 표시
+    // 준비: 공 랜덤 배치 (preparing 단계)
+    const handlePrepareRace = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('prepare_race', { level: selectedMap });
+    };
+
+    // 본 게임: 선택한 맵, 순위 표시 (preparing 단계에서 시작 버튼)
     const handleStartCompetition = () => {
         const socket = getSocket();
         if (socket) socket.emit('start_race', { mode: 'competition', level: selectedMap });
@@ -491,26 +506,23 @@ export default function DashboardPage() {
                             {/* 모드별 시작 */}
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
-                                onClick={handleStartPractice}
-                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
-                                style={{ borderColor: '#3b82f666', background: 'rgba(59,130,246,0.12)' }}
+                                onClick={handlePrepareRace}
+                                disabled={racePhase === 'racing' || racePhase === 'stageResult' || racePhase === 'preparing' || raceTeamCount === 0}
+                                style={{ borderColor: '#10b98166', background: 'rgba(16,185,129,0.12)' }}
                             >
-                                <span>🔵 연습</span>
+                                <span>🎯 준비 ({raceTeamCount}팀)</span>
                             </button>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
                                 onClick={handleStartCompetition}
-                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
-                                style={{ borderColor: '#fbbf2466', background: 'rgba(251,191,36,0.12)' }}
+                                disabled={racePhase !== 'preparing'}
+                                style={{
+                                  borderColor: racePhase === 'preparing' ? '#fbbf24' : 'rgba(255,255,255,0.15)',
+                                  background: racePhase === 'preparing' ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)',
+                                  fontWeight: racePhase === 'preparing' ? 700 : 400,
+                                }}
                             >
-                                <span>🏆 본게임 ({raceTeamCount}팀)</span>
-                            </button>
-                            <button
-                                className={`btn-nova ${s.btnSmall}`}
-                                onClick={handleStartGP}
-                                disabled={racePhase === 'racing' || racePhase === 'stageResult'}
-                            >
-                                <span>🏎️ GP</span>
+                                <span>🚀 시작!</span>
                             </button>
                             {gpActive && gpStage > 0 && (
                                 <span style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 700, padding: '0 4px' }}>

@@ -157,6 +157,15 @@ export default function Week5Page() {
             if (data?.level) setMapLevel(data.level);
         };
 
+        const handleRacePrepare = (data) => {
+            setRacePhase('preparing');
+            updateBalls(data.balls);
+            if (data.teams) setTeams(data.teams);
+            if (data.mapLevel) setMapLevel(data.mapLevel);
+            setIsParamsSet(false); // 파라미터 슬라이더 다시 표시
+        };
+
+        socket.on('race_prepare', handleRacePrepare);
         socket.on('map_selected', handleMapSelected);
         socket.on('race_teams_updated', handleTeamsUpdated);
         socket.on('race_started', handleRaceStarted);
@@ -172,6 +181,7 @@ export default function Week5Page() {
         return () => {
             socket.off('connect', handleConnect);
             socket.off('room_state', handleRoomState);
+            socket.off('race_prepare', handleRacePrepare);
             socket.off('map_selected', handleMapSelected);
             socket.off('race_teams_updated', handleTeamsUpdated);
             socket.off('race_started', handleRaceStarted);
@@ -243,7 +253,7 @@ export default function Week5Page() {
 
     // ── 레이스 중 파라미터 실시간 전송 (throttle 300ms) ──
     useEffect(() => {
-        if (racePhase !== 'racing' || !myTeamId || isSoloMode) return;
+        if ((racePhase !== 'racing' && racePhase !== 'preparing') || !myTeamId || isSoloMode) return;
         if (paramThrottleRef.current) clearTimeout(paramThrottleRef.current);
         paramThrottleRef.current = setTimeout(() => {
             const socket = getSocket();
@@ -433,9 +443,10 @@ export default function Week5Page() {
                         </div>
                         <div className={s.statusRow}>
                             <span className="badge-glow online">
-                                {racePhase === 'racing' ? `🏁 Stage ${gpStage} 레이싱` :
-                                    racePhase === 'stageResult' ? `📊 Stage ${gpStage} 결과` :
-                                        racePhase === 'finished' ? '🏆 Grand Prix 완료' : '⏳ 대기'}
+                                {racePhase === 'racing' ? `🏁 레이싱` :
+                                  racePhase === 'preparing' ? '🎯 준비 중' :
+                                  racePhase === 'stageResult' ? `📊 Stage ${gpStage} 결과` :
+                                    racePhase === 'finished' ? '🏆 완료' : '⏳ 대기'}
                             </span>
                             <span className={s.statusText}>{teamCount}팀 참가</span>
                         </div>
@@ -472,8 +483,8 @@ export default function Week5Page() {
                     </div>
                 )}
 
-                {/* ── 파라미터 설정 — setup이거나, 레이싱 중인데 아직 미참여 학생 ── */}
-                {!isParamsSet && (racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)) && (
+                {/* ── 파라미터 설정 — setup이거나, preparing이거나, 레이싱 중인데 아직 미참여 학생 ── */}
+                {!isParamsSet && (racePhase === 'setup' || racePhase === 'preparing' || (racePhase === 'racing' && !myTeamId)) && (
                     <div className={`glass-card ${s.inputCard}`}>
                         <label className="label-cosmic">🎛️ 하이퍼파라미터 설정</label>
                         {/* 교사가 선택한 맵 표시 */}
@@ -496,6 +507,17 @@ export default function Week5Page() {
                                 </div>
                             ) : null;
                         })()}
+                        {racePhase === 'preparing' && (
+                            <div style={{
+                                padding: '10px 12px', borderRadius: 10, marginBottom: 10,
+                                background: 'rgba(16,185,129,0.12)',
+                                border: '1px solid rgba(16,185,129,0.3)',
+                                fontSize: '0.78rem', color: '#10b981',
+                            }}>
+                                🎯 3D 화면에서 내 공 위치를 확인하고 파라미터를 조정하세요!<br/>
+                                교사가 시작 버튼을 누르면 바로 레이스가 시작됩니다.
+                            </div>
+                        )}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 12 }}>
                             파라미터를 정하고 제출하세요. 교사가 시작하면 바로 레이스가 시작됩니다!
                         </p>
@@ -888,7 +910,7 @@ export default function Week5Page() {
                                     </span>
                                     <span className={s.resultName}>{r.teamName}</span>
                                     <span className={s.resultLoss} style={{ color: r.status === 'escaped' ? '#f43f5e' : '#10b981' }}>
-                                        {r.status === 'escaped' ? '이탈' : `Loss: ${r.finalLoss?.toFixed(3)}`}
+                                        {r.status === 'escaped' ? `💥 이탈` : `📊 ${r.cumulativeLoss?.toFixed(1)}`}
                                     </span>
                                 </div>
                             ))}
