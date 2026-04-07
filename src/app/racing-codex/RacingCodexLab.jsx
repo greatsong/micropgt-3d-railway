@@ -389,6 +389,7 @@ export default function RacingCodexLab() {
   const alertSequenceRef = useRef(0);
   const paramThrottleRef = useRef(null);
   const soloIntervalRef = useRef(null);
+  const soloStartTimeRef = useRef(null);
 
   const isSoloMode = sessionMode === 'solo';
   const normalizedMapLevel = normalizeMapLevel(mapLevel, 2);
@@ -431,6 +432,7 @@ export default function RacingCodexLab() {
       window.clearInterval(soloIntervalRef.current);
       soloIntervalRef.current = null;
     }
+    soloStartTimeRef.current = null;
   }, []);
 
   const resetRaceViewport = useCallback(() => {
@@ -635,7 +637,8 @@ export default function RacingCodexLab() {
 
     updateBalls(localBalls);
 
-    const startTime = Date.now();
+    soloStartTimeRef.current = Date.now();
+    const startTime = soloStartTimeRef.current;
     soloIntervalRef.current = window.setInterval(() => {
       let allDone = true;
       const finishedResults = {};
@@ -701,6 +704,71 @@ export default function RacingCodexLab() {
     setRacePhase,
     setResults,
     teams,
+    updateBalls,
+  ]);
+
+  const handleStopSoloPractice = useCallback(() => {
+    if (!isSoloMode || racePhase !== 'racing') return;
+
+    const currentState = useRaceStore.getState();
+    const currentBalls = {
+      ...currentState.balls,
+    };
+    const currentTeams = currentState.teams;
+    const elapsed = soloStartTimeRef.current ? Date.now() - soloStartTimeRef.current : 0;
+
+    const finalizedResults = Object.entries(currentBalls)
+      .map(([teamId, ball]) => {
+        const team = currentTeams[teamId];
+        if (!team || !ball) return null;
+
+        if (ball.finishResult) return ball.finishResult;
+
+        const outcome = inspectRaceBall(ball, normalizedMapLevel, Number.POSITIVE_INFINITY) || {
+          status: 'local_minimum',
+          distToGlobal: Number.POSITIVE_INFINITY,
+        };
+
+        const nextStatus = outcome.status === 'escaped'
+          ? 'escaped'
+          : outcome.distToGlobal < 0.8
+            ? 'converged'
+            : 'local_minimum';
+
+        ball.status = nextStatus;
+        ball.finishResult = createRaceResult({
+          teamId,
+          teamName: team.name,
+          ball,
+          level: normalizedMapLevel,
+          timeMs: elapsed,
+          status: nextStatus,
+          lr: teamId === SOLO_PLAYER_ID ? clampLearningRate(myLearningRate, 0.1) : team.learningRate,
+          momentum: teamId === SOLO_PLAYER_ID ? clampMomentum(myMomentum, 0.9) : team.momentum,
+          distToGlobal: outcome.distToGlobal,
+        });
+
+        return ball.finishResult;
+      })
+      .filter(Boolean);
+
+    clearSoloInterval();
+    updateBalls(currentBalls);
+    setResults(rankRaceResults(finalizedResults));
+    setRacePaused(false);
+    setRacePhase('finished');
+    pushAlert('⏸️ 셀프 연습을 멈추고 현재 위치를 기준으로 결과를 정리했습니다.');
+  }, [
+    clearSoloInterval,
+    isSoloMode,
+    myLearningRate,
+    myMomentum,
+    normalizedMapLevel,
+    pushAlert,
+    racePhase,
+    setRacePaused,
+    setRacePhase,
+    setResults,
     updateBalls,
   ]);
 
@@ -1376,82 +1444,285 @@ export default function RacingCodexLab() {
                 ) : null}
               </div>
 
-              <div className={styles.overlayRight}>
-                <div className={styles.overlayCard}>
-                  <span className={styles.overlayLabel}>내 전략</span>
-                  <strong>{studentName || joinForm.teamName || '미등록 팀'}</strong>
-                  <div className={styles.metricRow}>
+              <div className={styles.tracksideHud}>
+                <div className={styles.hudHeader}>
+                  <div className={styles.hudIntro}>
+                    <span className={styles.overlayLabel}>Trackside HUD</span>
+                    <strong>{isSoloMode ? '맵을 보면서 바로 세팅하고 달릴 수 있습니다.' : '맵 옆에서 바로 전략을 확정합니다.'}</strong>
+                    <p>{sliderSummary}</p>
+                  </div>
+                  <div className={styles.hudStats}>
                     <span>LR {formatNumber(myLearningRate, 2)}</span>
                     <span>Momentum {formatNumber(myMomentum, 2)}</span>
-                  </div>
-                  <div className={styles.metricRow}>
-                    <span>{isParamsConfirmed ? '전략 준비 완료' : '아직 전략 미확정'}</span>
                     <TeamStatusBadge status={myStatus} />
                   </div>
-                  {myBall ? (
-                    <p className={styles.overlayHint}>
-                      좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) / Loss {formatNumber(myBall.loss, 3)}
-                    </p>
+                </div>
+
+                <div className={styles.hudMapLine}>
+                  <div>
+                    <span className={styles.mapBadge}>{currentMap.difficulty}</span>
+                    <strong>{currentMap.emoji} {currentMap.name}</strong>
+                  </div>
+                  <p>{currentMap.description}</p>
+                </div>
+
+                {isSoloMode ? (
+                  <div className={styles.hudMapPicker}>
+                    {MAP_LEVELS.map((level) => (
+                      <button
+                        key={level.level}
+                        type="button"
+                        className={`${styles.mapButton} ${normalizedMapLevel === level.level ? styles.mapButtonActive : ''}`}
+                        onClick={() => handleSelectMap(level.level)}
+                      >
+                        <span>{level.emoji}</span>
+                        <strong>Level {level.level}</strong>
+                        <small>{level.name}</small>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className={styles.hudPresetRow}>
+                  {recommendedPresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`${styles.presetButton} ${selectedPresetId === preset.id ? styles.presetActive : ''}`}
+                      onClick={() => handleApplyPreset(preset)}
+                    >
+                      <strong>{preset.label}</strong>
+                      <span>{preset.summary}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className={styles.hudSliderGrid}>
+                  <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
+                    <div className={styles.sliderHeader}>
+                      <span>Learning Rate</span>
+                      <strong>{formatNumber(myLearningRate, 3)}</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.001"
+                      max="0.6"
+                      step="0.001"
+                      value={myLearningRate}
+                      onChange={(event) => setMyLearningRate(Number(event.target.value))}
+                    />
+                    <p>클수록 빠르지만, 최솟값을 지나치며 진동하거나 이탈할 수 있습니다.</p>
+                  </label>
+
+                  <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
+                    <div className={styles.sliderHeader}>
+                      <span>Momentum</span>
+                      <strong>{formatNumber(myMomentum, 2)}</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="0.99"
+                      step="0.01"
+                      value={myMomentum}
+                      onChange={(event) => setMyMomentum(Number(event.target.value))}
+                    />
+                    <p>높으면 관성이 커지고, 낮으면 더 안정적으로 감속합니다.</p>
+                  </label>
+                </div>
+
+                <div className={styles.hudFooter}>
+                  <div className={styles.hudFootnote}>
+                    {myBall ? (
+                      <p className={styles.overlayHint}>
+                        좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) / Loss {formatNumber(myBall.loss, 3)} / {levelGuide.coachingFocus}
+                      </p>
+                    ) : (
+                      <p className={styles.overlayHint}>
+                        {isSoloMode ? '맵을 고르고 출발 위치를 잡은 뒤 바로 시작하거나 멈춰보세요.' : '선생님이 준비를 누르면 출발 위치가 보이고, 학생은 여기서 바로 전략을 확정할 수 있습니다.'}
+                      </p>
+                    )}
+                  </div>
+
+                  {isSoloMode ? (
+                    <div className={styles.hudActionRow}>
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={handleSubmitParams}
+                        disabled={racePhase === 'racing'}
+                      >
+                        {racePhase === 'preparing'
+                          ? '셀프 연습 시작'
+                          : racePhase === 'finished'
+                            ? '같은 위치에서 다시 달리기'
+                            : racePhase === 'racing'
+                              ? '셀프 연습 진행 중'
+                              : '셀프 연습 시작'}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={handleStopSoloPractice}
+                        disabled={racePhase !== 'racing'}
+                      >
+                        셀프 연습 멈추기
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => prepareSoloPractice()}
+                      >
+                        출발 위치 다시 배치
+                      </button>
+                    </div>
                   ) : (
-                    <p className={styles.overlayHint}>
-                      {isSoloMode ? '셀프 연습을 시작하면 내 공과 AI 기준선이 바로 배치됩니다.' : '선생님이 준비를 누르면 출발 위치가 표시됩니다.'}
-                    </p>
+                    <div className={styles.hudActionRow}>
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={handleSubmitParams}
+                        disabled={!studentName || !roomCode || joinBusy}
+                      >
+                        {racePhase === 'preparing'
+                          ? '출발 위치 확인 후 전략 확정'
+                          : racePhase === 'racing'
+                            ? '현재 전략 다시 전송'
+                            : '전략 제출'}
+                      </button>
+                    </div>
                   )}
                 </div>
-
-                <div className={styles.overlayCard}>
-                  <span className={styles.overlayLabel}>맵 해석 포인트</span>
-                  <strong>{levelGuide.concept}</strong>
-                  <p className={styles.overlayHint}>{levelGuide.coachingFocus}</p>
-                </div>
-              </div>
-
-              <div className={styles.overlayBottom}>
-                {liveTeams.slice(0, 4).map((team) => (
-                  <article
-                    key={team.id}
-                    className={`${styles.rankingCard} ${team.id === myTeamId ? styles.rankingCardMine : ''}`}
-                    style={{ '--team-color': team.color }}
-                  >
-                    <div className={styles.rankingTop}>
-                      <strong>{team.rank ? `${team.rank}위` : 'LIVE'}</strong>
-                      <TeamStatusBadge status={team.status} />
-                    </div>
-                    <span>{team.teamName}</span>
-                    <small>
-                      LR {formatNumber(team.learningRate, 2)} / M {formatNumber(team.momentum, 2)}
-                    </small>
-                    <small>
-                      {Number.isFinite(team.currentLoss) ? `Loss ${formatNumber(team.currentLoss, 3)}` : '아직 코스 미배치'}
-                    </small>
-                  </article>
-                ))}
               </div>
             </div>
 
-            <div className={styles.briefingGrid}>
-              <article className={styles.briefCard}>
-                <span className={styles.briefLabel}>{isSoloMode ? 'Solo Cue' : 'Teacher Cue'}</span>
-                <strong>{levelGuide.teacherCue}</strong>
-                <p>{coachSummary}</p>
-              </article>
-              <article className={styles.briefCard}>
-                <span className={styles.briefLabel}>Reflection</span>
-                <strong>{levelGuide.reflectionPrompt}</strong>
-                <p>{modeMeta.copy}</p>
-              </article>
-              <article className={styles.briefCard}>
-                <span className={styles.briefLabel}>Recent Alerts</span>
-                {alerts.length > 0 ? (
-                  <div className={styles.alertList}>
-                    {alerts.map((alert) => (
-                      <p key={alert.id}>{alert.message}</p>
-                    ))}
+            <div className={styles.supportDeck}>
+              <section className={`${styles.panelCard} ${styles.supportWide}`}>
+                <div className={styles.panelHeader}>
+                  <span className={styles.eyebrow}>Team Radar</span>
+                  <h2>{isSoloMode ? '내 전략과 Codex Bot 기준선 비교' : '모든 팀의 전략과 진행 상황'}</h2>
+                  <p>{isSoloMode ? '혼자 연습일 때도 AI 기준선과 비교해 내 조절이 어떤 차이를 냈는지 바로 볼 수 있습니다.' : '누가 빠른지보다 어떤 조합이 어떤 결과를 만들었는지 읽기 쉽게 정리했습니다.'}</p>
+                </div>
+
+                <div className={styles.teamRadarList}>
+                  {liveTeams.length > 0 ? (
+                    liveTeams.map((team) => (
+                      <article key={team.id} className={`${styles.teamCard} ${team.id === myTeamId ? styles.teamCardMine : ''}`}>
+                        <div className={styles.teamTop}>
+                          <div className={styles.teamIdentity}>
+                            <span className={styles.teamSwatch} style={{ backgroundColor: team.color }} />
+                            <div>
+                              <strong>{team.teamName}</strong>
+                              <small>{team.memberNames || '팀원 정보 없음'}</small>
+                            </div>
+                          </div>
+                          <TeamStatusBadge status={team.status} />
+                        </div>
+
+                        <div className={styles.teamMetrics}>
+                          <span>LR {formatNumber(team.learningRate, 2)}</span>
+                          <span>M {formatNumber(team.momentum, 2)}</span>
+                          <span>{Number.isFinite(team.currentLoss) ? `Loss ${formatNumber(team.currentLoss, 3)}` : 'Loss 대기'}</span>
+                          <span>{team.rank ? `${team.rank}위 / ${formatTime(team.resultTime)}` : '진행 중'}</span>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className={styles.emptyText}>아직 팀이 등록되지 않았습니다. 전략을 제출하거나 셀프 연습을 시작하면 여기에 표시됩니다.</p>
+                  )}
+                </div>
+              </section>
+
+              <div className={styles.supportStack}>
+                <section className={styles.panelCard}>
+                  <div className={styles.panelHeader}>
+                    <span className={styles.eyebrow}>{isSoloMode ? 'Solo Cue' : 'Teacher Cue'}</span>
+                    <h2>{levelGuide.teacherCue}</h2>
+                    <p>{coachSummary}</p>
                   </div>
-                ) : (
-                  <p>{isSoloMode ? '출발 위치를 확인한 뒤 한 번 달려보면 로컬 미니마나 오버슈팅 메시지가 여기에 쌓입니다.' : '아직 경고가 없습니다. 팀별 경로 차이를 먼저 관찰해보세요.'}</p>
-                )}
-              </article>
+
+                  <div className={styles.insightStack}>
+                    <article className={styles.briefCard}>
+                      <span className={styles.briefLabel}>Reflection</span>
+                      <strong>{levelGuide.reflectionPrompt}</strong>
+                      <p>{modeMeta.copy}</p>
+                    </article>
+                    <article className={styles.briefCard}>
+                      <span className={styles.briefLabel}>Map Reading</span>
+                      <strong>{levelGuide.concept}</strong>
+                      <p>{levelGuide.coachingFocus}</p>
+                    </article>
+                  </div>
+                </section>
+
+                <section className={styles.panelCard}>
+                  <div className={styles.panelHeader}>
+                    <span className={styles.eyebrow}>Recent Alerts</span>
+                    <h2>실시간 피드백</h2>
+                    <p>멈춤, 오버슈팅, 수렴 성공 같은 메시지를 바로 모아둡니다.</p>
+                  </div>
+
+                  {alerts.length > 0 ? (
+                    <div className={styles.alertList}>
+                      {alerts.map((alert) => (
+                        <p key={alert.id}>{alert.message}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={styles.emptyText}>{isSoloMode ? '출발 위치를 확인한 뒤 한 번 달려보면 로컬 미니마나 오버슈팅 메시지가 여기에 쌓입니다.' : '아직 경고가 없습니다. 팀별 경로 차이를 먼저 관찰해보세요.'}</p>
+                  )}
+                </section>
+
+                <section className={styles.panelCard}>
+                  <div className={styles.panelHeader}>
+                    <span className={styles.eyebrow}>{isSoloMode ? 'Solo Drill' : 'Room Roster'}</span>
+                    <h2>{isSoloMode ? '혼자 연습 추천 시나리오' : '현재 방에 들어온 학생들'}</h2>
+                    <p>{isSoloMode ? '다른 학생 없이도 바로 실험할 수 있는 흐름을 넣었습니다.' : '아직 전략을 안 낸 학생도 바로 확인할 수 있습니다.'}</p>
+                  </div>
+
+                  {isSoloMode ? (
+                    <div className={styles.rosterList}>
+                      <div className={styles.rosterItem}>
+                        <div>
+                          <strong>1. 맵 선택</strong>
+                          <small>로컬 미니마, 계곡 진동, 종합 전략 맵을 바꿔가며 차이를 봅니다.</small>
+                        </div>
+                      </div>
+                      <div className={styles.rosterItem}>
+                        <div>
+                          <strong>2. 세팅 후 즉시 출발</strong>
+                          <small>맵 옆 HUD에서 LR, Momentum을 조절한 뒤 바로 시작합니다.</small>
+                        </div>
+                      </div>
+                      <div className={styles.rosterItem}>
+                        <div>
+                          <strong>3. 멈추고 비교</strong>
+                          <small>{soloBenchmarkPreset.label} 기준선과 내 공을 멈춘 시점 기준으로 비교해 전략을 설명합니다.</small>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.rosterList}>
+                      {students.length > 0 ? (
+                        students.map((student) => {
+                          const team = liveTeams.find((entry) => entry.id === student.id);
+                          return (
+                            <div key={student.id} className={styles.rosterItem}>
+                              <div>
+                                <strong>{student.studentName}</strong>
+                                <small>{student.memberNames || '팀원 정보 없음'}</small>
+                              </div>
+                              <TeamStatusBadge status={team?.status || 'waiting'} />
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className={styles.emptyText}>아직 이 방에 학생이 없습니다.</p>
+                      )}
+                    </div>
+                  )}
+                </section>
+              </div>
             </div>
 
             {gpActive ? (
@@ -1482,212 +1753,6 @@ export default function RacingCodexLab() {
 
             {gpFinalResults.length > 0 ? <GpFinalTable rows={gpFinalResults} /> : null}
           </div>
-
-          <aside className={styles.commandRail}>
-            <section className={styles.panelCard}>
-              <div className={styles.panelHeader}>
-                <span className={styles.eyebrow}>Strategy HUD</span>
-                <h2>{isSoloMode ? '혼자서도 전략을 반복 실험할 수 있습니다.' : '플레이 화면 옆에서 바로 전략을 조정합니다.'}</h2>
-                <p>{sliderSummary}</p>
-              </div>
-
-              <div className={styles.mapSummary}>
-                <div>
-                  <span className={styles.mapBadge}>{currentMap.difficulty}</span>
-                  <strong>{currentMap.emoji} {currentMap.name}</strong>
-                </div>
-                <p>{currentMap.description}</p>
-              </div>
-
-              {isSoloMode ? (
-                <div className={styles.mapPicker}>
-                  {MAP_LEVELS.map((level) => (
-                    <button
-                      key={level.level}
-                      type="button"
-                      className={`${styles.mapButton} ${normalizedMapLevel === level.level ? styles.mapButtonActive : ''}`}
-                      onClick={() => handleSelectMap(level.level)}
-                    >
-                      <span>{level.emoji}</span>
-                      <strong>Level {level.level}</strong>
-                      <small>{level.name}</small>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className={styles.presetGrid}>
-                {recommendedPresets.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={`${styles.presetButton} ${selectedPresetId === preset.id ? styles.presetActive : ''}`}
-                    onClick={() => handleApplyPreset(preset)}
-                  >
-                    <strong>{preset.label}</strong>
-                    <span>{preset.summary}</span>
-                  </button>
-                ))}
-              </div>
-
-              <label className={styles.sliderGroup}>
-                <div className={styles.sliderHeader}>
-                  <span>Learning Rate</span>
-                  <strong>{formatNumber(myLearningRate, 3)}</strong>
-                </div>
-                <input
-                  type="range"
-                  min="0.001"
-                  max="0.6"
-                  step="0.001"
-                  value={myLearningRate}
-                  onChange={(event) => setMyLearningRate(Number(event.target.value))}
-                />
-                <p>클수록 빠르지만, 최솟값을 지나치며 진동하거나 이탈할 수 있습니다.</p>
-              </label>
-
-              <label className={styles.sliderGroup}>
-                <div className={styles.sliderHeader}>
-                  <span>Momentum</span>
-                  <strong>{formatNumber(myMomentum, 2)}</strong>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="0.99"
-                  step="0.01"
-                  value={myMomentum}
-                  onChange={(event) => setMyMomentum(Number(event.target.value))}
-                />
-                <p>낮으면 안정적이고, 높으면 로컬 미니마 탈출과 빠른 관성을 만들 수 있습니다.</p>
-              </label>
-
-              {isSoloMode ? (
-                <div className={styles.actionRow}>
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    onClick={handleSubmitParams}
-                    disabled={racePhase === 'racing'}
-                  >
-                    {racePhase === 'preparing'
-                      ? '셀프 연습 시작'
-                      : racePhase === 'finished'
-                        ? '같은 위치에서 다시 달리기'
-                        : racePhase === 'racing'
-                          ? '셀프 연습 진행 중'
-                          : '셀프 연습 시작'}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.secondaryButton}
-                    onClick={() => prepareSoloPractice()}
-                  >
-                    출발 위치 다시 배치
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={handleSubmitParams}
-                  disabled={!studentName || !roomCode || joinBusy}
-                >
-                  {racePhase === 'preparing'
-                    ? '출발 위치 확인 후 전략 확정'
-                    : racePhase === 'racing'
-                      ? '현재 전략 다시 전송'
-                      : '전략 제출'}
-                </button>
-              )}
-            </section>
-
-            <section className={styles.panelCard}>
-              <div className={styles.panelHeader}>
-                <span className={styles.eyebrow}>Team Radar</span>
-                <h2>{isSoloMode ? '내 전략과 Codex Bot 기준선 비교' : '모든 팀의 전략과 진행 상황'}</h2>
-                <p>{isSoloMode ? '혼자 연습일 때도 AI 기준선과 비교해 내 조절이 어떤 차이를 냈는지 바로 볼 수 있습니다.' : '누가 빠른지보다 어떤 조합이 어떤 결과를 만들었는지 읽기 쉽게 정리했습니다.'}</p>
-              </div>
-
-              <div className={styles.teamRadarList}>
-                {liveTeams.length > 0 ? (
-                  liveTeams.map((team) => (
-                    <article key={team.id} className={`${styles.teamCard} ${team.id === myTeamId ? styles.teamCardMine : ''}`}>
-                      <div className={styles.teamTop}>
-                        <div className={styles.teamIdentity}>
-                          <span className={styles.teamSwatch} style={{ backgroundColor: team.color }} />
-                          <div>
-                            <strong>{team.teamName}</strong>
-                            <small>{team.memberNames || '팀원 정보 없음'}</small>
-                          </div>
-                        </div>
-                        <TeamStatusBadge status={team.status} />
-                      </div>
-
-                      <div className={styles.teamMetrics}>
-                        <span>LR {formatNumber(team.learningRate, 2)}</span>
-                        <span>M {formatNumber(team.momentum, 2)}</span>
-                        <span>{Number.isFinite(team.currentLoss) ? `Loss ${formatNumber(team.currentLoss, 3)}` : 'Loss 대기'}</span>
-                        <span>{team.rank ? `${team.rank}위 / ${formatTime(team.resultTime)}` : '진행 중'}</span>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <p className={styles.emptyText}>아직 팀이 등록되지 않았습니다. 전략을 제출하거나 셀프 연습을 시작하면 여기에 표시됩니다.</p>
-                )}
-              </div>
-            </section>
-
-            <section className={styles.panelCard}>
-              <div className={styles.panelHeader}>
-                <span className={styles.eyebrow}>{isSoloMode ? 'Solo Drill' : 'Room Roster'}</span>
-                <h2>{isSoloMode ? '혼자 연습 추천 시나리오' : '현재 방에 들어온 학생들'}</h2>
-                <p>{isSoloMode ? '다른 학생 없이도 바로 실험할 수 있는 흐름을 넣었습니다.' : '아직 전략을 안 낸 학생도 바로 확인할 수 있습니다.'}</p>
-              </div>
-
-              {isSoloMode ? (
-                <div className={styles.rosterList}>
-                  <div className={styles.rosterItem}>
-                    <div>
-                      <strong>1. 맵 선택</strong>
-                      <small>로컬 미니마, 계곡 진동, 종합 전략 맵을 바꿔가며 차이를 봅니다.</small>
-                    </div>
-                  </div>
-                  <div className={styles.rosterItem}>
-                    <div>
-                      <strong>2. 출발 위치 다시 배치</strong>
-                      <small>같은 파라미터라도 출발 위치가 달라지면 경로가 달라지는 장면을 관찰합니다.</small>
-                    </div>
-                  </div>
-                  <div className={styles.rosterItem}>
-                    <div>
-                      <strong>3. Codex Bot 비교</strong>
-                      <small>{soloBenchmarkPreset.label} 기준선과 비교해 내 전략이 빠른지, 안정적인지 해석합니다.</small>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.rosterList}>
-                  {students.length > 0 ? (
-                    students.map((student) => {
-                      const team = liveTeams.find((entry) => entry.id === student.id);
-                      return (
-                        <div key={student.id} className={styles.rosterItem}>
-                          <div>
-                            <strong>{student.studentName}</strong>
-                            <small>{student.memberNames || '팀원 정보 없음'}</small>
-                          </div>
-                          <TeamStatusBadge status={team?.status || 'waiting'} />
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className={styles.emptyText}>아직 이 방에 학생이 없습니다.</p>
-                  )}
-                </div>
-              )}
-            </section>
-          </aside>
         </section>
       </div>
     </div>
