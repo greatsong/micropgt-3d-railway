@@ -84,6 +84,26 @@ export default function HubPage() {
                 )}
             </div>
 
+            {/* 딥러닝 기초반 배너 */}
+            <div
+                className={s.featuredCard}
+                style={{ cursor: 'pointer' }}
+                onClick={() => router.push('/deep-learning-basic')}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '2.2rem' }}>📚</span>
+                    <div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#e8e8f0', marginBottom: '0.2rem' }}>
+                            딥러닝 기초반
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: '#a5a0c0', lineHeight: 1.6 }}>
+                            활성화 함수 → 평가 지표 → 경사하강법 레이싱 → LLM 실험실
+                        </div>
+                    </div>
+                    <span style={{ marginLeft: 'auto', fontSize: '1.5rem', color: '#7c5cfc' }}>→</span>
+                </div>
+            </div>
+
             {/* 모듈 카드 그리드 */}
             <div className={s.grid}>
                 {CURRICULUM.map((mod, index) => {

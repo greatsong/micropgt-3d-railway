@@ -1,5 +1,20 @@
 /* ── Hub Page CSS Module ── */
 
+.featuredCard {
+    background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(41,121,255,0.1));
+    border: 1.5px solid rgba(124,92,252,0.35);
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.featuredCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(124,92,252,0.2);
+    border-color: rgba(124,92,252,0.6);
+}
+
 .container {
     min-height: 100vh;
     padding: 40px 24px;
