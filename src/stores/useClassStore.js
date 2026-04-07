@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 // 브라우저 탭 고유 ID (새로고침해도 유지, 탭마다 다름)
-function getOrCreateStableId() {
+export function getOrCreateStableId() {
     if (typeof window === 'undefined') return '';
     let id = sessionStorage.getItem('microgpt-stableId');
     if (!id) {
@@ -28,9 +28,6 @@ export const useClassStore = create(
             students: [],
             currentWeek: 3,
             notifications: [],
-
-            // ── 안정적 식별자 ──
-            getStableId: () => getOrCreateStableId(),
 
             // ── 액션: 학생 입장 정보 설정 ──
             setStudentInfo: (name, room, members) =>

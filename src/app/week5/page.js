@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import WebGLErrorBoundary from '@/components/layout/WebGLErrorBoundary';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 import useIsMobile from '@/lib/useIsMobile';
-import { useClassStore } from '@/stores/useClassStore';
+import { useClassStore, getOrCreateStableId } from '@/stores/useClassStore';
 import { useRaceStore, TEAM_COLORS } from '@/stores/useRaceStore';
 import { getSocket, connectSocket } from '@/lib/socket';
 import { MAP_LEVELS } from '@/lib/lossFunction';
@@ -66,7 +66,6 @@ export default function Week5Page() {
     const memberNames = useClassStore((st) => st.memberNames);
     const roomCode = useClassStore((st) => st.roomCode);
     const addNotification = useClassStore((st) => st.addNotification);
-    const getStableId = useClassStore((st) => st.getStableId);
 
     const racePhase = useRaceStore((st) => st.racePhase);
     const setRacePhase = useRaceStore((st) => st.setRacePhase);
@@ -124,7 +123,7 @@ export default function Week5Page() {
                     studentName: studentName || '익명',
                     memberNames: memberNames || '',
                     roomCode,
-                    stableId: getStableId(),
+                    stableId: getOrCreateStableId(),
                 });
             }
         };
@@ -445,10 +444,10 @@ export default function Week5Page() {
                 roomCode,
                 studentName: studentName || '익명',
                 memberNames: memberNames || '',
-                stableId: getStableId(),
+                stableId: getOrCreateStableId(),
             });
         }
-    }, [reset, resetSoloProgress, roomCode, studentName, memberNames, getStableId]);
+    }, [reset, resetSoloProgress, roomCode, studentName, memberNames]);
 
     // ── 혼자 연습 모드 (GP 3스테이지) ──
     const handleSoloPractice = useCallback(() => {

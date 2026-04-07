@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useClassStore } from '@/stores/useClassStore';
+import { useClassStore, getOrCreateStableId } from '@/stores/useClassStore';
 import { connectSocket } from '@/lib/socket';
 import s from './page.module.css';
 
@@ -23,8 +23,6 @@ export default function HomePage() {
   const setStudentInfo = useClassStore((st) => st.setStudentInfo);
   const setConnected = useClassStore((st) => st.setConnected);
   const addNotification = useClassStore((st) => st.addNotification);
-  const getStableId = useClassStore((st) => st.getStableId);
-
   const [teamName, setTeamName] = useState('');
   const [memberNames, setMemberNames] = useState('');
   const [room, setRoom] = useState('');
@@ -80,7 +78,7 @@ export default function HomePage() {
         studentName: teamName.trim(),
         memberNames: memberNames.trim(),
         roomCode: room.trim(),
-        stableId: getStableId(),
+        stableId: getOrCreateStableId(),
       });
     };
 
