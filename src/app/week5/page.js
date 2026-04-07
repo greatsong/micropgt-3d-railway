@@ -924,6 +924,30 @@ export default function Week5Page() {
                             </div>
                         )}
 
+                        {/* 정지 버튼 */}
+                        <button
+                            style={{
+                                width: '100%', marginTop: 10, padding: '10px 0',
+                                borderRadius: 10, border: '1.5px solid rgba(244,63,94,0.4)',
+                                background: 'rgba(244,63,94,0.1)', color: '#f43f5e',
+                                fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                                fontFamily: 'inherit',
+                            }}
+                            onClick={() => {
+                                if (isSoloMode) {
+                                    // 솔로: 즉시 종료
+                                    if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
+                                    setRacePhase('stageResult');
+                                } else {
+                                    // 멀티: 서버에 정지 요청
+                                    const socket = getSocket();
+                                    if (socket) socket.emit('stop_race');
+                                }
+                            }}
+                        >
+                            ⏹ 레이스 정지
+                        </button>
+
                         {/* 레이스 중 실시간 파라미터 조절 (멀티플레이 전용) */}
                         {!isSoloMode && (
                             <div style={{

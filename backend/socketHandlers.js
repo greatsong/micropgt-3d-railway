@@ -627,6 +627,25 @@ export function registerSocketHandlers(io) {
       console.log(`🎯 레이스 준비! 방 [${currentRoom}] 맵레벨=${level} — ${Object.keys(room.raceTeams).length}팀 위치 배치 완료`);
     }));
 
+    // 레이스 정지 — 교사 또는 학생이 요청
+    socket.on('stop_race', safeHandler('stop_race', () => {
+      if (!currentRoom) return;
+      const room = rooms.get(currentRoom);
+      if (!room || room.racePhase !== 'racing') return;
+      for (const [teamId, ball] of Object.entries(room.raceBalls)) {
+        if (ball.status === 'racing') {
+          const gm = GLOBAL_MINIMA[room.mapLevel] || GLOBAL_MINIMA[2];
+          const dist = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
+          ball.status = dist < 0.8 ? 'converged' : 'local_minimum';
+          const td = room.raceTeams[teamId];
+          room.raceFinished[teamId] = { teamId, teamName: td?.name, finalLoss: ball.loss, status: ball.status, time: Date.now() - room.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: td?.learningRate || ball.lr, momentum: td?.momentum || ball.momentum, distToGlobal: dist };
+        }
+      }
+      if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
+      room.racePhase = 'finished';
+      io.to(currentRoom).emit('race_finished', { results: Object.values(room.raceFinished) });
+    }));
+
     // 교사: 같은 맵 다시 도전 (retry_same_level) — 맵 유지, 공 초기화
     socket.on('retry_same_level', safeHandler('retry_same_level', () => {
       if (!currentRoom) return;
