@@ -7,9 +7,20 @@ import WebGLErrorBoundary from '@/components/layout/WebGLErrorBoundary';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 import useIsMobile from '@/lib/useIsMobile';
 import { useClassStore } from '@/stores/useClassStore';
-import { useRaceStore, TEAM_COLORS, calcGpPoints } from '@/stores/useRaceStore';
+import { useRaceStore, TEAM_COLORS } from '@/stores/useRaceStore';
 import { getSocket, connectSocket } from '@/lib/socket';
-import { lossFunctionByLevel, gradientByLevel, MAP_LEVELS, GLOBAL_MINIMA } from '@/lib/lossFunction';
+import { MAP_LEVELS } from '@/lib/lossFunction';
+import {
+    advanceRaceBall,
+    clampLearningRate,
+    clampMomentum,
+    createRaceBall,
+    createRaceResult,
+    getRandomizedStartPosition,
+    inspectRaceBall,
+    normalizeMapLevel,
+    rankRaceResults,
+} from '@/lib/raceEngine';
 import s from './page.module.css';
 
 const GradientRaceScene = dynamic(
@@ -80,6 +91,7 @@ export default function Week5Page() {
     const setGpStage = useRaceStore((st) => st.setGpStage);
     const stageResults = useRaceStore((st) => st.stageResults);
     const addStageResult = useRaceStore((st) => st.addStageResult);
+    const setStageResults = useRaceStore((st) => st.setStageResults);
     const gpFinalResults = useRaceStore((st) => st.gpFinalResults);
     const setGpFinalResults = useRaceStore((st) => st.setGpFinalResults);
     const gpCountdown = useRaceStore((st) => st.gpCountdown);
@@ -94,6 +106,7 @@ export default function Week5Page() {
     const [soloMapLevel, setSoloMapLevel] = useState(1); // 솔로 연습 맵 레벨
     const [soloSingleMode, setSoloSingleMode] = useState(false); // true = 단일 맵 연습 (GP 아님)
     const soloIntervalRef = useRef(null);
+    const soloStageResultsRef = useRef([[], [], []]);
     const paramThrottleRef = useRef(null);
 
     // ── Socket 이벤트 ──
@@ -114,20 +127,36 @@ export default function Week5Page() {
         socket.on('connect', handleConnect);
 
         const handleRoomState = (data) => {
-            if (data.raceTeams && Object.keys(data.raceTeams).length > 0) setTeams(data.raceTeams);
-            if (data.racePhase && data.racePhase !== 'waiting') setRacePhase(data.racePhase);
-            if (data.raceBalls && Object.keys(data.raceBalls).length > 0) updateBalls(data.raceBalls);
-            if (data.mapLevel) setMapLevel(data.mapLevel);
+            setTeams(data.raceTeams || {});
+            setRacePhase(data.racePhase || 'setup');
+            updateBalls(data.raceBalls || {});
+            setMapLevel(normalizeMapLevel(data.mapLevel, 2));
+            setRaceMode(data.raceMode || 'competition');
+            setResults(data.results || []);
+            setGpActive(!!data.gpActive);
+            setGpStage(data.gpStage || 0);
+            setStageResults(data.gpStageResults || [[], [], []]);
+            setGpFinalResults(data.gpFinalResults || []);
+            setGpCountdown(data.gpCountdown || 0);
+
+            const myId = getSocket()?.id;
+            const isRegistered = !!(myId && (data.raceTeams?.[myId] || data.raceBalls?.[myId]));
+            if (isRegistered) {
+                setMyTeamId(myId);
+            }
+            setIsParamsSet(isRegistered);
         };
         socket.on('room_state', handleRoomState);
 
         const handleTeamsUpdated = (data) => setTeams(data.teams);
         const handleRaceStarted = (data) => {
             setRacePhase('racing');
+            setResults([]);
+            setGpCountdown(0);
             updateBalls(data.balls);
             if (data.teams) setTeams(data.teams); // 리셋 후 이름 복구
-            if (data.mapLevel) setMapLevel(data.mapLevel);
-            if (data.gpStage) setGpStage(data.gpStage);
+            if (data.mapLevel) setMapLevel(normalizeMapLevel(data.mapLevel, 2));
+            setGpStage(data.gpStage || 0);
             if (data.raceMode) setRaceMode(data.raceMode);
         };
         const handleRaceTick = (data) => updateBalls(data.balls);
@@ -138,11 +167,14 @@ export default function Week5Page() {
         const handleRaceFinished = (data) => {
             setRacePhase('finished');
             setResults(data.results);
+            setGpActive(false);
+            setGpCountdown(0);
         };
         const handleRaceReset = (data) => {
             reset();
             setIsParamsSet(false);
             setAlerts([]);
+            setPendingSoloStage(null);
             setRaceMode('competition');
             if (data?.teams) setTeams(data.teams); // 리셋 후 기존 팀 목록 유지
         };
@@ -151,6 +183,10 @@ export default function Week5Page() {
         const handleGpStarted = (data) => {
             setGpActive(true);
             setGpStage(data.currentStage);
+            setStageResults([[], [], []]);
+            setGpFinalResults([]);
+            setGpCountdown(0);
+            setResults([]);
             addNotification('🏎️ Grand Prix 시작!');
         };
         const handleGpStageComplete = (data) => {
@@ -163,19 +199,24 @@ export default function Week5Page() {
         };
         const handleGpFinalResults = (data) => {
             setRacePhase('finished');
+            setGpActive(true);
+            setStageResults(data.allStageResults || [[], [], []]);
             setGpFinalResults(data.finalResults);
+            setGpCountdown(0);
             addNotification('🏆 Grand Prix 종료! 종합 순위 발표!');
         };
 
         const handleMapSelected = (data) => {
-            if (data?.level) setMapLevel(data.level);
+            if (data?.level) setMapLevel(normalizeMapLevel(data.level, 2));
         };
 
         const handleRacePrepare = (data) => {
             setRacePhase('preparing');
+            setResults([]);
+            setGpCountdown(0);
             updateBalls(data.balls);
             if (data.teams) setTeams(data.teams);
-            if (data.mapLevel) setMapLevel(data.mapLevel);
+            if (data.mapLevel) setMapLevel(normalizeMapLevel(data.mapLevel, 2));
             setIsParamsSet(false); // 파라미터 슬라이더 다시 표시
             // 서버가 자동 등록한 내 공이 있으면 myTeamId 설정 (내 공 하이라이트)
             const myId = getSocket()?.id;
@@ -213,29 +254,155 @@ export default function Week5Page() {
             socket.off('gp_countdown', handleGpCountdown);
             socket.off('gp_final_results', handleGpFinalResults);
         };
-    }, [roomCode]);
+    }, [
+        addNotification,
+        addStageResult,
+        reset,
+        roomCode,
+        setGpActive,
+        setGpCountdown,
+        setGpFinalResults,
+        setGpStage,
+        setMapLevel,
+        setMyTeamId,
+        setRacePhase,
+        setResults,
+        setStageResults,
+        setTeams,
+        studentName,
+        updateBalls,
+    ]);
 
     // ── 파라미터 제출 ──
-    const handleSubmitParams = useCallback(() => {
-        const socket = getSocket();
-        const teamId = socket.id;
+    const handleSubmitParams = () => {
+        const socket = connectSocket();
+        const teamId = socket.id || myTeamId || null;
         const colorIdx = Object.keys(teams).length % TEAM_COLORS.length;
+        const learningRate = clampLearningRate(myLearningRate, 0.1);
+        const momentum = clampMomentum(myMomentum, 0.9);
 
         socket.emit('set_race_params', {
-            teamId,
             teamName: studentName || '익명',
             color: TEAM_COLORS[colorIdx],
-            learningRate: myLearningRate,
-            momentum: myMomentum,
+            learningRate,
+            momentum,
+            mapLevel,
         });
 
-        setMyTeamId(teamId);
+        if (teamId) {
+            setMyTeamId(teamId);
+        }
         setIsParamsSet(true);
-    }, [studentName, myLearningRate, myMomentum, teams]);
+    };
+
+    const resetSoloProgress = useCallback(() => {
+        soloStageResultsRef.current = [[], [], []];
+        setStageResults([[], [], []]);
+        setGpFinalResults([]);
+        setGpCountdown(0);
+        setPendingSoloStage(null);
+    }, [setGpCountdown, setGpFinalResults, setStageResults]);
+
+    const buildSoloTeams = useCallback((myId, botId) => ({
+        [myId]: {
+            id: myId,
+            name: studentName || '나',
+            color: TEAM_COLORS[0],
+            learningRate: clampLearningRate(myLearningRate, 0.1),
+            momentum: clampMomentum(myMomentum, 0.9),
+        },
+        [botId]: {
+            id: botId,
+            name: 'AI 봇 (lr=0.1, m=0.9)',
+            color: TEAM_COLORS[3],
+            learningRate: 0.1,
+            momentum: 0.9,
+        },
+    }), [studentName, myLearningRate, myMomentum]);
+
+    const buildSoloBalls = useCallback((level, myId, botId) => {
+        const normalizedLevel = normalizeMapLevel(level, 2);
+        const myStart = getRandomizedStartPosition(normalizedLevel);
+        const botStart = getRandomizedStartPosition(normalizedLevel);
+
+        return {
+            [myId]: createRaceBall({
+                level: normalizedLevel,
+                x: myStart.x,
+                z: myStart.z,
+                lr: clampLearningRate(myLearningRate, 0.1),
+                momentum: clampMomentum(myMomentum, 0.9),
+                status: 'racing',
+            }),
+            [botId]: createRaceBall({
+                level: normalizedLevel,
+                x: botStart.x,
+                z: botStart.z,
+                lr: 0.1,
+                momentum: 0.9,
+                status: 'racing',
+            }),
+        };
+    }, [myLearningRate, myMomentum]);
+
+    const runSoloSimulation = useCallback((level, myId, botId, onComplete) => {
+        const normalizedLevel = normalizeMapLevel(level, 2);
+        setMapLevel(normalizedLevel);
+        setRacePhase('racing');
+        setResults([]);
+        setGpCountdown(0);
+
+        const localBalls = buildSoloBalls(normalizedLevel, myId, botId);
+        updateBalls(localBalls);
+
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        const startTime = Date.now();
+
+        soloIntervalRef.current = setInterval(() => {
+            let allDone = true;
+            const elapsed = Date.now() - startTime;
+
+            for (const [, ball] of Object.entries(localBalls)) {
+                if (ball.status !== 'racing') continue;
+                allDone = false;
+
+                advanceRaceBall(ball, normalizedLevel);
+                const outcome = inspectRaceBall(ball, normalizedLevel, elapsed);
+                if (outcome) {
+                    ball.status = outcome.status;
+                    ball.finishTimeMs = elapsed;
+                }
+            }
+
+            updateBalls({ ...localBalls });
+
+            const finishedCount = Object.values(localBalls).filter((ball) => ball.status !== 'racing').length;
+            if (finishedCount >= Object.keys(localBalls).length || allDone) {
+                clearInterval(soloIntervalRef.current);
+                soloIntervalRef.current = null;
+
+                const rankedResults = rankRaceResults(
+                    Object.entries(localBalls).map(([id, ball]) => createRaceResult({
+                        teamId: id,
+                        teamName: id === myId ? (studentName || '나') : 'AI 봇',
+                        ball,
+                        level: normalizedLevel,
+                        timeMs: ball.finishTimeMs ?? (Date.now() - startTime),
+                        status: ball.status,
+                        lr: ball.lr,
+                        momentum: ball.momentum,
+                    }))
+                );
+
+                onComplete(rankedResults);
+            }
+        }, 33);
+    }, [buildSoloBalls, setGpCountdown, setMapLevel, setRacePhase, setResults, studentName, updateBalls]);
 
     // ── 솔로 → 전체 레이싱 참여 ──
     const handleJoinCompetition = useCallback(() => {
         if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        resetSoloProgress();
         reset();
         setIsSoloMode(false);
         setSoloSingleMode(false);
@@ -249,127 +416,66 @@ export default function Week5Page() {
                 studentName: studentName || '익명',
             });
         }
-    }, [reset, roomCode, studentName]);
+    }, [reset, resetSoloProgress, roomCode, studentName]);
 
     // ── 혼자 연습 모드 (GP 3스테이지) ──
     const handleSoloPractice = useCallback(() => {
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        resetSoloProgress();
         setIsSoloMode(true);
         setSoloSingleMode(false);
         setGpActive(true);
         setGpStage(1);
+        setResults([]);
 
         const myId = 'solo-me';
         const botId = 'solo-bot';
 
-        setTeams({
-            [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
-            [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
-        });
+        setTeams(buildSoloTeams(myId, botId));
         setMyTeamId(myId);
         setIsParamsSet(true);
 
-        // 솔로 GP: 스테이지 1부터 시작
-        runSoloStage(1, myId, botId);
-    }, [studentName, myLearningRate, myMomentum]);
+        runSoloSimulation(1, myId, botId, (rankedResults) => {
+            const totalTeams = rankedResults.length;
+            const stageResultsWithPoints = rankedResults.map((result) => ({
+                ...result,
+                points: result.status === 'converged' ? Math.max(0, totalTeams - result.rank + 1) : 0,
+            }));
+
+            soloStageResultsRef.current[0] = stageResultsWithPoints;
+            addStageResult(0, stageResultsWithPoints);
+            setRacePhase('stageResult');
+            setPendingSoloStage({ stage: 2, myId, botId });
+        });
+    }, [addStageResult, buildSoloTeams, resetSoloProgress, runSoloSimulation, setGpActive, setGpStage, setMyTeamId, setRacePhase, setResults, setTeams]);
 
     // ── 혼자 연습: 단일 맵 모드 (선택한 맵에서 반복 연습) ──
     const handleSoloSingleMap = useCallback((level) => {
         if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        resetSoloProgress();
+
+        const normalizedLevel = normalizeMapLevel(level, soloMapLevel || 1);
         setIsSoloMode(true);
         setSoloSingleMode(true);
         setGpActive(false);
-        setSoloMapLevel(level);
-        setMapLevel(level);
+        setGpStage(0);
+        setSoloMapLevel(normalizedLevel);
+        setMapLevel(normalizedLevel);
         setRacePhase('racing');
         setResults([]);
 
         const myId = 'solo-me';
         const botId = 'solo-bot';
 
-        setTeams({
-            [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
-            [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
-        });
+        setTeams(buildSoloTeams(myId, botId));
         setMyTeamId(myId);
         setIsParamsSet(true);
 
-        runSoloSingleRace(level, myId, botId);
-    }, [studentName, myLearningRate, myMomentum]);
-
-    // 솔로 단일 맵 레이스 실행
-    function runSoloSingleRace(level, myId, botId) {
-        setMapLevel(level);
-        setRacePhase('racing');
-        setResults([]);
-
-        // 레벨별 시작점 (서버와 동일)
-        const startPositions = {
-            1: { x: -7, z: -7 }, 2: { x: -6, z: -5 }, 3: { x: -6, z: -4 },
-            4: { x: 5, z: 5 }, 5: { x: -7, z: -7 }, 6: { x: 0, z: 5 },
-            7: { x: 6, z: 6 }, 8: { x: 3, z: 3 },
-        };
-        const startPos = startPositions[level] || startPositions[2];
-        const startX = startPos.x + (Math.random() - 0.5) * 0.5;
-        const startZ = startPos.z + (Math.random() - 0.5) * 0.5;
-
-        const localBalls = {
-            [myId]: { x: startX, z: startZ, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: myLearningRate, momentum: myMomentum },
-            [botId]: { x: startX + 0.5, z: startZ + 0.5, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: 0.1, momentum: 0.9 },
-        };
-        localBalls[myId].y = lossFunctionByLevel(localBalls[myId].x, localBalls[myId].z, level);
-        localBalls[myId].loss = localBalls[myId].y;
-        localBalls[botId].y = lossFunctionByLevel(localBalls[botId].x, localBalls[botId].z, level);
-        localBalls[botId].loss = localBalls[botId].y;
-
-        updateBalls(localBalls);
-
-        const boundary = level === 8 ? 30 : 20;
-
-        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
-        soloIntervalRef.current = setInterval(() => {
-            let allDone = true;
-            for (const [, ball] of Object.entries(localBalls)) {
-                if (ball.status !== 'racing') continue;
-                allDone = false;
-                const grad = gradientByLevel(ball.x, ball.z, level);
-                ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * 0.4;
-                ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * 0.4;
-                ball.vx = Math.max(-10, Math.min(10, ball.vx));
-                ball.vz = Math.max(-10, Math.min(10, ball.vz));
-                ball.x += ball.vx;
-                ball.z += ball.vz;
-                ball.y = lossFunctionByLevel(ball.x, ball.z, level);
-                ball.loss = ball.y;
-                if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) { ball.status = 'escaped'; continue; }
-                if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
-                if (ball.trail.length > 300) ball.trail.shift();
-                if (Math.abs(ball.x) > boundary || Math.abs(ball.z) > boundary || ball.y > 15) ball.status = 'escaped';
-                const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-                if (speed < 0.001 && ball.trail.length > 150) {
-                    const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
-                    const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
-                    ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
-                }
-            }
-            updateBalls({ ...localBalls });
-            if (allDone) {
-                clearInterval(soloIntervalRef.current);
-                const res = Object.entries(localBalls)
-                    .map(([id, b]) => ({
-                        teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
-                        finalLoss: b.loss, status: b.status,
-                        distToGlobal: (() => { const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2]; return Math.sqrt((b.x - gm.x) ** 2 + (b.z - gm.z) ** 2); })(),
-                    }))
-                    .sort((a, b) => {
-                        const order = { converged: 0, local_minimum: 1, escaped: 2 };
-                        return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.finalLoss - b.finalLoss;
-                    })
-                    .map((r, i) => ({ ...r, rank: i + 1 }));
-                setResults(res);
-                setRacePhase('finished');
-            }
-        }, 33);
-    }
+        runSoloSimulation(normalizedLevel, myId, botId, (rankedResults) => {
+            setResults(rankedResults);
+            setRacePhase('finished');
+        });
+    }, [buildSoloTeams, resetSoloProgress, runSoloSimulation, setGpActive, setGpStage, setMapLevel, setMyTeamId, setRacePhase, setResults, setTeams, soloMapLevel]);
 
     // ── 레이스 중 파라미터 실시간 전송 (throttle 300ms) ──
     useEffect(() => {
@@ -379,129 +485,64 @@ export default function Week5Page() {
             const socket = getSocket();
             if (socket?.connected) {
                 socket.emit('set_race_params', {
-                    teamId: myTeamId,
                     teamName: studentName || '익명',
-                    learningRate: myLearningRate,
-                    momentum: myMomentum,
+                    learningRate: clampLearningRate(myLearningRate, 0.1),
+                    momentum: clampMomentum(myMomentum, 0.9),
+                    mapLevel,
                 });
             }
         }, 300);
         return () => { if (paramThrottleRef.current) clearTimeout(paramThrottleRef.current); };
-    }, [myLearningRate, myMomentum, racePhase, myTeamId, isSoloMode]);
+    }, [myLearningRate, myMomentum, racePhase, myTeamId, isSoloMode, studentName, mapLevel]);
 
-    const soloStageResultsRef = useRef([[], [], []]);
-
-    function runSoloStage(stage, myId, botId) {
-        const level = stage; // stage 1=level 1, etc.
+    const runSoloStage = useCallback((stage, myId, botId) => {
+        const level = normalizeMapLevel(stage, 1);
         setGpStage(stage);
         setMapLevel(level);
         setRacePhase('racing');
 
-        // 레벨별 시작점 (서버와 동일)
-        const startPositions = {
-            1: { x: -7, z: -7 }, 2: { x: -6, z: -5 }, 3: { x: -6, z: -4 },
-            4: { x: 5, z: 5 }, 5: { x: -7, z: -7 }, 6: { x: 0, z: 5 },
-            7: { x: 6, z: 6 }, 8: { x: 3, z: 3 },
-        };
-        const sp = startPositions[level] || startPositions[2];
-        const startX = sp.x + (Math.random() - 0.5) * 0.5;
-        const startZ = sp.z + (Math.random() - 0.5) * 0.5;
+        setTeams(buildSoloTeams(myId, botId));
 
-        const localBalls = {
-            [myId]: { x: startX, z: startZ, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: myLearningRate, momentum: myMomentum },
-            [botId]: { x: startX + 0.5, z: startZ + 0.5, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: 0.1, momentum: 0.9 },
-        };
-        localBalls[myId].y = lossFunctionByLevel(localBalls[myId].x, localBalls[myId].z, level);
-        localBalls[myId].loss = localBalls[myId].y;
-        localBalls[botId].y = lossFunctionByLevel(localBalls[botId].x, localBalls[botId].z, level);
-        localBalls[botId].loss = localBalls[botId].y;
+        runSoloSimulation(level, myId, botId, (rankedResults) => {
+            const totalTeams = rankedResults.length;
+            const stageResultsWithPoints = rankedResults.map((result) => ({
+                ...result,
+                points: result.status === 'converged' ? Math.max(0, totalTeams - result.rank + 1) : 0,
+            }));
 
-        updateBalls(localBalls);
+            soloStageResultsRef.current[stage - 1] = stageResultsWithPoints;
+            addStageResult(stage - 1, stageResultsWithPoints);
 
-        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
-        soloIntervalRef.current = setInterval(() => {
-            let allDone = true;
-
-            for (const [, ball] of Object.entries(localBalls)) {
-                if (ball.status !== 'racing') continue;
-                allDone = false;
-
-                const grad = gradientByLevel(ball.x, ball.z, level);
-                // 서버와 동일하게 그래디언트 0.4배 스케일
-                ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * 0.4;
-                ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * 0.4;
-                ball.vx = Math.max(-10, Math.min(10, ball.vx));
-                ball.vz = Math.max(-10, Math.min(10, ball.vz));
-                ball.x += ball.vx;
-                ball.z += ball.vz;
-                ball.y = lossFunctionByLevel(ball.x, ball.z, level);
-                ball.loss = ball.y;
-
-                if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) { ball.status = 'escaped'; continue; }
-                if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
-                if (ball.trail.length > 200) ball.trail.shift();
-                const soloBoundary = level === 8 ? 30 : 20;
-                if (Math.abs(ball.x) > soloBoundary || Math.abs(ball.z) > soloBoundary || ball.y > 15) ball.status = 'escaped';
-                const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-                // 서버와 동일한 converged/local_minimum 판정 (최소 5초 = trail 150)
-                if (speed < 0.001 && ball.trail.length > 150) {
-                    const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
-                    const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
-                    ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
-                }
+            if (stage < 3) {
+                setRacePhase('stageResult');
+                setPendingSoloStage({ stage: stage + 1, myId, botId });
+                return;
             }
 
-            updateBalls({ ...localBalls });
-
-            if (allDone) {
-                clearInterval(soloIntervalRef.current);
-                const res = Object.entries(localBalls)
-                    .map(([id, b]) => {
-                        const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
-                        const distToGlobal = Math.sqrt((b.x - gm.x) ** 2 + (b.z - gm.z) ** 2);
-                        return {
-                            teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
-                            finalLoss: b.loss, status: b.status,
-                            lr: b.lr, momentum: b.momentum, distToGlobal,
+            const combined = {};
+            for (let si = 0; si < 3; si++) {
+                for (const result of soloStageResultsRef.current[si]) {
+                    if (!combined[result.teamId]) {
+                        combined[result.teamId] = {
+                            teamId: result.teamId,
+                            teamName: result.teamName,
+                            totalPoints: 0,
+                            stageRanks: [0, 0, 0],
                         };
-                    })
-                    // Fix 12: converged > local_minimum > escaped 정렬
-                    .sort((a, b) => {
-                        const order = { converged: 0, local_minimum: 1, escaped: 2 };
-                        const ao = order[a.status] ?? 1;
-                        const bo = order[b.status] ?? 1;
-                        if (ao !== bo) return ao - bo;
-                        return a.finalLoss - b.finalLoss;
-                    })
-                    // converged만 포인트, local_minimum·escaped = 0점
-                    .map((r, i) => ({ ...r, rank: i + 1, points: r.status === 'converged' ? Math.max(0, 2 - i) : 0 }));
-
-                soloStageResultsRef.current[stage - 1] = res;
-                addStageResult(stage - 1, res);
-
-                // Don't auto-progress; show stageResult and let student choose
-                if (stage < 3) {
-                    setRacePhase('stageResult');
-                    setPendingSoloStage({ stage: stage + 1, myId, botId });
-                } else {
-                    // 종합 결과 계산
-                    const combined = {};
-                    for (let si = 0; si < 3; si++) {
-                        for (const r of soloStageResultsRef.current[si]) {
-                            if (!combined[r.teamId]) combined[r.teamId] = { teamId: r.teamId, teamName: r.teamName, totalPoints: 0, stageRanks: [0, 0, 0] };
-                            combined[r.teamId].totalPoints += r.points;
-                            combined[r.teamId].stageRanks[si] = r.rank;
-                        }
                     }
-                    const final = Object.values(combined)
-                        .sort((a, b) => b.totalPoints - a.totalPoints)
-                        .map((r, i) => ({ ...r, gpRank: i + 1 }));
-                    setGpFinalResults(final);
-                    setRacePhase('finished');
+                    combined[result.teamId].totalPoints += result.points || 0;
+                    combined[result.teamId].stageRanks[si] = result.rank;
                 }
             }
-        }, 33);
-    }
+
+            const final = Object.values(combined)
+                .sort((left, right) => right.totalPoints - left.totalPoints)
+                .map((result, index) => ({ ...result, gpRank: index + 1 }));
+
+            setGpFinalResults(final);
+            setRacePhase('finished');
+        });
+    }, [addStageResult, buildSoloTeams, runSoloSimulation, setGpFinalResults, setGpStage, setMapLevel, setRacePhase, setTeams]);
 
     useEffect(() => {
         return () => { if (soloIntervalRef.current) clearInterval(soloIntervalRef.current); };
@@ -544,9 +585,10 @@ export default function Week5Page() {
                         <span className="text-gradient">경사하강법 Grand Prix</span>
                     </h1>
                     <p className={s.description}>
-                        3개 스테이지를 연속 레이싱!
-                        <br />
-                        종합 포인트로 <strong>최종 챔피언</strong>을 가립니다 🏆
+                        {isSoloMode
+                            ? '원하는 맵을 선택하고 하이퍼파라미터를 조절하세요!'
+                            : (<>3개 스테이지를 연속 레이싱!<br />종합 포인트로 <strong>최종 챔피언</strong>을 가립니다 🏆</>)
+                        }
                     </p>
                 </div>
 
@@ -598,11 +640,11 @@ export default function Week5Page() {
                                 <span style={{
                                     fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px',
                                     borderRadius: 20,
-                                    background: raceMode === 'practice' ? 'rgba(59,130,246,0.18)' : 'rgba(251,191,36,0.18)',
-                                    border: `1px solid ${raceMode === 'practice' ? '#3b82f6' : '#fbbf24'}`,
-                                    color: raceMode === 'practice' ? '#60a5fa' : '#fbbf24',
+                                    background: isSoloMode ? 'rgba(16,185,129,0.18)' : raceMode === 'practice' ? 'rgba(59,130,246,0.18)' : 'rgba(251,191,36,0.18)',
+                                    border: `1px solid ${isSoloMode ? '#10b981' : raceMode === 'practice' ? '#3b82f6' : '#fbbf24'}`,
+                                    color: isSoloMode ? '#10b981' : raceMode === 'practice' ? '#60a5fa' : '#fbbf24',
                                 }}>
-                                    {raceMode === 'practice' ? '🔵 연습 게임' : '🏆 본 게임'}
+                                    {isSoloMode ? '🎮 연습' : raceMode === 'practice' ? '🔵 연습 게임' : '🏆 본 게임'}
                                 </span>
                             )}
                             <span className={s.statusText}>{teamCount}팀 참가</span>
@@ -738,28 +780,46 @@ export default function Week5Page() {
                                 </button>
                             )}
                         </div>
-                        {/* 솔로 맵 선택 (preparing이 아닐 때만) */}
+                        {/* 솔로 맵 선택 그리드 (preparing이 아닐 때만) */}
                         {racePhase !== 'preparing' && (
-                            <div style={{ marginTop: 10 }}>
-                                <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginBottom: 6 }}>
-                                    맵 선택 (솔로 연습용):
+                            <div style={{ marginTop: 14 }}>
+                                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#a78bfa', marginBottom: 8 }}>
+                                    🗺️ 맵 선택 (솔로 연습용)
                                 </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                    {SOLO_MAP_OPTIONS.map(m => (
-                                        <button
-                                            key={m.level}
-                                            onClick={() => setSoloMapLevel(m.level)}
-                                            style={{
-                                                padding: '4px 8px', borderRadius: 8, fontSize: '0.68rem',
-                                                border: `1px solid ${m.level === soloMapLevel ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
-                                                background: m.level === soloMapLevel ? 'rgba(167,139,250,0.2)' : 'transparent',
-                                                color: m.level === soloMapLevel ? '#a78bfa' : 'var(--text-dim)',
-                                                cursor: 'pointer', fontWeight: m.level === soloMapLevel ? 700 : 400,
-                                            }}
-                                        >
-                                            {m.emoji} {m.label}
-                                        </button>
-                                    ))}
+                                <div style={{
+                                    display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6,
+                                }}>
+                                    {SOLO_MAP_OPTIONS.map(m => {
+                                        const isSelected = m.level === soloMapLevel;
+                                        const diffColors = {
+                                            '입문': '#10b981', '초급': '#3b82f6', '중급': '#f59e0b',
+                                            '고급': '#f97316', '마스터': '#f43f5e',
+                                        };
+                                        const dc = diffColors[m.difficulty] || '#a78bfa';
+                                        return (
+                                            <button
+                                                key={m.level}
+                                                onClick={() => { setSoloMapLevel(m.level); setMapLevel(m.level); }}
+                                                style={{
+                                                    padding: '10px 8px', borderRadius: 10, cursor: 'pointer',
+                                                    border: isSelected ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.1)',
+                                                    background: isSelected ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.03)',
+                                                    textAlign: 'center', transition: 'all 0.2s',
+                                                    fontFamily: 'inherit',
+                                                }}
+                                            >
+                                                <div style={{ fontSize: '1.3rem', marginBottom: 2 }}>{m.emoji}</div>
+                                                <div style={{
+                                                    fontSize: '0.72rem', fontWeight: isSelected ? 700 : 500,
+                                                    color: isSelected ? '#a78bfa' : '#e2e8f0',
+                                                }}>{m.label}</div>
+                                                <div style={{
+                                                    fontSize: '0.6rem', fontWeight: 600,
+                                                    color: dc, marginTop: 2,
+                                                }}>{m.difficulty}</div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -837,10 +897,6 @@ export default function Week5Page() {
                                         // Retry same stage with updated params
                                         const myId = 'solo-me';
                                         const botId = 'solo-bot';
-                                        setTeams({
-                                            [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
-                                            [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
-                                        });
                                         runSoloStage(gpStage, myId, botId);
                                     }}
                                 >
@@ -853,10 +909,6 @@ export default function Week5Page() {
                                         onClick={() => {
                                             const { stage, myId, botId } = pendingSoloStage;
                                             setPendingSoloStage(null);
-                                            setTeams({
-                                                [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
-                                                [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
-                                            });
                                             runSoloStage(stage, myId, botId);
                                         }}
                                     >
@@ -871,9 +923,29 @@ export default function Week5Page() {
                 {/* ── 레이싱 중: 실시간 데이터 ── */}
                 {racePhase === 'racing' && myBall && (
                     <div className={`glass-card ${s.liveCard}`}>
-                        <label className="label-cosmic">
-                            📊 실시간 현황 {gpActive ? `— Stage ${gpStage}: ${currentStageInfo.emoji} ${currentStageInfo.name}` : ''}
-                        </label>
+                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                            <label className="label-cosmic" style={{ margin:0 }}>
+                                📊 실시간 현황 {gpActive ? `— Stage ${gpStage}: ${currentStageInfo.emoji} ${currentStageInfo.name}` : ''}
+                            </label>
+                            <button
+                                style={{
+                                    padding: '5px 14px', borderRadius: 8,
+                                    border: '1.5px solid rgba(244,63,94,0.5)',
+                                    background: 'rgba(244,63,94,0.15)', color: '#f43f5e',
+                                    fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
+                                    fontFamily: 'inherit',
+                                }}
+                                onClick={() => {
+                                    if (isSoloMode) {
+                                        if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
+                                        setRacePhase('stageResult');
+                                    } else {
+                                        const socket = getSocket();
+                                        if (socket) socket.emit('stop_race');
+                                    }
+                                }}
+                            >⏹ 정지</button>
+                        </div>
                         <div className={s.liveGrid}>
                             <div className={s.liveItem}>
                                 <span className={s.liveLabel}>현재 Loss</span>
@@ -923,30 +995,6 @@ export default function Week5Page() {
                                 </div>
                             </div>
                         )}
-
-                        {/* 정지 버튼 */}
-                        <button
-                            style={{
-                                width: '100%', marginTop: 10, padding: '10px 0',
-                                borderRadius: 10, border: '1.5px solid rgba(244,63,94,0.4)',
-                                background: 'rgba(244,63,94,0.1)', color: '#f43f5e',
-                                fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
-                                fontFamily: 'inherit',
-                            }}
-                            onClick={() => {
-                                if (isSoloMode) {
-                                    // 솔로: 즉시 종료
-                                    if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
-                                    setRacePhase('stageResult');
-                                } else {
-                                    // 멀티: 서버에 정지 요청
-                                    const socket = getSocket();
-                                    if (socket) socket.emit('stop_race');
-                                }
-                            }}
-                        >
-                            ⏹ 레이스 정지
-                        </button>
 
                         {/* 레이스 중 실시간 파라미터 조절 (멀티플레이 전용) */}
                         {!isSoloMode && (
@@ -1302,77 +1350,7 @@ export default function Week5Page() {
                     </div>
                 </div>
 
-                {/* ── Theory Section ── */}
-                <div className={`glass-card ${s.card}`}>
-                    <label className="label-cosmic">🤖 LLM 학습의 비밀</label>
-                    <div className={s.theoryBody}>
-                        <div className={s.lossTip}>
-                            💡 <strong className={s.colorGreen}>Loss(손실) 함수란?</strong> —
-                            AI가 얼마나 틀렸는지를 숫자로 나타내는 함수. 이 값을 줄이는 것이 학습의 목표입니다.
-                            Loss가 <strong>0에 가까울수록</strong> 정확한 예측이에요.
-                        </div>
-                        <p className={s.mb10}>
-                            <strong>1. 천문학적인 비용 (GPU)</strong><br />
-                            GPT-4를 학습시킬 때는 이 경사하강법을 <strong>수천 대의 GPU</strong>에서 동시에 돌립니다.
-                            전기세만 수백억 원이 나오는데, 그 이유가 바로 이 &quot;최저점 찾기&quot;를 엄청나게 많이 반복해야 하기 때문입니다.
-                        </p>
-                        <p className={s.mb10}>
-                            <strong>2. 학습률(Learning Rate) 스케줄링</strong><br />
-                            처음엔 과감하게(Step을 크게) 내려가다가, 최저점에 가까워지면 아주 조심스럽게(Step을 작게) 이동합니다.
-                            이것을 <strong>&quot;Learning Rate Scheduler&quot;</strong>라고 부릅니다.
-                        </p>
-                        <p className={s.mb10}>
-                            <strong>3. 옵티마이저(Optimizer) 비교</strong>
-                        </p>
-                        <div className={s.tableWrap}>
-                            <div className={s.tableHeader}>
-                                <div className={s.tableHeaderCell}>옵티마이저</div>
-                                <div className={s.tableHeaderCell}>특징</div>
-                                <div className={s.tableHeaderCell}>사용처</div>
-                            </div>
-                            {[
-                                { name: 'SGD', feat: '가장 기본적인 경사하강. 모멘텀(관성) 추가 가능', use: '간단한 모델, 연구', color: '#94a3b8' },
-                                { name: 'Adam', feat: '학습률을 자동으로 조절 + 모멘텀 결합 (만능형)', use: 'GPT, BERT 등 LLM', color: '#10b981' },
-                                { name: 'AdaGrad', feat: '자주 등장하는 파라미터는 천천히, 드문 파라미터는 빠르게', use: '희소 데이터 (NLP)', color: '#3b82f6' },
-                                { name: 'AdamW', feat: 'Adam + 가중치 감쇠(과적합 방지)', use: 'GPT-3, LLaMA', color: '#a78bfa' },
-                            ].map(o => (
-                                <div key={o.name} className={s.tableRow}>
-                                    <div className={s.tableNameCell} style={{ color: o.color }}>{o.name}</div>
-                                    <div className={s.tableDimCell}>{o.feat}</div>
-                                    <div className={s.tableDimCell}>{o.use}</div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className={s.tipBox}>
-                            💡 <strong>실전 팁:</strong> 대부분의 LLM 학습에는 <strong className={s.colorEmerald}>AdamW</strong>가 사용됩니다.
-                            이 게임에서 사용한 SGD+Momentum을 기반으로 학습률 자동 조절이 추가된 것입니다.
-                        </div>
-                    </div>
-                </div>
-
-                {/* 한 걸음 더 */}
-                <div className={s.deepDiveWrap}>
-                    <button onClick={() => setShowDeepDive(!showDeepDive)} className={s.deepDiveToggle}>
-                        {showDeepDive ? '▼' : '▶'} 한 걸음 더: Loss 함수는 어떤 종류가 있을까?
-                    </button>
-                    {showDeepDive && (
-                        <div className={s.deepDiveContent}>
-                            <p className={s.deepDiveP}>
-                                <strong className={s.colorYellow}>Cross-Entropy Loss</strong> —
-                                GPT가 사용하는 Loss 함수! 모델이 예측한 확률 분포와 정답 사이의 차이를 측정해요.
-                            </p>
-                            <p className={s.deepDiveP}>
-                                <strong className={s.colorGreen}>MSE (Mean Squared Error)</strong> —
-                                예측값과 정답의 차이를 제곱해서 평균 낸 것. 숫자 예측(회귀) 문제에 많이 써요.
-                            </p>
-                            <p>
-                                <strong className={s.colorRed}>핵심 포인트</strong> —
-                                어떤 Loss를 선택하느냐에 따라 AI가 &quot;무엇을 잘하려고 노력하는지&quot;가 달라져요.
-                                Loss 함수는 AI에게 주는 <strong>성적표</strong>와 같습니다!
-                            </p>
-                        </div>
-                    )}
-                </div>
+                {/* Theory/DeepDive 제거됨 — 게임에 집중 */}
 
                 {/* 네비게이션 */}
                 <div className={s.navRow}>
