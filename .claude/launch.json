@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "micropgt",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/micropgt-3d-railway && npm run dev"],
+      "port": 3000
+    },
+    {
+      "name": "turing-test",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/ai-basic-2026/turing-test-app && PORT=3001 APP_BASE_PATH=/turing-test node server/index.js"],
+      "port": 3001
+    },
+    {
+      "name": "student-textbook",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/ai-basic-2026/textbook && npm run dev"],
+      "port": 4025
+    },
+    {
+      "name": "teacher-textbook",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/ai-basic-2026/textbook-teacher && npm run dev"],
+      "port": 4026
+    },
+    {
+      "name": "nn-playground",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/micropgt-3d-railway/ai-basic-2026/phase2-nn-playground && npm run dev"],
+      "port": 4027
+    }
+  ]
+}

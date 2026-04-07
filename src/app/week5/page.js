@@ -96,6 +96,8 @@ export default function Week5Page() {
     const setGpFinalResults = useRaceStore((st) => st.setGpFinalResults);
     const gpCountdown = useRaceStore((st) => st.gpCountdown);
     const setGpCountdown = useRaceStore((st) => st.setGpCountdown);
+    const racePaused = useRaceStore((st) => st.racePaused);
+    const setRacePaused = useRaceStore((st) => st.setRacePaused);
 
     const [isParamsSet, setIsParamsSet] = useState(false);
     const [alerts, setAlerts] = useState([]);
@@ -237,6 +239,8 @@ export default function Week5Page() {
         socket.on('gp_stage_complete', handleGpStageComplete);
         socket.on('gp_countdown', handleGpCountdown);
         socket.on('gp_final_results', handleGpFinalResults);
+        const handleRacePaused = (data) => setRacePaused(data.paused);
+        socket.on('race_paused', handleRacePaused);
 
         return () => {
             socket.off('connect', handleConnect);
@@ -252,6 +256,7 @@ export default function Week5Page() {
             socket.off('gp_started', handleGpStarted);
             socket.off('gp_stage_complete', handleGpStageComplete);
             socket.off('gp_countdown', handleGpCountdown);
+            socket.off('race_paused', handleRacePaused);
             socket.off('gp_final_results', handleGpFinalResults);
         };
     }, [
@@ -399,6 +404,20 @@ export default function Week5Page() {
         }, 33);
     }, [buildSoloBalls, setGpCountdown, setMapLevel, setRacePhase, setResults, studentName, updateBalls]);
 
+    // ── 솔로 단일 맵 → 맵 선택 화면으로 돌아가기 ──
+    const handleBackToMapSelection = useCallback(() => {
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        resetSoloProgress();
+        setIsSoloMode(false);
+        setSoloSingleMode(false);
+        setRacePhase(null);
+        setResults([]);
+        setIsParamsSet(false);
+        setGpActive(false);
+        setGpStage(0);
+        // mapLevel과 soloMapLevel은 유지 (마지막 선택 기억)
+    }, [resetSoloProgress, setGpActive, setGpStage, setRacePhase, setResults]);
+
     // ── 솔로 → 전체 레이싱 참여 ──
     const handleJoinCompetition = useCallback(() => {
         if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
@@ -454,7 +473,8 @@ export default function Week5Page() {
         if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
         resetSoloProgress();
 
-        const normalizedLevel = normalizeMapLevel(level, soloMapLevel || 1);
+        // level 인자를 직접 사용 (stale soloMapLevel에 의존하지 않음)
+        const normalizedLevel = normalizeMapLevel(level, 1);
         setIsSoloMode(true);
         setSoloSingleMode(true);
         setGpActive(false);
@@ -475,7 +495,7 @@ export default function Week5Page() {
             setResults(rankedResults);
             setRacePhase('finished');
         });
-    }, [buildSoloTeams, resetSoloProgress, runSoloSimulation, setGpActive, setGpStage, setMapLevel, setMyTeamId, setRacePhase, setResults, setTeams, soloMapLevel]);
+    }, [buildSoloTeams, resetSoloProgress, runSoloSimulation, setGpActive, setGpStage, setMapLevel, setMyTeamId, setRacePhase, setResults, setTeams]);
 
     // ── 레이스 중 파라미터 실시간 전송 (throttle 300ms) ──
     useEffect(() => {
@@ -660,7 +680,7 @@ export default function Week5Page() {
                 )}
 
                 {/* ── 파라미터 설정 — preparing 중엔 항상 표시 (위치 보고 조정), setup/racing 미참여엔 미제출 시 표시 ── */}
-                {(racePhase === 'preparing' || (!isParamsSet && (racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)))) && (
+                {(racePhase === 'preparing' || (!isParamsSet && (!racePhase || racePhase === 'setup' || (racePhase === 'racing' && !myTeamId)))) && (
                     <div className={`glass-card ${s.inputCard}`}>
                         <label className="label-cosmic">🎛️ 하이퍼파라미터 설정</label>
                         {/* 교사가 선택한 맵 표시 */}
@@ -925,8 +945,9 @@ export default function Week5Page() {
                     <div className={`glass-card ${s.liveCard}`}>
                         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                             <label className="label-cosmic" style={{ margin:0 }}>
-                                📊 실시간 현황 {gpActive ? `— Stage ${gpStage}: ${currentStageInfo.emoji} ${currentStageInfo.name}` : ''}
+                                📊 실시간 현황 {racePaused ? '⏸️ 일시정지' : ''} {gpActive ? `— Stage ${gpStage}: ${currentStageInfo.emoji} ${currentStageInfo.name}` : ''}
                             </label>
+                            {isSoloMode && (
                             <button
                                 style={{
                                     padding: '5px 14px', borderRadius: 8,
@@ -936,15 +957,11 @@ export default function Week5Page() {
                                     fontFamily: 'inherit',
                                 }}
                                 onClick={() => {
-                                    if (isSoloMode) {
-                                        if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
-                                        setRacePhase('stageResult');
-                                    } else {
-                                        const socket = getSocket();
-                                        if (socket) socket.emit('stop_race');
-                                    }
+                                    if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
+                                    setRacePhase(soloSingleMode ? 'finished' : 'stageResult');
                                 }}
                             >⏹ 정지</button>
+                            )}
                         </div>
                         <div className={s.liveGrid}>
                             <div className={s.liveItem}>
@@ -1169,7 +1186,7 @@ export default function Week5Page() {
                                     </button>
                                     <button
                                         className={`btn-nova ${s.submitBtn}`}
-                                        onClick={() => handleSoloSingleMap(1)}
+                                        onClick={handleBackToMapSelection}
                                         style={{ flex: 1, background: 'rgba(124,92,252,0.12)', borderColor: '#7c5cfc44' }}
                                     >
                                         🗺️ 맵 선택 연습
@@ -1286,28 +1303,13 @@ export default function Week5Page() {
                             >
                                 🔁 같은 맵 다시 도전
                             </button>
-                        </div>
-
-                        {/* 맵 선택 */}
-                        <div style={{ marginTop: 16 }}>
-                            <label className="label-cosmic" style={{ marginBottom: 8 }}>🗺️ 다른 맵 선택</label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                                {SOLO_MAP_OPTIONS.map(m => (
-                                    <button
-                                        key={m.level}
-                                        className={`btn-nova ${s.submitBtn}`}
-                                        style={{
-                                            flex: '0 0 auto', padding: '6px 10px', fontSize: '0.72rem',
-                                            borderColor: m.level === soloMapLevel ? '#a78bfa' : 'rgba(255,255,255,0.15)',
-                                            background: m.level === soloMapLevel ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
-                                            fontWeight: m.level === soloMapLevel ? 700 : 400,
-                                        }}
-                                        onClick={() => handleSoloSingleMap(m.level)}
-                                    >
-                                        {m.emoji} {m.label}
-                                    </button>
-                                ))}
-                            </div>
+                            <button
+                                className={`btn-nova ${s.submitBtn}`}
+                                style={{ flex: 1, background: 'rgba(124,92,252,0.12)', borderColor: '#7c5cfc44' }}
+                                onClick={handleBackToMapSelection}
+                            >
+                                🗺️ 다른 맵 선택
+                            </button>
                         </div>
 
                         {/* 전체 레이싱 참여 */}

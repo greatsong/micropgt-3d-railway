@@ -8,6 +8,7 @@ import { useClassStore } from '@/stores/useClassStore';
 import { useGalaxyStore } from '@/stores/useGalaxyStore';
 import { useRaceStore } from '@/stores/useRaceStore';
 import { connectSocket, getSocket } from '@/lib/socket';
+import { normalizeMapLevel } from '@/lib/raceEngine';
 import s from './page.module.css';
 
 const DashLoadingUI = ({ emoji, text }) => (
@@ -56,10 +57,13 @@ export default function DashboardPage() {
     const setGpStage = useRaceStore((st) => st.setGpStage);
     const stageResults = useRaceStore((st) => st.stageResults);
     const addStageResult = useRaceStore((st) => st.addStageResult);
+    const setStageResults = useRaceStore((st) => st.setStageResults);
     const gpFinalResults = useRaceStore((st) => st.gpFinalResults);
     const setGpFinalResults = useRaceStore((st) => st.setGpFinalResults);
     const gpCountdown = useRaceStore((st) => st.gpCountdown);
     const setGpCountdown = useRaceStore((st) => st.setGpCountdown);
+    const racePaused = useRaceStore((st) => st.racePaused);
+    const setRacePaused = useRaceStore((st) => st.setRacePaused);
 
     const [roomCode, setRoomCode] = useState('');
     const [password, setPassword] = useState('');
@@ -70,9 +74,10 @@ export default function DashboardPage() {
     const [selectedMap, setSelectedMap] = useState(2); // 교사 선택 맵 레벨
 
     const handleSelectMap = (level) => {
-        setSelectedMap(level);
+        const normalizedLevel = normalizeMapLevel(level, 2);
+        setSelectedMap(normalizedLevel);
         const socket = getSocket();
-        if (socket) socket.emit('teacher_set_map', { level });
+        if (socket) socket.emit('teacher_set_map', { level: normalizedLevel });
     };
 
     // 퀴즈 시스템
@@ -107,10 +112,17 @@ export default function DashboardPage() {
             setStudents(data.students);
             loadFromRoomState(data.students);
             // 레이싱 상태 복원
-            if (data.raceTeams) setTeams(data.raceTeams);
-            if (data.racePhase) setRacePhase(data.racePhase);
-            if (data.raceBalls) updateBalls(data.raceBalls);
-            if (data.mapLevel) setMapLevel(data.mapLevel);
+            setTeams(data.raceTeams || {});
+            setRacePhase(data.racePhase || 'setup');
+            updateBalls(data.raceBalls || {});
+            setMapLevel(normalizeMapLevel(data.mapLevel, 2));
+            setSelectedMap(normalizeMapLevel(data.mapLevel, 2));
+            setResults(data.results || []);
+            setGpActive(!!data.gpActive);
+            setGpStage(data.gpStage || 0);
+            setStageResults(data.gpStageResults || [[], [], []]);
+            setGpFinalResults(data.gpFinalResults || []);
+            setGpCountdown(data.gpCountdown || 0);
         };
 
         const onStudentJoined = (data) => {
@@ -141,17 +153,29 @@ export default function DashboardPage() {
         // 레이싱 이벤트
         const onRacePrepare = (data) => {
             setRacePhase('preparing');
+            setResults([]);
+            setGpCountdown(0);
             if (data.teams) setTeams(data.teams);
-            if (data.mapLevel) setMapLevel(data.mapLevel);
+            if (data.mapLevel) {
+                const nextLevel = normalizeMapLevel(data.mapLevel, 2);
+                setMapLevel(nextLevel);
+                setSelectedMap(nextLevel);
+            }
             updateBalls(data.balls);
             addNotification(`🎯 준비 완료! ${Object.keys(data.teams || {}).length}팀 위치 배치`);
         };
         const onRaceTeamsUpdated = (data) => setTeams(data.teams);
         const onRaceStarted = (data) => {
             setRacePhase('racing');
+            setResults([]);
+            setGpCountdown(0);
             updateBalls(data.balls);
-            if (data.mapLevel) setMapLevel(data.mapLevel);
-            if (data.gpStage) setGpStage(data.gpStage);
+            if (data.mapLevel) {
+                const nextLevel = normalizeMapLevel(data.mapLevel, 2);
+                setMapLevel(nextLevel);
+                setSelectedMap(nextLevel);
+            }
+            setGpStage(data.gpStage || 0);
             addNotification(`🏁 ${data.gpStage ? `GP Stage ${data.gpStage}` : '레이스'} 시작!`);
         };
         const onRaceTick = (data) => updateBalls(data.balls);
@@ -159,6 +183,8 @@ export default function DashboardPage() {
         const onRaceFinished = (data) => {
             setRacePhase('finished');
             setResults(data.results);
+            setGpActive(false);
+            setGpCountdown(0);
             addNotification('🏆 레이스 종료!');
         };
         const onRaceReset = () => {
@@ -170,6 +196,10 @@ export default function DashboardPage() {
         const onGpStarted = (data) => {
             setGpActive(true);
             setGpStage(data.currentStage);
+            setStageResults([[], [], []]);
+            setGpFinalResults([]);
+            setGpCountdown(0);
+            setResults([]);
             addNotification('🏎️ Grand Prix 시작!');
         };
         const onGpStageComplete = (data) => {
@@ -182,7 +212,10 @@ export default function DashboardPage() {
         };
         const onGpFinalResults = (data) => {
             setRacePhase('finished');
+            setGpActive(true);
+            setStageResults(data.allStageResults || [[], [], []]);
             setGpFinalResults(data.finalResults);
+            setGpCountdown(0);
             addNotification('🏆🏆🏆 Grand Prix 종합 결과 발표!');
         };
 
@@ -241,6 +274,11 @@ export default function DashboardPage() {
         socket.on('gp_stage_complete', onGpStageComplete);
         socket.on('gp_countdown', onGpCountdown);
         socket.on('gp_final_results', onGpFinalResults);
+        const onRacePaused = (data) => {
+            setRacePaused(data.paused);
+            addNotification(data.paused ? '⏸️ 레이스 일시정지' : '▶️ 레이스 재개');
+        };
+        socket.on('race_paused', onRacePaused);
         socket.on('attention_updated', onAttentionUpdated);
         socket.on('quiz_broadcast', onQuizBroadcast);
         socket.on('quiz_answer_received', onQuizAnswerReceived);
@@ -266,6 +304,7 @@ export default function DashboardPage() {
             socket.off('gp_stage_complete', onGpStageComplete);
             socket.off('gp_countdown', onGpCountdown);
             socket.off('gp_final_results', onGpFinalResults);
+            socket.off('race_paused', onRacePaused);
             socket.off('attention_updated', onAttentionUpdated);
             socket.off('quiz_broadcast', onQuizBroadcast);
             socket.off('quiz_answer_received', onQuizAnswerReceived);
@@ -522,10 +561,10 @@ export default function DashboardPage() {
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
                                 onClick={handlePrepareRace}
-                                disabled={racePhase === 'racing' || racePhase === 'stageResult' || racePhase === 'preparing' || raceTeamCount === 0}
+                                disabled={racePhase === 'racing' || racePhase === 'stageResult' || racePhase === 'preparing' || (raceTeamCount === 0 && students.length === 0)}
                                 style={{ borderColor: '#10b98166', background: 'rgba(16,185,129,0.12)' }}
                             >
-                                <span>🎯 준비 ({raceTeamCount}팀)</span>
+                                <span>🎯 준비 ({raceTeamCount > 0 ? `${raceTeamCount}팀` : `${students.length}명`})</span>
                             </button>
                             <button
                                 className={`btn-nova ${s.btnSmall}`}
@@ -568,12 +607,18 @@ export default function DashboardPage() {
                     >
                         <span>📝 퀴즈</span>
                     </button>
+                    {racePhase === 'racing' && (
                     <button
                         className={`btn-nova ${s.btnSmall}`}
-                        onClick={() => handleTeacherCommand('PAUSE')}
+                        onClick={() => handleTeacherCommand(racePaused ? 'RESUME' : 'PAUSE')}
+                        style={{
+                            borderColor: racePaused ? '#10b98166' : '#f59e0b66',
+                            background: racePaused ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+                        }}
                     >
-                        <span>⏸️ 일시정지</span>
+                        <span>{racePaused ? '▶️ 재개' : '⏸️ 일시정지'}</span>
                     </button>
+                    )}
                 </div>
             </div>
 

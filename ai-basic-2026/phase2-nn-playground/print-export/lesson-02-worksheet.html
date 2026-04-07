@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 기초 2차시 수학 연습 활동지</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --pri: #4F46E5; --pri-dk: #3730A3; --pri-lt: #EEF2FF;
+  --grn: #059669; --grn-lt: #D1FAE5; --red: #DC2626; --red-lt: #FEE2E2;
+  --org: #D97706; --org-lt: #FEF3C7; --acc: #818CF8;
+  --g50: #F9FAFB; --g100: #F3F4F6; --g200: #E5E7EB; --g300: #D1D5DB;
+  --g400: #9CA3AF; --g500: #6B7280; --g600: #4B5563; --g700: #374151; --g800: #1F2937;
+}
+/* ─── 흑백 모드 ─── */
+body.bw{--pri:#222;--pri-dk:#000;--pri-lt:#eee;--grn:#333;--grn-lt:#ddd;--red:#444;--red-lt:#eee;--org:#555;--org-lt:#eee;--acc:#555;}
+body.bw .hdr{background:#000}
+/* SVG 텍스트: 어두운 배경 위 흰 글자 — 최대 대비 */
+body.bw svg text[fill="#fff"]{fill:#fff!important}
+body.bw svg text[fill="#C7D2FE"],body.bw svg text[fill="#c7d2fe"]{fill:#eee!important}
+body.bw svg text[fill="#DC2626"],body.bw svg text[fill="#991B1B"],body.bw svg text[fill="#059669"],body.bw svg text[fill="#065F46"]{fill:#000!important}
+body.bw svg text[fill="#4F46E5"],body.bw svg text[fill="#3730A3"],body.bw svg text[fill="#7C3AED"]{fill:#000!important}
+body.bw svg text[fill="#D97706"],body.bw svg text[fill="#92400E"],body.bw svg text[fill="#B45309"]{fill:#000!important}
+body.bw svg text[fill="#818CF8"],body.bw svg text[fill="#374151"]{fill:#222!important}
+body.bw svg text[fill="#6B7280"],body.bw svg text[fill="#9CA3AF"]{fill:#444!important}
+/* SVG 도형 흑백화 — 강한 대비 */
+body.bw svg circle[fill="#4F46E5"],body.bw svg circle[fill="#3730A3"]{fill:#000!important}
+body.bw svg circle[fill="#059669"]{fill:#222!important}
+body.bw svg circle[fill="#E0E7FF"]{fill:#fff!important;stroke:#000!important;stroke-width:2.5!important}
+body.bw svg circle[fill="#D1FAE5"]{fill:#fff!important;stroke:#000!important;stroke-width:2!important}
+body.bw svg circle[fill="#FEF3C7"]{fill:#fff!important;stroke:#000!important;stroke-width:2!important}
+/* 좌표평면: 파랑(0)=빈 원, 빨강(1)=채운 원 */
+body.bw svg circle[fill="#3B82F6"]{fill:#fff!important;stroke:#000!important;stroke-width:2.5!important}
+body.bw svg circle[fill="#DC2626"]{fill:#000!important}
+body.bw svg rect[fill="#4F46E5"]{fill:#000!important}
+body.bw svg rect[fill="#FEF3C7"],body.bw svg rect[fill="#D1FAE5"],body.bw svg rect[fill="#EEF2FF"],body.bw svg rect[fill="#E0E7FF"]{fill:#f0f0f0!important;stroke:#000!important}
+body.bw svg rect[fill="#FEE2E2"]{fill:#e8e8e8!important;stroke:#555!important}
+body.bw svg rect[fill="#FAFBFF"]{fill:#fff!important}
+body.bw svg line[stroke="#4F46E5"]{stroke:#000!important}
+body.bw svg line[stroke="#059669"]{stroke:#000!important;stroke-dasharray:8,4!important}
+body.bw svg line[stroke="#DC2626"]{stroke:#555!important;stroke-dasharray:3,3!important}
+/* UI 요소 */
+body.bw .qn,body.bw .qn.sc,body.bw .qn.pr{background:#000!important;color:#fff!important}
+body.bw .qd{border:1px solid #999!important;background:#eee!important;color:#333!important}
+body.bw .ib{background:#f5f5f5!important;border-left:4px solid #000!important;color:#111!important}
+body.bw .ib.tip{background:#f5f5f5!important;border-left:4px dashed #000!important;color:#111!important}
+body.bw .ib.ok{background:#f5f5f5!important;border-left:4px double #000!important;color:#111!important}
+body.bw .ib.warn{background:#f0f0f0!important;border-left:4px dotted #000!important;color:#111!important}
+body.bw .fm{background:#eee;border-color:#000;color:#111}
+body.bw .ex{background:#f5f5f5;border-color:#000;color:#111}
+body.bw .sh{background:#e0e0e0!important;border-left-color:#000!important}
+body.bw .sh h2{color:#000!important}
+body.bw .qc{border:1px solid #999!important;box-shadow:none!important}
+body.bw .hl,body.bw .hlg,body.bw .hlr{background:#ddd!important;color:#000!important}
+body.bw .sc3{color:#333!important}
+body.bw .tb th{background:#000!important;color:#fff!important}
+
+@media print{
+  @page{size:A4;margin:12mm 10mm 14mm}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:9.6pt;line-height:1.55}
+  .np{display:none!important}
+  .pb{break-before:page;page-break-before:always}
+  .hdr{padding:0.7rem .9rem}
+  .hdr h1{font-size:1.35rem}
+  .hdr .sub{font-size:.78rem}
+  .si,.ct{max-width:none;width:100%}
+  .si{margin:.35rem 0 .45rem;padding:.45rem .75rem;gap:1rem}
+  .ct{padding:.2rem 0 0}
+  .sh{margin:.9rem 0 .45rem;padding:.38rem .55rem;break-after:avoid;page-break-after:avoid}
+  .qc{break-inside:auto;page-break-inside:auto;overflow:visible;margin-bottom:.75rem;box-shadow:none;border:1px solid #ccc}
+  .qh,.sf,.fm,.gv,.ex,.ib,.tb,.an,.st,.sq li{break-inside:avoid;page-break-inside:avoid}
+  .qb{padding:.55rem .7rem}
+  .sf{margin:.45rem 0;padding:.4rem .15rem .15rem}
+  .sf svg{max-width:100%!important;height:auto!important}
+  p,li{orphans:3;widows:3}
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans KR',sans-serif;line-height:1.65;color:var(--g800);background:#fff}
+
+.hdr{background:linear-gradient(135deg,#3730A3,#4F46E5 60%,#818CF8);color:#fff;padding:1.6rem 1.5rem 1.2rem;text-align:center}
+.hdr h1{font-size:1.5rem;font-weight:800;margin-bottom:0.2rem} .hdr .sub{font-size:0.85rem;opacity:.92}
+.hdr .br{margin-top:.5rem;display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap}
+.hdr .bd{padding:.15rem .5rem;border-radius:50px;font-size:.7rem;font-weight:600;background:rgba(255,255,255,.2)}
+
+.mt{text-align:center;padding:.4rem;background:var(--g100);border-bottom:1px solid var(--g200)}
+.mt button{padding:.3rem .8rem;border:1.5px solid var(--g300);border-radius:6px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;color:var(--g700);cursor:pointer;margin:0 .15rem}
+.mt button:hover{background:var(--pri-lt)} .mt button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+.si{max-width:720px;margin:.6rem auto;padding:.5rem 1rem;background:#fff;border:2px solid var(--g300);border-radius:6px;display:flex;gap:1.5rem;align-items:center;font-size:.85rem}
+.si label{font-weight:600;color:var(--g700)} .si .ul{display:inline-block;width:100px;border-bottom:1.5px solid var(--g400);margin-left:.3rem}
+
+.ct{max-width:720px;margin:0 auto;padding:.8rem 1rem 2rem}
+
+.sh{display:flex;align-items:center;gap:.5rem;margin:1.5rem 0 .6rem;padding:.5rem .7rem;border-radius:6px;border-left:4px solid var(--pri);background:var(--pri-lt)}
+.sh h2{font-size:1rem;font-weight:700;color:var(--pri-dk)} .sh .tg{margin-left:auto;font-size:.7rem;font-weight:600;color:var(--pri);background:#C7D2FE;padding:.1rem .45rem;border-radius:50px}
+
+.qc{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:1.1rem;border:1px solid var(--g200);overflow:hidden}
+.qh{display:flex;align-items:center;gap:.4rem;padding:.5rem .7rem;border-bottom:1px solid var(--g100);background:var(--g50)}
+.qn{font-size:.72rem;font-weight:700;padding:.1rem .4rem;border-radius:5px;color:#fff;background:var(--pri)}
+.qn.sc{background:var(--grn)} .qn.pr{background:var(--acc)} .qn.ch{background:var(--org)}
+.qm{font-size:.7rem;color:var(--g500)} .qd{margin-left:auto;font-size:.66rem;font-weight:600;padding:.08rem .35rem;border-radius:50px}
+.qd.e{background:var(--grn-lt);color:#065F46} .qd.m{background:var(--pri-lt);color:var(--pri-dk)} .qd.h{background:var(--org-lt);color:#92400E}
+.qb{padding:.7rem .9rem} .qb p{margin-bottom:.4rem;font-size:.86rem}
+
+.cx{font-size:.8rem!important;color:var(--g600);padding:.5rem .6rem;background:var(--g50);border-radius:6px;border-left:3px solid var(--g300);margin-bottom:.6rem!important;line-height:1.7}
+.qt{font-weight:600;color:var(--g800);line-height:1.7;font-size:.88rem!important}
+
+.fm{background:var(--pri-lt);border:1px solid #C7D2FE;border-radius:6px;padding:.45rem .7rem;margin:.4rem 0;font-size:.9rem;font-weight:600;color:var(--pri-dk);text-align:center;font-family:'SF Mono',monospace}
+.gv{background:var(--g50);border:1px solid var(--g200);border-radius:6px;padding:.5rem .7rem;margin:.4rem 0;font-size:.84rem;line-height:1.9;font-family:'SF Mono',monospace}
+.ex{background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:.5rem .7rem;margin:.4rem 0;font-size:.82rem;line-height:1.9}
+.ex .lb{font-weight:700;color:#92400E;font-size:.76rem;margin-bottom:.15rem}
+.ib{background:var(--pri-lt);border-left:4px solid var(--pri);border-radius:6px;padding:.5rem .7rem;margin:.5rem 0;font-size:.8rem;color:var(--pri-dk);line-height:1.7}
+.ib.tip{background:var(--org-lt);border-left-color:var(--org);color:#92400E}
+.ib.ok{background:var(--grn-lt);border-left-color:var(--grn);color:#065F46}
+
+.an{border:1.5px dashed var(--g300);border-radius:6px;min-height:48px;margin:.3rem 0;padding:.4rem;position:relative}
+.an.t{min-height:72px} .an.s{min-height:30px}
+.an::before{content:attr(data-label);position:absolute;top:-.4rem;left:.5rem;background:#fff;padding:0 .2rem;font-size:.66rem;color:var(--g400)}
+
+.sq{list-style:none;padding:0;margin:.3rem 0 0} .sq li{padding:.35rem 0;border-bottom:1px dashed var(--g200);font-size:.86rem}
+.sq li:last-child{border-bottom:none} .sl{font-weight:700;color:var(--pri);margin-right:.12rem}
+
+.st{display:flex;gap:.5rem;align-items:flex-start;margin:.35rem 0}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.sc2{flex:1;font-size:.84rem}
+
+.tb{width:100%;border-collapse:collapse;margin:.4rem 0;font-size:.82rem}
+.tb th,.tb td{border:1px solid var(--g200);padding:.35rem .45rem;text-align:center}
+.tb th{background:var(--pri);color:#fff;font-weight:600;font-size:.76rem} .tb td{background:#fff}
+.bc{background:var(--g50)!important;min-width:50px} .fc{background:var(--grn-lt)!important;font-weight:600;color:#065F46}
+
+.bl{display:inline-block;min-width:45px;border-bottom:2px solid var(--pri);text-align:center;margin:0 .1rem}
+.bl.w{min-width:80px} .bl.n{min-width:32px}
+.hl{background:#FEF3C7;padding:0 .2rem;border-radius:2px;font-weight:600}
+.hlg{background:var(--grn-lt);padding:0 .2rem;border-radius:2px}
+.hlr{background:var(--red-lt);padding:0 .2rem;border-radius:2px}
+
+.sf{text-align:center;margin:.6rem 0;background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:.5rem .2rem .2rem}
+.sf svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.sc3{font-size:.73rem;color:var(--g500);text-align:center;margin-top:.2rem;padding:0 .4rem;line-height:1.5}
+
+.ft{text-align:center;padding:.8rem;color:var(--g500);font-size:.72rem;border-top:1px solid var(--g200);margin-top:1rem}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>2차시 수학 연습 활동지</h1>
+  <p class="sub">기계가 스스로 학습할 수 있는가? — 퍼셉트론의 수학</p>
+  <div class="br"><span class="bd">scaffolding</span><span class="bd">A4 출력</span></div>
+</div>
+<div class="mt np">
+  <button class="on" onclick="document.body.classList.remove('bw');this.classList.add('on');this.nextElementSibling.classList.remove('on')">컬러</button>
+  <button onclick="document.body.classList.add('bw');this.classList.add('on');this.previousElementSibling.classList.remove('on')">흑백</button>
+  <button onclick="window.print()" style="margin-left:.8rem;background:var(--pri-lt)">인쇄</button>
+</div>
+<div class="si">
+  <div><label>학년/반</label><span class="ul"></span></div>
+  <div><label>번호</label><span class="ul" style="width:50px"></span></div>
+  <div><label>이름</label><span class="ul"></span></div>
+</div>
+
+<div class="ct">
+
+<div class="sh"><h2>퍼셉트론의 수학</h2><span class="tg">2차시</span></div>
+
+<div class="ib">
+  <strong>퍼셉트론 = 가장 단순한 인공 뉴런.</strong>
+  입력에 가중치를 곱하고 더한 뒤, 기준을 넘으면 1, 못 넘으면 0을 출력합니다.
+  이 활동지에서 그 계산을 <strong>단계별로</strong> 연습합니다.
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     S-1: 퍼셉트론 구조 이해 + 가중합 기초
+     ════════════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-1</span><span class="qm">퍼셉트론 구조 이해 + 가중합 계산</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      <strong>가중치(weight)</strong>: 성적에서 "수학 가중치 1.2배"라고 하면 100점이 120점이 됩니다. <strong>각 입력값에 대한 중요도</strong> &mdash; 그 입력을 얼마나 크게 반영할지 결정합니다.<br>
+      <strong>편향(bias)</strong>: <strong>퍼셉트론(인공 뉴런) 자체의 중요도</strong>입니다. 입력과 상관없이, 이 뉴런이 얼마나 쉽게 활성화되는지를 결정합니다.<br>
+      <strong>가중합(z)</strong>: 입력 &times; 가중치를 모두 더한 뒤 편향을 더한 값. 이 값으로 출력을 결정합니다.
+    </p>
+
+    <!-- ★ 퍼셉트론 구조도 — 대형, 한국어 레이블, 계산 흐름 표시 -->
+    <div class="sf">
+      <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" style="max-width:660px">
+        <defs>
+          <marker id="a1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4F46E5"/></marker>
+          <marker id="a2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#374151"/></marker>
+          <marker id="a3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#059669"/></marker>
+        </defs>
+        <rect x="0" y="0" width="700" height="330" rx="12" fill="#FAFBFF"/>
+        <!-- 단계 번호 상단 -->
+        <rect x="60" y="8" width="580" height="26" rx="5" fill="#EEF2FF"/>
+        <text x="350" y="26" text-anchor="middle" font-size="12" font-weight="600" fill="#4F46E5" font-family="sans-serif">① 입력 받기 &nbsp;&rarr;&nbsp; ② 가중치 곱하기 &nbsp;&rarr;&nbsp; ③ 합산 + 편향 &nbsp;&rarr;&nbsp; ④ 활성화함수 &nbsp;&rarr;&nbsp; ⑤ 출력</text>
+        <!-- 입력 -->
+        <circle cx="80" cy="110" r="42" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5"/>
+        <text x="80" y="98" text-anchor="middle" font-size="13" fill="#6B7280" font-family="sans-serif">입력 1</text>
+        <text x="80" y="122" text-anchor="middle" font-size="22" font-weight="800" fill="#3730A3" font-family="sans-serif">x&#8321;</text>
+        <circle cx="80" cy="240" r="42" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5"/>
+        <text x="80" y="228" text-anchor="middle" font-size="13" fill="#6B7280" font-family="sans-serif">입력 2</text>
+        <text x="80" y="252" text-anchor="middle" font-size="22" font-weight="800" fill="#3730A3" font-family="sans-serif">x&#8322;</text>
+        <!-- 가중치 화살표 -->
+        <line x1="122" y1="110" x2="260" y2="165" stroke="#4F46E5" stroke-width="3" marker-end="url(#a1)"/>
+        <rect x="152" y="112" width="65" height="28" rx="6" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1.5"/>
+        <text x="185" y="131" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3" font-family="sans-serif">w&#8321;</text>
+        <text x="185" y="106" text-anchor="middle" font-size="10" fill="#818CF8" font-family="sans-serif">가중치 1</text>
+        <line x1="122" y1="240" x2="260" y2="185" stroke="#4F46E5" stroke-width="3" marker-end="url(#a1)"/>
+        <rect x="152" y="216" width="65" height="28" rx="6" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1.5"/>
+        <text x="185" y="235" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3" font-family="sans-serif">w&#8322;</text>
+        <text x="185" y="256" text-anchor="middle" font-size="10" fill="#818CF8" font-family="sans-serif">가중치 2</text>
+        <!-- 합산 (편향 포함) -->
+        <circle cx="300" cy="175" r="48" fill="#4F46E5" stroke="#3730A3" stroke-width="2.5"/>
+        <text x="300" y="158" text-anchor="middle" font-size="20" font-weight="700" fill="#fff" font-family="sans-serif">&#931;</text>
+        <text x="300" y="178" text-anchor="middle" font-size="11" fill="#C7D2FE" font-family="sans-serif">합산+편향</text>
+        <text x="300" y="198" text-anchor="middle" font-size="13" font-weight="600" fill="#FEF3C7" font-family="monospace">b</text>
+        <!-- 편향 설명 (옆에 표시) -->
+        <rect x="240" y="62" width="120" height="30" rx="6" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+        <text x="300" y="82" text-anchor="middle" font-size="11" font-weight="600" fill="#92400E" font-family="sans-serif">편향(b) = 자체 중요도</text>
+        <line x1="300" y1="92" x2="300" y2="127" stroke="#D97706" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <!-- z -->
+        <line x1="348" y1="175" x2="415" y2="175" stroke="#374151" stroke-width="2.5" marker-end="url(#a2)"/>
+        <rect x="370" y="152" width="32" height="22" rx="5" fill="#EEF2FF"/>
+        <text x="386" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="#3730A3" font-family="sans-serif">z</text>
+        <!-- 활성화함수 -->
+        <rect x="420" y="140" width="110" height="70" rx="12" fill="#FEF3C7" stroke="#D97706" stroke-width="2.5"/>
+        <text x="475" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="#92400E" font-family="sans-serif">활성화함수</text>
+        <text x="475" y="188" text-anchor="middle" font-size="11" fill="#B45309" font-family="sans-serif">(계단함수)</text>
+        <!-- 출력 -->
+        <line x1="530" y1="175" x2="590" y2="175" stroke="#059669" stroke-width="2.5" marker-end="url(#a3)"/>
+        <circle cx="625" cy="175" r="36" fill="#D1FAE5" stroke="#059669" stroke-width="2.5"/>
+        <text x="625" y="167" text-anchor="middle" font-size="12" fill="#065F46" font-family="sans-serif">출력</text>
+        <text x="625" y="190" text-anchor="middle" font-size="24" font-weight="800" fill="#059669" font-family="sans-serif">y</text>
+        <!-- 하단 수식 -->
+        <rect x="100" y="282" width="500" height="38" rx="8" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1.5"/>
+        <text x="350" y="307" text-anchor="middle" font-size="15" font-weight="700" fill="#3730A3" font-family="monospace">z = (x&#8321; &times; w&#8321;) + (x&#8322; &times; w&#8322;) + b</text>
+      </svg>
+      <p class="sc3">퍼셉트론 전체 구조: 입력 &times; 가중치 &rarr; 합산(+편향) &rarr; 활성화함수 &rarr; 출력</p>
+    </div>
+
+    <div class="fm">가중합 z = (x&#8321; &times; w&#8321;) + (x&#8322; &times; w&#8322;) + b</div>
+
+    <div class="ex">
+      <div class="lb">풀이 예시 &mdash; 천천히 따라가 보세요</div>
+      <strong>주어진 값:</strong> x&#8321;=1, x&#8322;=1, w&#8321;=0.5, w&#8322;=0.5, b=&minus;0.7<br>
+      <strong>Step 1)</strong> 곱하기: 1&times;0.5 = 0.5, &nbsp; 1&times;0.5 = 0.5<br>
+      <strong>Step 2)</strong> 더하기: 0.5 + 0.5 = 1.0<br>
+      <strong>Step 3)</strong> 편향 더하기: 1.0 + (&minus;0.7) = <span class="hl">0.3</span> &larr; 이것이 z!
+    </div>
+
+    <!-- ★ 문제에 값이 대입된 퍼셉트론 -->
+    <div class="sf">
+      <svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" style="max-width:620px">
+        <rect x="0" y="0" width="660" height="200" rx="10" fill="#FAFBFF"/>
+        <circle cx="55" cy="55" r="32" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="55" y="47" text-anchor="middle" font-size="10" fill="#6B7280">x&#8321;</text>
+        <text x="55" y="67" text-anchor="middle" font-size="20" font-weight="800" fill="#3730A3">1</text>
+        <circle cx="55" cy="145" r="32" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="55" y="137" text-anchor="middle" font-size="10" fill="#6B7280">x&#8322;</text>
+        <text x="55" y="157" text-anchor="middle" font-size="20" font-weight="800" fill="#3730A3">0</text>
+        <line x1="87" y1="55" x2="210" y2="95" stroke="#4F46E5" stroke-width="2.5" marker-end="url(#a1)"/>
+        <rect x="122" y="55" width="48" height="22" rx="5" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="146" y="71" text-anchor="middle" font-size="13" font-weight="700" fill="#3730A3">0.7</text>
+        <line x1="87" y1="145" x2="210" y2="105" stroke="#4F46E5" stroke-width="2.5" marker-end="url(#a1)"/>
+        <rect x="117" y="124" width="55" height="22" rx="5" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="145" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#3730A3">&minus;0.4</text>
+        <circle cx="245" cy="100" r="36" fill="#4F46E5"/>
+        <text x="245" y="93" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">&#931;</text>
+        <text x="245" y="112" text-anchor="middle" font-size="10" fill="#C7D2FE">b=&minus;0.3</text>
+        <line x1="281" y1="100" x2="345" y2="100" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="313" y="90" text-anchor="middle" font-size="12" font-weight="600" fill="#D97706">z = ?</text>
+        <rect x="350" y="77" width="80" height="46" rx="10" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+        <text x="390" y="98" text-anchor="middle" font-size="11" font-weight="600" fill="#92400E">계단함수</text>
+        <text x="390" y="114" text-anchor="middle" font-size="9" fill="#B45309">z&gt;0 &rarr; 1</text>
+        <line x1="430" y1="100" x2="490" y2="100" stroke="#059669" stroke-width="2" marker-end="url(#a3)"/>
+        <circle cx="522" cy="100" r="28" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="522" y="105" text-anchor="middle" font-size="18" font-weight="800" fill="#059669">y=?</text>
+        <rect x="90" y="162" width="460" height="28" rx="6" fill="#EEF2FF"/>
+        <text x="320" y="181" text-anchor="middle" font-size="13" font-weight="600" fill="#3730A3" font-family="monospace">(1&times;0.7) + (0&times;(&minus;0.4)) + (&minus;0.3) = ???</text>
+      </svg>
+      <p class="sc3">문제 (1): 위 값을 넣고 z를 계산한 뒤, 계단함수를 적용하여 y를 구하세요</p>
+    </div>
+
+    <p class="qt">아래 값들로 가중합 z를 구하고, 계단함수를 적용하세요.</p>
+
+    <ul class="sq">
+      <li>
+        <span class="sl">(1)</span> x&#8321;=1, x&#8322;=0, w&#8321;=0.7, w&#8322;=&minus;0.4, b=&minus;0.3
+        <div class="st"><div class="sn">1</div><div class="sc2">곱하기: (1&times;0.7) + (0&times;(&minus;0.4)) = <span class="bl n"></span> + <span class="bl n"></span> = <span class="bl n"></span></div></div>
+        <div class="st"><div class="sn">2</div><div class="sc2">편향 더하기: <span class="bl n"></span> + (&minus;0.3) = z = <span class="bl n"></span></div></div>
+        <div class="st"><div class="sn">3</div><div class="sc2">계단함수: z = <span class="bl n"></span> &rarr; 0보다 <span class="bl n">(크다/작다)</span> &rarr; y = <span class="bl n"></span></div></div>
+      </li>
+      <li>
+        <span class="sl">(2)</span> x&#8321;=0, x&#8322;=1 (나머지 같음)
+        <div class="an s" data-label="z = &nbsp;&nbsp;&nbsp;&nbsp;, y = "></div>
+      </li>
+      <li>
+        <span class="sl">(3)</span> x&#8321;=1, x&#8322;=1
+        <div class="an s" data-label="z = &nbsp;&nbsp;&nbsp;&nbsp;, y = "></div>
+      </li>
+      <li>
+        <span class="sl">(4)</span> x&#8321;=0, x&#8322;=0
+        <div class="an s" data-label="z = &nbsp;&nbsp;&nbsp;&nbsp;, y = "></div>
+      </li>
+    </ul>
+
+    <div class="ib tip">
+      <strong>확인!</strong> (1)~(4)의 y 출력이 AND 연산 결과와 같나요?<br>
+      AND: (0,0)&rarr;0, (0,1)&rarr;0, (1,0)&rarr;0, (1,1)&rarr;1<br>
+      같다면, 이 퍼셉트론은 <strong>AND 게이트를 구현</strong>한 것입니다!
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     S-2: 계단함수 그래프 이해
+     ════════════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-2</span><span class="qm">계단함수 그래프 이해하기</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      <strong>활성화함수</strong>는 가중합 z를 "신호를 보낼지(1) 말지(0)"로 변환하는 장치입니다.<br>
+      계단함수는 그 중 가장 단순한 형태: <strong>z &gt; 0이면 신호 발사(1), z &le; 0이면 침묵(0).</strong><br>
+      <span style="color:#6B7280;font-size:.88em">※ 편향(bias)이 뉴런의 자체 중요도라면, 활성화함수는 계산이 끝난 뒤 "출력할지 말지"를 결정하는 마지막 관문입니다.</span><br>
+      아래 그래프에서 x축이 가중합 z, y축이 출력입니다.
+    </p>
+
+    <div class="sf">
+      <svg viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg" style="max-width:500px">
+        <rect x="0" y="0" width="520" height="280" rx="10" fill="#FAFBFF"/>
+        <line x1="60" y1="250" x2="490" y2="250" stroke="#6B7280" stroke-width="2"/>
+        <line x1="260" y1="30" x2="260" y2="260" stroke="#6B7280" stroke-width="2"/>
+        <text x="500" y="254" font-size="15" font-weight="600" fill="#374151">z</text>
+        <text x="265" y="26" font-size="15" font-weight="600" fill="#374151">y</text>
+        <text x="50" y="254" text-anchor="end" font-size="13" font-weight="600" fill="#6B7280">0</text>
+        <text x="50" y="64" text-anchor="end" font-size="13" font-weight="600" fill="#6B7280">1</text>
+        <text x="260" y="272" text-anchor="middle" font-size="13" fill="#6B7280">0</text>
+        <line x1="60" y1="60" x2="490" y2="60" stroke="#E5E7EB" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <!-- 그래프 -->
+        <line x1="60" y1="240" x2="260" y2="240" stroke="#DC2626" stroke-width="4"/>
+        <circle cx="260" cy="240" r="7" fill="#DC2626"/>
+        <line x1="260" y1="60" x2="490" y2="60" stroke="#059669" stroke-width="4"/>
+        <circle cx="260" cy="60" r="7" fill="#fff" stroke="#059669" stroke-width="2.5"/>
+        <line x1="260" y1="240" x2="260" y2="60" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- 설명 -->
+        <rect x="80" y="195" width="145" height="36" rx="8" fill="#FEE2E2"/>
+        <text x="153" y="218" text-anchor="middle" font-size="13" font-weight="700" fill="#DC2626">z &le; 0 &rarr; y = 0</text>
+        <rect x="300" y="75" width="145" height="36" rx="8" fill="#D1FAE5"/>
+        <text x="373" y="98" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">z &gt; 0 &rarr; y = 1</text>
+        <!-- 예시점 -->
+        <circle cx="330" cy="60" r="5" fill="#059669"/>
+        <text x="342" y="52" font-size="11" fill="#059669">z=0.4 &rarr; 1 &#10003;</text>
+        <circle cx="190" cy="240" r="5" fill="#DC2626"/>
+        <text x="142" y="232" font-size="11" fill="#DC2626">z=&minus;0.7 &rarr; 0</text>
+      </svg>
+      <p class="sc3">계단함수: 0을 기준으로 "딱" 나뉜다 (왼쪽=0, 오른쪽=1)</p>
+    </div>
+
+    <p class="qt">다음 z값에 계단함수를 적용한 출력 y를 그래프에서 읽어보세요.</p>
+    <table class="tb">
+      <thead><tr><th>z</th><th>0보다 큰가?</th><th>y</th></tr></thead>
+      <tbody>
+        <tr><td>2.5</td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td>&minus;1.3</td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td>0</td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td>0.001</td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td>&minus;0.001</td><td class="bc"></td><td class="bc"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     P-1: OR 게이트 구현 확인 + 좌표평면
+     ════════════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-1</span><span class="qm">OR 게이트 구현 확인 + 좌표평면</span><span class="qd m">연습</span></div>
+  <div class="qb">
+    <p class="cx">
+      시뮬레이터에서 직선 하나로 AND, OR을 나눌 수 있었죠? 지금 그것을 <strong>수학으로 확인</strong>합니다.<br>
+      가중치와 편향을 바꾸면 AND 퍼셉트론이 OR 퍼셉트론이 됩니다.
+    </p>
+    <div class="ib" style="background:#F0FDF4;border-left:4px solid #059669;margin-bottom:.8rem">
+      <strong>결정 경계(decision boundary)란?</strong><br>
+      운동장에서 두 팀을 나누는 선을 상상하세요. 선 한쪽은 A팀(출력=1), 다른 쪽은 B팀(출력=0).<br>
+      퍼셉트론이 그리는 <strong>직선 하나</strong>가 바로 그 "팀 구분선"입니다. 이것을 <strong>결정 경계</strong>라고 합니다.<br>
+      <span style="color:#6B7280;font-size:.88em">가중치(w)가 직선의 기울기를, 편향(b)이 직선의 위치(얼마나 올리거나 내릴지)를 결정합니다.</span>
+    </div>
+
+    <!-- ★ AND vs OR 좌표평면 비교 -->
+    <div class="sf">
+      <svg viewBox="0 0 600 290" xmlns="http://www.w3.org/2000/svg" style="max-width:580px">
+        <rect x="0" y="0" width="600" height="290" rx="10" fill="#FAFBFF"/>
+        <!-- AND -->
+        <text x="140" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#3730A3">AND</text>
+        <rect x="20" y="30" width="240" height="230" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <line x1="40" y1="245" x2="250" y2="245" stroke="#9CA3AF" stroke-width="1.5"/>
+        <line x1="40" y1="245" x2="40" y2="40" stroke="#9CA3AF" stroke-width="1.5"/>
+        <text x="255" y="249" font-size="11" fill="#6B7280">x&#8321;</text>
+        <text x="34" y="37" font-size="11" fill="#6B7280">x&#8322;</text>
+        <text x="40" y="262" font-size="10" fill="#9CA3AF">0</text>
+        <text x="230" y="262" font-size="10" fill="#9CA3AF">1</text>
+        <text x="28" y="60" font-size="10" fill="#9CA3AF">1</text>
+        <circle cx="40" cy="245" r="15" fill="#3B82F6" opacity=".85"/><text x="40" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">0</text>
+        <circle cx="230" cy="245" r="15" fill="#3B82F6" opacity=".85"/><text x="230" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">0</text>
+        <circle cx="40" cy="55" r="15" fill="#3B82F6" opacity=".85"/><text x="40" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">0</text>
+        <circle cx="230" cy="55" r="15" fill="#DC2626" opacity=".85"/><text x="230" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
+        <line x1="170" y1="30" x2="252" y2="115" stroke="#059669" stroke-width="2.5" stroke-dasharray="8,4"/>
+        <text x="230" y="90" font-size="10" font-weight="600" fill="#059669" transform="rotate(-40,230,90)">결정 경계</text>
+        <!-- OR -->
+        <text x="440" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#3730A3">OR</text>
+        <rect x="320" y="30" width="240" height="230" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <line x1="340" y1="245" x2="550" y2="245" stroke="#9CA3AF" stroke-width="1.5"/>
+        <line x1="340" y1="245" x2="340" y2="40" stroke="#9CA3AF" stroke-width="1.5"/>
+        <text x="555" y="249" font-size="11" fill="#6B7280">x&#8321;</text>
+        <text x="334" y="37" font-size="11" fill="#6B7280">x&#8322;</text>
+        <text x="340" y="262" font-size="10" fill="#9CA3AF">0</text>
+        <text x="530" y="262" font-size="10" fill="#9CA3AF">1</text>
+        <text x="328" y="60" font-size="10" fill="#9CA3AF">1</text>
+        <circle cx="340" cy="245" r="15" fill="#3B82F6" opacity=".85"/><text x="340" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">0</text>
+        <circle cx="530" cy="245" r="15" fill="#DC2626" opacity=".85"/><text x="530" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
+        <circle cx="340" cy="55" r="15" fill="#DC2626" opacity=".85"/><text x="340" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
+        <circle cx="530" cy="55" r="15" fill="#DC2626" opacity=".85"/><text x="530" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
+        <line x1="325" y1="195" x2="470" y2="32" stroke="#059669" stroke-width="2.5" stroke-dasharray="8,4"/>
+        <!-- 범례 -->
+        <circle cx="200" cy="280" r="6" fill="#3B82F6"/><text x="210" y="284" font-size="10" fill="#6B7280">파랑=0</text>
+        <circle cx="290" cy="280" r="6" fill="#DC2626"/><text x="300" y="284" font-size="10" fill="#6B7280">빨강=1</text>
+        <text x="440" y="284" text-anchor="middle" font-size="10" font-weight="600" fill="#059669">직선 하나로 나눌 수 있다!</text>
+      </svg>
+      <p class="sc3">AND와 OR 모두 직선 하나로 파랑(0)과 빨강(1)을 완벽히 나눌 수 있다</p>
+    </div>
+
+    <p class="qt">w&#8321;=0.6, w&#8322;=0.6, b=&minus;0.2로 OR이 되는지 <strong>네 가지 입력 모두</strong> 확인하세요.</p>
+    <table class="tb">
+      <thead><tr><th>x&#8321;</th><th>x&#8322;</th><th>z = 0.6&times;x&#8321; + 0.6&times;x&#8322; + (&minus;0.2)</th><th>y</th><th>OR</th><th>일치?</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>0</td><td class="bc"></td><td class="bc"></td><td>0</td><td class="bc"></td></tr>
+        <tr><td>0</td><td>1</td><td class="bc"></td><td class="bc"></td><td>1</td><td class="bc"></td></tr>
+        <tr><td>1</td><td>0</td><td class="bc"></td><td class="bc"></td><td>1</td><td class="bc"></td></tr>
+        <tr><td>1</td><td>1</td><td class="bc"></td><td class="bc"></td><td>1</td><td class="bc"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     P-2: XOR — 좌표에서 이해 (계산 아님!)
+     ════════════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-2</span><span class="qm">XOR: 왜 직선 하나로 안 되는가?</span><span class="qd m">이해</span></div>
+  <div class="qb">
+    <p class="cx">
+      AND와 OR은 결정 경계(직선 하나)로 빨간 점과 파란 점을 나눌 수 있었습니다. 하지만 XOR은?<br>
+      <strong>시뮬레이터에서 이미 확인했죠 — 안 됩니다.</strong> 왜 안 되는지 좌표평면에서 이해해봅시다.
+    </p>
+    <div class="ib" style="background:#FFF7ED;border-left:4px solid #EA580C;margin-bottom:.8rem">
+      <strong>XOR의 문제 — "친구가 대각선에 흩어져 있다"</strong><br>
+      운동장에서 A팀(빨강)과 B팀(파랑)을 직선 하나로 나누려는데, A팀 친구 두 명이 운동장 <strong>대각선 구석</strong>에 각각 떨어져 있어요.<br>
+      어떤 직선을 그어도 한쪽엔 A팀 1명 + B팀 1명이 함께 들어갑니다. <strong>직선 하나로는 절대 완벽하게 나눌 수 없습니다.</strong><br>
+      <span style="color:#6B7280;font-size:.88em">1969년 민스키가 이것을 수학으로 증명 → AI의 겨울. 해결책은 3차시에!</span>
+    </div>
+
+    <div class="sf">
+      <svg viewBox="0 0 520 310" xmlns="http://www.w3.org/2000/svg" style="max-width:500px">
+        <rect x="0" y="0" width="520" height="310" rx="10" fill="#FAFBFF"/>
+        <text x="260" y="25" text-anchor="middle" font-size="15" font-weight="700" fill="#DC2626">XOR: 빨간 점이 대각선으로 엇갈린다</text>
+        <rect x="35" y="35" width="250" height="250" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <line x1="55" y1="270" x2="275" y2="270" stroke="#9CA3AF" stroke-width="1.5"/>
+        <line x1="55" y1="270" x2="55" y2="45" stroke="#9CA3AF" stroke-width="1.5"/>
+        <text x="280" y="274" font-size="12" fill="#6B7280">x&#8321;</text>
+        <text x="49" y="42" font-size="12" fill="#6B7280">x&#8322;</text>
+        <text x="55" y="288" font-size="11" fill="#9CA3AF">0</text>
+        <text x="260" y="288" font-size="11" fill="#9CA3AF">1</text>
+        <text x="40" y="60" font-size="11" fill="#9CA3AF">1</text>
+        <!-- XOR 데이터 -->
+        <circle cx="55" cy="270" r="18" fill="#3B82F6" opacity=".9"/><text x="55" y="275" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">0</text>
+        <circle cx="260" cy="270" r="18" fill="#DC2626" opacity=".9"/><text x="260" y="275" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">1</text>
+        <circle cx="55" cy="55" r="18" fill="#DC2626" opacity=".9"/><text x="55" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">1</text>
+        <circle cx="260" cy="55" r="18" fill="#3B82F6" opacity=".9"/><text x="260" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">0</text>
+        <!-- 실패 직선들 -->
+        <line x1="30" y1="40" x2="280" y2="285" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="7,4" opacity=".4"/>
+        <line x1="30" y1="160" x2="280" y2="40" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="7,4" opacity=".4"/>
+        <line x1="158" y1="35" x2="158" y2="285" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="7,4" opacity=".4"/>
+        <!-- 설명 패널 -->
+        <rect x="310" y="45" width="190" height="240" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5"/>
+        <text x="405" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#DC2626">어떤 직선을 그어도</text>
+        <text x="405" y="95" text-anchor="middle" font-size="13" font-weight="700" fill="#DC2626">나눌 수 없다!</text>
+        <line x1="340" y1="110" x2="470" y2="110" stroke="#DC2626" stroke-width="0.5"/>
+        <text x="405" y="135" text-anchor="middle" font-size="12" fill="#7F1D1D">빨강(1)이 왼쪽 위와</text>
+        <text x="405" y="153" text-anchor="middle" font-size="12" fill="#7F1D1D">오른쪽 아래에 있어서,</text>
+        <text x="405" y="175" text-anchor="middle" font-size="12" fill="#7F1D1D">한쪽을 나누면</text>
+        <text x="405" y="193" text-anchor="middle" font-size="12" fill="#7F1D1D">다른 쪽이 반대편에</text>
+        <text x="405" y="211" text-anchor="middle" font-size="12" fill="#7F1D1D">걸립니다.</text>
+        <line x1="340" y1="225" x2="470" y2="225" stroke="#DC2626" stroke-width="0.5"/>
+        <text x="405" y="250" text-anchor="middle" font-size="12" font-weight="700" fill="#DC2626">1969년 민스키 증명:</text>
+        <text x="405" y="270" text-anchor="middle" font-size="11" fill="#991B1B">"수학적으로 불가능"</text>
+      </svg>
+      <p class="sc3">XOR: 빨간 점과 파란 점이 대각선으로 번갈아 놓여 있어, 어떤 직선도 완벽히 나눌 수 없다</p>
+    </div>
+
+    <p class="qt">위 좌표평면을 보고 답하세요.</p>
+    <ul class="sq">
+      <li><span class="sl">(1)</span> AND/OR과 XOR의 차이점은 무엇인가요? (빨간 점의 <strong>위치</strong>에 주목)
+        <div class="an" data-label="차이점"></div>
+      </li>
+      <li><span class="sl">(2)</span> (1)에서 찾은 XOR의 한계가 AI 역사에 어떤 영향을 주었나요?
+        <div class="an" data-label="AI 겨울과의 연결"></div>
+      </li>
+    </ul>
+
+    <div class="ib ok">
+      <strong>핵심 정리:</strong> 퍼셉트론 = 결정 경계(직선) 하나. AND, OR은 되지만, XOR은 안 된다.<br>
+      &rarr; 인공 뉴런(퍼셉트론)을 여러 층으로 연결하면? 그것이 3차시의 주제입니다!
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     자기 점검
+     ════════════════════════════════════════════ -->
+<div class="sh" style="border-left-color:var(--grn);background:var(--grn-lt)"><h2 style="color:#065F46">자기 점검</h2></div>
+<div class="qc"><div class="qb">
+  <table class="tb">
+    <thead><tr><th style="width:65%">확인 항목</th><th>O</th><th>X</th></tr></thead>
+    <tbody>
+      <tr><td style="text-align:left;padding-left:.7rem">가중합 z = (x&#8321;&times;w&#8321;) + (x&#8322;&times;w&#8322;) + b를 계산할 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">계단함수(z&gt;0&rarr;1, z&le;0&rarr;0)를 적용할 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">AND와 OR이 퍼셉트론으로 구현됨을 확인했다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">XOR이 직선 하나로 안 되는 이유를 좌표평면에서 설명할 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+    </tbody>
+  </table>
+</div></div>
+
+</div>
+<div class="ft">AI 기초 | 고등학교 정보 교과 | 2차시 수학 연습 활동지</div>
+</body>
+</html>

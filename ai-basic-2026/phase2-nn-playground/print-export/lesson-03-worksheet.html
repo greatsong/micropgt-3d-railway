@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 기초 3차시 수학 연습 활동지</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --pri: #4F46E5; --pri-dk: #3730A3; --pri-lt: #EEF2FF;
+  --grn: #059669; --grn-lt: #D1FAE5; --red: #DC2626; --red-lt: #FEE2E2;
+  --org: #D97706; --org-lt: #FEF3C7; --acc: #818CF8; --pur: #7C3AED;
+  --g50: #F9FAFB; --g100: #F3F4F6; --g200: #E5E7EB; --g300: #D1D5DB;
+  --g400: #9CA3AF; --g500: #6B7280; --g600: #4B5563; --g700: #374151; --g800: #1F2937;
+}
+/* ─── 흑백 모드 ─── */
+body.bw{--pri:#222;--pri-dk:#000;--pri-lt:#eee;--grn:#333;--grn-lt:#ddd;--red:#444;--red-lt:#eee;--org:#555;--org-lt:#eee;--acc:#555;--pur:#333}
+body.bw .hdr{background:#000}
+body.bw svg text[fill="#fff"]{fill:#fff!important}
+body.bw svg text[fill="#C7D2FE"],body.bw svg text[fill="#c7d2fe"]{fill:#eee!important}
+body.bw svg text[fill="#DC2626"],body.bw svg text[fill="#991B1B"],body.bw svg text[fill="#059669"],body.bw svg text[fill="#065F46"]{fill:#000!important}
+body.bw svg text[fill="#4F46E5"],body.bw svg text[fill="#3730A3"],body.bw svg text[fill="#7C3AED"]{fill:#000!important}
+body.bw svg text[fill="#D97706"],body.bw svg text[fill="#92400E"],body.bw svg text[fill="#B45309"]{fill:#000!important}
+body.bw svg text[fill="#818CF8"],body.bw svg text[fill="#374151"]{fill:#222!important}
+body.bw svg text[fill="#6B7280"],body.bw svg text[fill="#9CA3AF"]{fill:#444!important}
+body.bw svg text[fill="#7F1D1D"],body.bw svg text[fill="#8B5CF6"]{fill:#000!important}
+body.bw svg circle[fill="#4F46E5"],body.bw svg circle[fill="#3730A3"]{fill:#000!important}
+body.bw svg circle[fill="#059669"]{fill:#222!important}
+body.bw svg circle[fill="#E0E7FF"]{fill:#fff!important;stroke:#000!important;stroke-width:2.5!important}
+body.bw svg circle[fill="#D1FAE5"]{fill:#fff!important;stroke:#000!important;stroke-width:2!important}
+body.bw svg circle[fill="#FEF3C7"]{fill:#fff!important;stroke:#000!important;stroke-width:2!important}
+body.bw svg circle[fill="#3B82F6"]{fill:#fff!important;stroke:#000!important;stroke-width:2.5!important}
+body.bw svg circle[fill="#DC2626"]{fill:#000!important}
+body.bw svg rect[fill="#4F46E5"]{fill:#000!important}
+body.bw svg rect[fill="#FEF3C7"],body.bw svg rect[fill="#D1FAE5"],body.bw svg rect[fill="#EEF2FF"],body.bw svg rect[fill="#E0E7FF"]{fill:#f0f0f0!important;stroke:#000!important}
+body.bw svg rect[fill="#FEE2E2"]{fill:#e8e8e8!important;stroke:#555!important}
+body.bw svg rect[fill="#EDE9FE"]{fill:#f0f0f0!important;stroke:#000!important}
+body.bw svg rect[fill="#FAFBFF"]{fill:#fff!important}
+body.bw svg line[stroke="#4F46E5"]{stroke:#000!important}
+body.bw svg line[stroke="#059669"]{stroke:#000!important;stroke-dasharray:8,4!important}
+body.bw svg line[stroke="#DC2626"]{stroke:#555!important;stroke-dasharray:3,3!important}
+body.bw svg path[stroke="#8B5CF6"],body.bw svg path[stroke="#7C3AED"]{stroke:#000!important}
+body.bw .qn,body.bw .qn.sc,body.bw .qn.pr,body.bw .qn.ch{background:#000!important;color:#fff!important}
+body.bw .qd{border:1px solid #999!important;background:#eee!important;color:#333!important}
+body.bw .ib{background:#f5f5f5!important;border-left:4px solid #000!important;color:#111!important}
+body.bw .ib.tip{background:#f5f5f5!important;border-left:4px dashed #000!important;color:#111!important}
+body.bw .ib.ok{background:#f5f5f5!important;border-left:4px double #000!important;color:#111!important}
+body.bw .ib.warn{background:#f0f0f0!important;border-left:4px dotted #000!important;color:#111!important}
+body.bw .fm{background:#eee;border-color:#000;color:#111}
+body.bw .ex{background:#f5f5f5;border-color:#000;color:#111}
+body.bw .sh{background:#e0e0e0!important;border-left-color:#000!important}
+body.bw .sh h2{color:#000!important}
+body.bw .qc{border:1px solid #999!important;box-shadow:none!important}
+body.bw .hl,body.bw .hlg,body.bw .hlr{background:#ddd!important;color:#000!important}
+body.bw .sc3{color:#333!important}
+body.bw .tb th{background:#000!important;color:#fff!important}
+body.bw .fc{color:#000!important}
+
+@media print{
+  @page{size:A4;margin:12mm 10mm 14mm}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:9.6pt;line-height:1.55}
+  .np{display:none!important}
+  .pb{break-before:page;page-break-before:always}
+  .hdr{padding:0.7rem .9rem}
+  .hdr h1{font-size:1.35rem}
+  .hdr .sub{font-size:.78rem}
+  .si,.ct{max-width:none;width:100%}
+  .si{margin:.35rem 0 .45rem;padding:.45rem .75rem;gap:1rem}
+  .ct{padding:.2rem 0 0}
+  .sh{margin:.9rem 0 .45rem;padding:.38rem .55rem;break-after:avoid;page-break-after:avoid}
+  .qc{break-inside:auto;page-break-inside:auto;overflow:visible;margin-bottom:.75rem;box-shadow:none;border:1px solid #ccc}
+  .qh,.sf,.fm,.gv,.ex,.ib,.tb,.an,.st,.sq li{break-inside:avoid;page-break-inside:avoid}
+  .qb{padding:.55rem .7rem}
+  .sf{margin:.45rem 0;padding:.4rem .15rem .15rem}
+  .sf svg{max-width:100%!important;height:auto!important}
+  p,li{orphans:3;widows:3}
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans KR',sans-serif;line-height:1.65;color:var(--g800);background:#fff}
+
+.hdr{background:linear-gradient(135deg,#3730A3,#4F46E5 60%,#818CF8);color:#fff;padding:1.6rem 1.5rem 1.2rem;text-align:center}
+.hdr h1{font-size:1.5rem;font-weight:800;margin-bottom:0.2rem} .hdr .sub{font-size:0.85rem;opacity:.92}
+.hdr .br{margin-top:.5rem;display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap}
+.hdr .bd{padding:.15rem .5rem;border-radius:50px;font-size:.7rem;font-weight:600;background:rgba(255,255,255,.2)}
+
+.mt{text-align:center;padding:.4rem;background:var(--g100);border-bottom:1px solid var(--g200)}
+.mt button{padding:.3rem .8rem;border:1.5px solid var(--g300);border-radius:6px;background:#fff;font-family:inherit;font-size:.78rem;font-weight:600;color:var(--g700);cursor:pointer;margin:0 .15rem}
+.mt button:hover{background:var(--pri-lt)} .mt button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+.si{max-width:720px;margin:.6rem auto;padding:.5rem 1rem;background:#fff;border:2px solid var(--g300);border-radius:6px;display:flex;gap:1.5rem;align-items:center;font-size:.85rem}
+.si label{font-weight:600;color:var(--g700)} .si .ul{display:inline-block;width:100px;border-bottom:1.5px solid var(--g400);margin-left:.3rem}
+
+.ct{max-width:720px;margin:0 auto;padding:.8rem 1rem 2rem}
+
+.sh{display:flex;align-items:center;gap:.5rem;margin:1.5rem 0 .6rem;padding:.5rem .7rem;border-radius:6px;border-left:4px solid var(--pri);background:var(--pri-lt)}
+.sh h2{font-size:1rem;font-weight:700;color:var(--pri-dk)} .sh .tg{margin-left:auto;font-size:.7rem;font-weight:600;color:var(--pri);background:#C7D2FE;padding:.1rem .45rem;border-radius:50px}
+
+.qc{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:1.1rem;border:1px solid var(--g200);overflow:hidden}
+.qh{display:flex;align-items:center;gap:.4rem;padding:.5rem .7rem;border-bottom:1px solid var(--g100);background:var(--g50)}
+.qn{font-size:.72rem;font-weight:700;padding:.1rem .4rem;border-radius:5px;color:#fff;background:var(--pri)}
+.qn.sc{background:var(--grn)} .qn.pr{background:var(--acc)} .qn.ch{background:var(--org)}
+.qm{font-size:.7rem;color:var(--g500)} .qd{margin-left:auto;font-size:.66rem;font-weight:600;padding:.08rem .35rem;border-radius:50px}
+.qd.e{background:var(--grn-lt);color:#065F46} .qd.m{background:var(--pri-lt);color:var(--pri-dk)} .qd.h{background:var(--org-lt);color:#92400E}
+.qb{padding:.7rem .9rem} .qb p{margin-bottom:.4rem;font-size:.86rem}
+
+.cx{font-size:.8rem!important;color:var(--g600);padding:.5rem .6rem;background:var(--g50);border-radius:6px;border-left:3px solid var(--g300);margin-bottom:.6rem!important;line-height:1.7}
+.qt{font-weight:600;color:var(--g800);line-height:1.7;font-size:.88rem!important}
+
+.fm{background:var(--pri-lt);border:1px solid #C7D2FE;border-radius:6px;padding:.45rem .7rem;margin:.4rem 0;font-size:.9rem;font-weight:600;color:var(--pri-dk);text-align:center;font-family:'SF Mono',monospace}
+.gv{background:var(--g50);border:1px solid var(--g200);border-radius:6px;padding:.5rem .7rem;margin:.4rem 0;font-size:.84rem;line-height:1.9;font-family:'SF Mono',monospace}
+.ex{background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:.5rem .7rem;margin:.4rem 0;font-size:.82rem;line-height:1.9}
+.ex .lb{font-weight:700;color:#92400E;font-size:.76rem;margin-bottom:.15rem}
+.ib{background:var(--pri-lt);border-left:4px solid var(--pri);border-radius:6px;padding:.5rem .7rem;margin:.5rem 0;font-size:.8rem;color:var(--pri-dk);line-height:1.7}
+.ib.tip{background:var(--org-lt);border-left-color:var(--org);color:#92400E}
+.ib.ok{background:var(--grn-lt);border-left-color:var(--grn);color:#065F46}
+.ib.warn{background:var(--red-lt);border-left-color:var(--red);color:#991B1B}
+
+.an{border:1.5px dashed var(--g300);border-radius:6px;min-height:48px;margin:.3rem 0;padding:.4rem;position:relative}
+.an.t{min-height:72px} .an.s{min-height:30px}
+.an::before{content:attr(data-label);position:absolute;top:-.4rem;left:.5rem;background:#fff;padding:0 .2rem;font-size:.66rem;color:var(--g400)}
+
+.sq{list-style:none;padding:0;margin:.3rem 0 0} .sq li{padding:.35rem 0;border-bottom:1px dashed var(--g200);font-size:.86rem}
+.sq li:last-child{border-bottom:none} .sl{font-weight:700;color:var(--pri);margin-right:.12rem}
+
+.st{display:flex;gap:.5rem;align-items:flex-start;margin:.35rem 0}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.sc2{flex:1;font-size:.84rem}
+
+.tb{width:100%;border-collapse:collapse;margin:.4rem 0;font-size:.82rem}
+.tb th,.tb td{border:1px solid var(--g200);padding:.35rem .45rem;text-align:center}
+.tb th{background:var(--pri);color:#fff;font-weight:600;font-size:.76rem} .tb td{background:#fff}
+.bc{background:var(--g50)!important;min-width:50px} .fc{background:var(--grn-lt)!important;font-weight:600;color:#065F46}
+
+.bl{display:inline-block;min-width:45px;border-bottom:2px solid var(--pri);text-align:center;margin:0 .1rem}
+.bl.w{min-width:80px} .bl.n{min-width:32px}
+.hl{background:#FEF3C7;padding:0 .2rem;border-radius:2px;font-weight:600}
+.hlg{background:var(--grn-lt);padding:0 .2rem;border-radius:2px}
+.hlr{background:var(--red-lt);padding:0 .2rem;border-radius:2px}
+
+.sf{text-align:center;margin:.6rem 0;background:var(--g50);border:1px solid var(--g200);border-radius:8px;padding:.5rem .2rem .2rem}
+.sf svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.sc3{font-size:.73rem;color:var(--g500);text-align:center;margin-top:.2rem;padding:0 .4rem;line-height:1.5}
+
+.ft{text-align:center;padding:.8rem;color:var(--g500);font-size:.72rem;border-top:1px solid var(--g200);margin-top:1rem}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>3차시 수학 연습 활동지</h1>
+  <p class="sub">AI의 겨울을 이겨낸 알고리즘 — 활성화함수의 수학</p>
+  <div class="br"><span class="bd">scaffolding</span><span class="bd">A4 출력</span></div>
+</div>
+<div class="mt np">
+  <button class="on" onclick="document.body.classList.remove('bw');this.classList.add('on');this.nextElementSibling.classList.remove('on')">컬러</button>
+  <button onclick="document.body.classList.add('bw');this.classList.add('on');this.previousElementSibling.classList.remove('on')">흑백</button>
+  <button onclick="window.print()" style="margin-left:.8rem;background:var(--pri-lt)">인쇄</button>
+</div>
+<div class="si">
+  <div><label>학년/반</label><span class="ul"></span></div>
+  <div><label>번호</label><span class="ul" style="width:50px"></span></div>
+  <div><label>이름</label><span class="ul"></span></div>
+</div>
+
+<div class="ct">
+
+<div class="sh"><h2>활성화함수의 수학</h2><span class="tg">3차시</span></div>
+
+<div class="ib">
+  <strong>핵심 질문:</strong> 2차시에서 인공 뉴런(퍼셉트론) 하나로는 XOR이 안 됐습니다.<br>
+  "그러면 <strong>인공 뉴런을 여러 층으로 연결하면</strong> 해결될까요?" &mdash; 과연 이것만으로 충분할까요?<br>
+  이 활동지에서 직접 계산하며 확인해봅시다.
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-1: 핵심 개념 — 두 퍼셉트론 연결 = 하나
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-1</span><span class="qm">핵심 개념 | 퍼셉트론 2개 연결 = 퍼셉트론 1개?!</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      2차시에서 퍼셉트론 하나로 XOR이 안 됐으니, <strong>두 개를 연결하면 되지 않을까?</strong> 이것이 자연스러운 생각입니다.<br>
+      하지만 놀라운 사실: <strong>활성화함수 없이 두 퍼셉트론을 연결하면, 결국 퍼셉트론 하나와 완전히 동일합니다!</strong>
+    </p>
+    <div class="sf">
+      <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg" style="max-width:680px">
+        <defs>
+          <marker id="a1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4F46E5"/></marker>
+          <marker id="a2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#374151"/></marker>
+          <marker id="ar" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#DC2626"/></marker>
+          <marker id="ag" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#059669"/></marker>
+        </defs>
+        <rect x="0" y="0" width="700" height="360" rx="12" fill="#FAFBFF"/>
+        <text x="350" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#DC2626">활성화함수 없이 2개 연결하면...</text>
+        <rect x="15" y="35" width="670" height="130" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5" opacity=".3"/>
+        <circle cx="55" cy="100" r="28" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="55" y="105" text-anchor="middle" font-size="16" font-weight="800" fill="#3730A3">x</text>
+        <line x1="83" y1="100" x2="130" y2="100" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="135" y="72" width="100" height="56" rx="10" fill="#4F46E5"/>
+        <text x="185" y="92" text-anchor="middle" font-size="11" fill="#C7D2FE">1층 (퍼셉트론1)</text>
+        <text x="185" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="monospace">y = 2x + 1</text>
+        <rect x="242" y="76" width="48" height="48" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="266" y="100" text-anchor="middle" font-size="22" font-weight="800" fill="#DC2626">&times;</text>
+        <text x="266" y="118" text-anchor="middle" font-size="8" font-weight="600" fill="#DC2626">활성화 없음</text>
+        <line x1="290" y1="100" x2="330" y2="100" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <rect x="335" y="72" width="100" height="56" rx="10" fill="#4F46E5"/>
+        <text x="385" y="92" text-anchor="middle" font-size="11" fill="#C7D2FE">2층 (퍼셉트론2)</text>
+        <text x="385" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="monospace">z = 3y + 4</text>
+        <line x1="435" y1="100" x2="480" y2="100" stroke="#DC2626" stroke-width="2" marker-end="url(#ar)"/>
+        <text x="458" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="#DC2626">대입!</text>
+        <rect x="485" y="65" width="195" height="70" rx="10" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+        <text x="583" y="88" text-anchor="middle" font-size="11" fill="#991B1B">결국 퍼셉트론 1개!</text>
+        <text x="583" y="110" text-anchor="middle" font-size="16" font-weight="800" fill="#DC2626" font-family="monospace">z = 6x + 7</text>
+        <text x="583" y="128" text-anchor="middle" font-size="10" fill="#991B1B">3&times;(2x+1)+4 = 6x+7</text>
+        <text x="350" y="200" text-anchor="middle" font-size="48" font-weight="900" fill="#DC2626">=</text>
+        <text x="350" y="225" text-anchor="middle" font-size="13" font-weight="700" fill="#DC2626">완전히 같다! 2개를 연결해도 1개와 동일!</text>
+        <rect x="120" y="245" width="460" height="70" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5" opacity=".3"/>
+        <circle cx="175" cy="280" r="28" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="175" y="285" text-anchor="middle" font-size="16" font-weight="800" fill="#3730A3">x</text>
+        <line x1="203" y1="280" x2="290" y2="280" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="295" y="252" width="180" height="56" rx="10" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+        <text x="385" y="275" text-anchor="middle" font-size="12" fill="#991B1B">퍼셉트론 1개</text>
+        <text x="385" y="297" text-anchor="middle" font-size="16" font-weight="800" fill="#DC2626" font-family="monospace">z = 6x + 7</text>
+        <rect x="80" y="328" width="540" height="26" rx="6" fill="#FEE2E2"/>
+        <text x="350" y="346" text-anchor="middle" font-size="13" font-weight="700" fill="#DC2626">결론: 활성화함수 없이 층을 쌓으면, 아무리 쌓아도 퍼셉트론 1개와 같다!</text>
+      </svg>
+    </div>
+    <p class="qt">위 그림을 보고 직접 확인해봅시다.</p>
+    <div class="ex">
+      <div class="lb">단계별로 따라가세요</div>
+      <strong>1층:</strong> y = 2x + 1<br>
+      <strong>2층:</strong> z = 3y + 4<br>
+      <strong>대입:</strong> y 자리에 "2x+1"을 넣으면:<br>
+      z = 3 &times; (<span class="hl">2x + 1</span>) + 4 = 6x + 3 + 4 = <span class="hl">6x + 7</span>
+    </div>
+    <ul class="sq">
+      <li><span class="sl">(1)</span> 1층이 y = 5x + 2이고, 2층이 z = 4y + 3이면, z를 x에 대한 식으로 쓰세요.
+        <div class="st"><div class="sn">1</div><div class="sc2">z = 4 &times; (<span class="bl w"></span>) + 3 = <span class="bl w"></span></div></div>
+      </li>
+      <li><span class="sl">(2)</span> 위 결과가 <span class="bl w">(직선 / 곡선)</span> 형태인가요?</li>
+      <li><span class="sl">(3)</span> 100층을 쌓아도 활성화함수가 없으면? &nbsp; 퍼셉트론 <span class="bl n"></span>개와 같다</li>
+    </ul>
+    <div class="ib warn">
+      <strong>이것이 XOR을 못 푸는 진짜 이유!</strong><br>
+      활성화함수 없이 층을 아무리 쌓아도, 항상 직선 1개. XOR을 풀려면 공간을 휘게 만들어야 합니다.<br>
+      그 역할을 하는 것이 <strong>활성화함수</strong>입니다. &rarr; 활성화함수의 발전을 살펴봅시다!
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-2: 계단함수 (2차시 복습)
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-2</span><span class="qm">계단함수 복습 | 가장 오래된 활성화함수 (1958)</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      2차시에서 사용한 <strong>계단함수</strong>: z &gt; 0이면 1, z &le; 0이면 0. 가장 단순하지만<br>
+      <strong>치명적 약점</strong>이 있습니다: "딱" 끊어지기 때문에 <strong>미세한 조정(학습)이 불가능</strong>합니다.<br>
+      <span style="color:#6B7280;font-size:.88em">비유: 전등 스위치처럼 "완전 켜짐/완전 꺼짐"만 가능. 밝기를 서서히 올리는 볼륨 조절기는 될 수 없습니다.</span>
+    </p>
+    <div class="sf">
+      <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" style="max-width:400px">
+        <rect x="0" y="0" width="420" height="200" rx="10" fill="#FAFBFF"/>
+        <text x="210" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#3730A3">계단함수 &mdash; ON/OFF 스위치</text>
+        <line x1="40" y1="170" x2="380" y2="170" stroke="#6B7280" stroke-width="1.5"/>
+        <line x1="210" y1="30" x2="210" y2="178" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="385" y="174" font-size="12" fill="#374151">z</text>
+        <text x="215" y="30" font-size="12" fill="#374151">y</text>
+        <text x="30" y="174" font-size="10" fill="#9CA3AF">0</text>
+        <text x="30" y="58" font-size="10" fill="#9CA3AF">1</text>
+        <line x1="40" y1="165" x2="210" y2="165" stroke="#DC2626" stroke-width="4"/>
+        <line x1="210" y1="55" x2="380" y2="55" stroke="#059669" stroke-width="4"/>
+        <circle cx="210" cy="165" r="5" fill="#DC2626"/>
+        <circle cx="210" cy="55" r="5" fill="#fff" stroke="#059669" stroke-width="2"/>
+        <rect x="70" y="130" width="100" height="26" rx="6" fill="#FEE2E2"/>
+        <text x="120" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="#DC2626">y = 0 (OFF)</text>
+        <rect x="250" y="62" width="100" height="26" rx="6" fill="#D1FAE5"/>
+        <text x="300" y="80" text-anchor="middle" font-size="11" font-weight="600" fill="#059669">y = 1 (ON)</text>
+      </svg>
+    </div>
+    <div class="ib tip">
+      <strong>한계:</strong> 값을 0.01만 바꿔도 출력이 갑자기 0&rarr;1로 뛰어버림. 이런 "급변"은 학습을 불가능하게 합니다.<br>
+      &rarr; 해결책: 부드러운 곡선으로 바꾸자! &rarr; <strong>Sigmoid의 등장 (1986)</strong>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-3: Sigmoid 함수
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-3</span><span class="qm">Sigmoid 함수 | 부드러운 S자 곡선 (1986)</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      계단함수의 "딱 끊김"을 해결한 것이 <strong>Sigmoid</strong>입니다.<br>
+      어떤 값이든 <strong>0과 1 사이</strong>로 부드럽게 압축합니다. 0.5 근처에서 서서히 변하므로 학습이 가능합니다.<br>
+      <span style="color:#6B7280;font-size:.88em">비유: 전등 스위치(계단함수) &rarr; 볼륨 조절기(Sigmoid). 밝기를 서서히 조절할 수 있게 됨!</span>
+    </p>
+    <div class="sf">
+      <svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg" style="max-width:400px">
+        <rect x="0" y="0" width="420" height="220" rx="10" fill="#FAFBFF"/>
+        <text x="210" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#7C3AED">Sigmoid &mdash; 부드러운 볼륨 조절기</text>
+        <line x1="40" y1="190" x2="380" y2="190" stroke="#6B7280" stroke-width="1.5"/>
+        <line x1="210" y1="30" x2="210" y2="198" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="385" y="194" font-size="12" fill="#374151">z</text>
+        <line x1="40" y1="186" x2="380" y2="186" stroke="#E5E7EB" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="40" y1="108" x2="380" y2="108" stroke="#E5E7EB" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="40" y1="36" x2="380" y2="36" stroke="#E5E7EB" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <text x="30" y="190" font-size="10" fill="#9CA3AF">0</text>
+        <text x="26" y="112" font-size="10" font-weight="600" fill="#7C3AED">0.5</text>
+        <text x="30" y="40" font-size="10" fill="#9CA3AF">1</text>
+        <path d="M40,184 C80,183 110,178 145,168 C170,155 190,138 200,125 C210,112 210,108 220,95 C230,82 250,65 270,52 C295,42 330,38 380,36" fill="none" stroke="#8B5CF6" stroke-width="4"/>
+        <circle cx="210" cy="108" r="5" fill="#7C3AED"/>
+        <rect x="222" y="97" width="65" height="18" rx="4" fill="#EDE9FE"/>
+        <text x="255" y="110" text-anchor="middle" font-size="10" font-weight="600" fill="#7C3AED">z=0 &rarr; 0.5</text>
+      </svg>
+    </div>
+    <table class="tb">
+      <thead><tr><th>z</th><th>&minus;10</th><th>&minus;3</th><th>&minus;1</th><th>0</th><th>1</th><th>3</th><th>10</th></tr></thead>
+      <tbody><tr><td><strong>Sigmoid</strong></td><td class="fc">&asymp;0.00</td><td class="fc">&asymp;0.05</td><td class="fc">&asymp;0.27</td><td class="fc">0.50</td><td class="fc">&asymp;0.73</td><td class="fc">&asymp;0.95</td><td class="fc">&asymp;1.00</td></tr></tbody>
+    </table>
+    <ul class="sq">
+      <li><span class="sl">(1)</span> 출력 범위: <span class="bl n"></span> ~ <span class="bl n"></span></li>
+      <li><span class="sl">(2)</span> z=0 &rarr; <span class="bl n"></span> &nbsp;|&nbsp; z=100 &rarr; &asymp;<span class="bl n"></span> &nbsp;|&nbsp; z=&minus;100 &rarr; &asymp;<span class="bl n"></span></li>
+    </ul>
+    <div class="ib ok">
+      <strong>계단함수 &rarr; Sigmoid:</strong> "딱 끊김" &rarr; "부드러운 곡선"으로 진화. 학습이 가능해졌습니다!<br>
+      하지만 Sigmoid에도 치명적 약점이 발견됩니다... &darr;
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-4: Sigmoid의 기울기 소실 문제
+     ═══════════════════════════════════════ -->
+<div class="pb"></div>
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-4</span><span class="qm">Sigmoid의 치명적 약점 | 기울기 소실 문제</span><span class="qd m">핵심</span></div>
+  <div class="qb">
+    <p class="cx">
+      AI가 학습하는 방법: 출력의 <strong>"오차 신호"를 뒤로 전달</strong>해서 가중치를 조정합니다.<br>
+      이때 각 층을 통과할 때마다 신호가 <strong>Sigmoid의 기울기(최대 0.25)만큼 줄어듭니다.</strong><br>
+      <strong>층이 깊어지면 신호가 거의 사라져버립니다!</strong> 이것이 <span class="hlr">기울기 소실(Vanishing Gradient)</span> 문제입니다.
+    </p>
+
+    <div class="ib" style="background:#FFF7ED;border-left:4px solid #EA580C">
+      <strong style="color:#EA580C">직관적 비유: 소곤소곤 전화기 게임</strong><br>
+      체육대회에서 100명이 줄을 서서 메시지를 전달합니다. 그런데 <strong>각 사람은 들은 소리의 25%만 전달</strong>할 수 있습니다.<br>
+      1번 &rarr; 2번: 원래의 25%만 전달 &nbsp;|&nbsp; 2번 &rarr; 3번: 그것의 또 25%...<br>
+      <strong>4번째 사람에게 도달하면 원래 메시지의 0.4%만 남습니다!</strong> 사실상 아무것도 안 들림.
+    </div>
+
+    <!-- ★ 기울기 소실 시각화 -->
+    <div class="sf">
+      <svg viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg" style="max-width:660px">
+        <rect x="0" y="0" width="680" height="280" rx="10" fill="#FAFBFF"/>
+
+        <!-- ═══ Sigmoid 행 ═══ -->
+        <text x="340" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#DC2626">Sigmoid: 매 층마다 &times;0.25 &rarr; 신호 소멸!</text>
+        <!-- 시작 -->
+        <rect x="15" y="32" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="55" y="50" text-anchor="middle" font-size="9" fill="#fff">오차 신호</text>
+        <text x="55" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <!-- 1층 -->
+        <line x1="95" y1="56" x2="130" y2="56" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="113" y="48" text-anchor="middle" font-size="9" fill="#6B7280">&times;0.25</text>
+        <rect x="132" y="32" width="80" height="48" rx="8" fill="#D97706"/>
+        <text x="172" y="50" text-anchor="middle" font-size="9" fill="#fff">1층 통과</text>
+        <text x="172" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">25%</text>
+        <!-- 2층 -->
+        <line x1="212" y1="56" x2="247" y2="56" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="230" y="48" text-anchor="middle" font-size="9" fill="#6B7280">&times;0.25</text>
+        <rect x="249" y="32" width="80" height="48" rx="8" fill="#DC2626"/>
+        <text x="289" y="50" text-anchor="middle" font-size="9" fill="#fff">2층 통과</text>
+        <text x="289" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">6.3%</text>
+        <!-- 3층 -->
+        <line x1="329" y1="56" x2="364" y2="56" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="347" y="48" text-anchor="middle" font-size="9" fill="#6B7280">&times;0.25</text>
+        <rect x="366" y="32" width="80" height="48" rx="8" fill="#991B1B"/>
+        <text x="406" y="50" text-anchor="middle" font-size="9" fill="#fff">3층 통과</text>
+        <text x="406" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">1.6%</text>
+        <!-- 4층 -->
+        <line x1="446" y1="56" x2="481" y2="56" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="464" y="48" text-anchor="middle" font-size="9" fill="#6B7280">&times;0.25</text>
+        <rect x="483" y="32" width="80" height="48" rx="8" fill="#7F1D1D"/>
+        <text x="523" y="50" text-anchor="middle" font-size="9" fill="#fff">4층 통과</text>
+        <text x="523" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">0.4%</text>
+        <text x="590" y="62" font-size="20" font-weight="900" fill="#DC2626">&asymp; 0</text>
+
+        <!-- 구분선 -->
+        <line x1="15" y1="95" x2="665" y2="95" stroke="#E5E7EB" stroke-width="1.5"/>
+        <text x="340" y="88" text-anchor="middle" font-size="10" fill="#6B7280">vs</text>
+
+        <!-- ═══ ReLU 행 ═══ -->
+        <text x="340" y="115" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">ReLU: 매 층마다 &times;1 &rarr; 신호 그대로!</text>
+        <!-- 시작 -->
+        <rect x="15" y="126" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="55" y="144" text-anchor="middle" font-size="9" fill="#fff">오차 신호</text>
+        <text x="55" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <!-- 1층 -->
+        <line x1="95" y1="150" x2="130" y2="150" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="113" y="142" text-anchor="middle" font-size="9" fill="#059669" font-weight="600">&times;1</text>
+        <rect x="132" y="126" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="172" y="144" text-anchor="middle" font-size="9" fill="#fff">1층 통과</text>
+        <text x="172" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <!-- 2층 -->
+        <line x1="212" y1="150" x2="247" y2="150" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="230" y="142" text-anchor="middle" font-size="9" fill="#059669" font-weight="600">&times;1</text>
+        <rect x="249" y="126" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="289" y="144" text-anchor="middle" font-size="9" fill="#fff">2층 통과</text>
+        <text x="289" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <!-- 3층 -->
+        <line x1="329" y1="150" x2="364" y2="150" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="347" y="142" text-anchor="middle" font-size="9" fill="#059669" font-weight="600">&times;1</text>
+        <rect x="366" y="126" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="406" y="144" text-anchor="middle" font-size="9" fill="#fff">3층 통과</text>
+        <text x="406" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <!-- 4층 -->
+        <line x1="446" y1="150" x2="481" y2="150" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="464" y="142" text-anchor="middle" font-size="9" fill="#059669" font-weight="600">&times;1</text>
+        <rect x="483" y="126" width="80" height="48" rx="8" fill="#059669"/>
+        <text x="523" y="144" text-anchor="middle" font-size="9" fill="#fff">4층 통과</text>
+        <text x="523" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">100%</text>
+        <text x="590" y="158" font-size="20" font-weight="900" fill="#059669">100%!</text>
+
+        <!-- 하단 바 그래프 비교 -->
+        <text x="15" y="198" font-size="10" font-weight="700" fill="#DC2626">Sigmoid:</text>
+        <rect x="80" y="188" width="560" height="14" rx="3" fill="#f0f0f0" stroke="#E5E7EB"/>
+        <rect x="80" y="188" width="140" height="14" rx="3" fill="#D97706"/>
+        <rect x="80" y="188" width="35" height="14" rx="3" fill="#DC2626"/>
+        <rect x="80" y="188" width="9" height="14" rx="3" fill="#991B1B"/>
+        <text x="645" y="200" font-size="10" font-weight="700" fill="#DC2626">소멸</text>
+
+        <text x="15" y="224" font-size="10" font-weight="700" fill="#059669">ReLU:</text>
+        <rect x="80" y="214" width="560" height="14" rx="3" fill="#059669"/>
+        <text x="360" y="226" text-anchor="middle" font-size="10" font-weight="600" fill="#fff">100% 유지!</text>
+        <text x="645" y="226" font-size="10" font-weight="700" fill="#059669">유지!</text>
+
+        <rect x="50" y="244" width="580" height="28" rx="6" fill="#EEF2FF"/>
+        <text x="340" y="262" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">Sigmoid: 0.25 &times; 0.25 &times; ... = 거의 0 &nbsp;&nbsp;vs&nbsp;&nbsp; ReLU: 1 &times; 1 &times; ... = 항상 1</text>
+      </svg>
+      <p class="sc3">같은 4층 통과: Sigmoid 신호는 0.4%로 소멸, ReLU 신호는 100% 그대로 유지</p>
+    </div>
+
+    <p class="qt">직접 계산해봅시다. Sigmoid의 기울기 최댓값은 0.25입니다.</p>
+
+    <ul class="sq">
+      <li><span class="sl">(1)</span> 1층 통과 후: 100 &times; 0.25 = <span class="bl n"></span>%</li>
+      <li><span class="sl">(2)</span> 2층 통과 후: 25 &times; 0.25 = <span class="hl">6.25</span>%</li>
+      <li><span class="sl">(3)</span> 3층 통과 후: 6.25 &times; 0.25 &asymp; <span class="hl">1.56</span>%</li>
+      <li><span class="sl">(4)</span> 4층 통과 후: 1.56 &times; 0.25 &asymp; <span class="hl">0.39</span>%</li>
+      <li><span class="sl">(5)</span> 10층이면 0.25를 10번 곱합니다. 0.25<sup>10</sup> &asymp; <span class="bl w"></span>% &rarr; 사실상 <span class="bl n"></span></li>
+    </ul>
+
+    <div class="ib warn">
+      <strong>결론:</strong> Sigmoid는 부드럽지만, 층이 깊어지면 학습 신호가 사라져 학습이 멈춥니다.<br>
+      이 문제를 해결하기 위해 등장한 것이 &darr; <strong>ReLU (2012)</strong>입니다!
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-5: ReLU — 기울기 소실의 해결사
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-5</span><span class="qm">ReLU | 기울기 소실의 해결사 (2012)</span><span class="qd e">기초</span></div>
+  <div class="qb">
+    <p class="cx">
+      <strong>ReLU(z) = max(0, z)</strong>. 놀랍도록 단순합니다: <strong>음수면 0, 양수면 그대로.</strong><br>
+      핵심: 양수 영역에서 <strong>기울기가 1</strong>입니다. Sigmoid처럼 0.25로 줄지 않고, <strong>100% 그대로 전달!</strong><br>
+      <span style="color:#6B7280;font-size:.88em">비유: 소곤소곤 전화기 &rarr; 메가폰 릴레이. 각 사람이 100% 소리를 전달!</span>
+    </p>
+
+    <div class="sf">
+      <svg viewBox="0 0 540 240" xmlns="http://www.w3.org/2000/svg" style="max-width:520px">
+        <rect x="0" y="0" width="540" height="240" rx="10" fill="#FAFBFF"/>
+        <text x="270" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#059669">ReLU(z) = max(0, z) &mdash; 기울기 = 1!</text>
+        <line x1="60" y1="210" x2="510" y2="210" stroke="#6B7280" stroke-width="2"/>
+        <line x1="270" y1="30" x2="270" y2="218" stroke="#6B7280" stroke-width="2"/>
+        <text x="515" y="214" font-size="12" fill="#374151">z</text>
+        <text x="275" y="40" font-size="12" fill="#374151">ReLU(z)</text>
+        <text x="270" y="230" text-anchor="middle" font-size="10" fill="#9CA3AF">0</text>
+        <text x="350" y="230" font-size="10" fill="#9CA3AF">1</text>
+        <text x="430" y="230" font-size="10" fill="#9CA3AF">2</text>
+        <text x="190" y="230" font-size="10" fill="#9CA3AF">&minus;1</text>
+        <text x="50" y="138" font-size="10" fill="#9CA3AF">1</text>
+        <text x="50" y="62" font-size="10" fill="#9CA3AF">2</text>
+        <!-- 그래프 -->
+        <line x1="60" y1="130" x2="270" y2="130" stroke="#DC2626" stroke-width="4"/>
+        <line x1="270" y1="130" x2="490" y2="0" stroke="#059669" stroke-width="4"/>
+        <circle cx="270" cy="130" r="6" fill="#4F46E5" stroke="#fff" stroke-width="2"/>
+        <!-- 영역 -->
+        <rect x="90" y="82" width="130" height="36" rx="8" fill="#FEE2E2"/>
+        <text x="155" y="98" text-anchor="middle" font-size="11" font-weight="700" fill="#DC2626">음수 &rarr; 0 (잘림)</text>
+        <text x="155" y="112" text-anchor="middle" font-size="10" fill="#991B1B">기울기 = 0</text>
+        <rect x="340" y="42" width="145" height="36" rx="8" fill="#D1FAE5"/>
+        <text x="413" y="58" text-anchor="middle" font-size="11" font-weight="700" fill="#059669">양수 &rarr; 그대로!</text>
+        <text x="413" y="72" text-anchor="middle" font-size="10" fill="#065F46">기울기 = 1 (100% 전달!)</text>
+      </svg>
+    </div>
+
+    <div class="fm">ReLU(z) = max(0, z) &nbsp;|&nbsp; 기울기: 양수 &rarr; 1, 음수 &rarr; 0</div>
+
+    <div class="ib ok">
+      <strong>왜 ReLU가 혁명적인가? &mdash; 같은 계산을 해봅시다!</strong><br>
+      ReLU의 양수 영역 기울기 = <strong>1</strong>. Sigmoid처럼 매 층마다 곱해봅시다:<br>
+      Sigmoid: 100 &times; 0.25 = 25 &times; 0.25 = 6.25 &times; 0.25 = 1.56 &times; 0.25 = <span class="hlr">0.39%</span> (소멸!)<br>
+      <strong>ReLU: 100 &times; 1 = 100 &times; 1 = 100 &times; 1 = 100 &times; 1 = <span class="hlg">100%</span> (그대로!)</strong><br>
+      기울기가 1이니 아무리 곱해도 줄지 않습니다. 10층, 100층을 쌓아도 신호가 유지됩니다!
+    </div>
+
+    <div class="ex">
+      <div class="lb">풀이 예시</div>
+      ReLU(5) = max(0, 5) = <span class="hlg">5</span> (양수 &rarr; 그대로) &nbsp;|&nbsp;
+      ReLU(&minus;3) = max(0, &minus;3) = <span class="hlr">0</span> (음수 &rarr; 0) &nbsp;|&nbsp;
+      ReLU(0) = <span class="hl">0</span>
+    </div>
+
+    <table class="tb">
+      <thead><tr><th>z</th><th>ReLU(z)</th></tr></thead>
+      <tbody>
+        <tr><td>5</td><td class="bc"></td></tr>
+        <tr><td>&minus;3</td><td class="bc"></td></tr>
+        <tr><td>0.7</td><td class="bc"></td></tr>
+        <tr><td>&minus;100</td><td class="bc"></td></tr>
+        <tr><td>0.001</td><td class="bc"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     S-6: tanh & Leaky ReLU 소개
+     ═══════════════════════════════════════ -->
+<div class="pb"></div>
+<div class="qc">
+  <div class="qh"><span class="qn sc">S-6</span><span class="qm">더 알아보기 | tanh &amp; Leaky ReLU</span><span class="qd e">개념</span></div>
+  <div class="qb">
+    <p class="cx">
+      계단 &rarr; Sigmoid &rarr; ReLU로 발전했지만, ReLU에도 약점이 있습니다: <strong>음수 입력은 영원히 0</strong>.<br>
+      한번 0이 되면 다시 살아나지 못합니다 (Dead Neuron). 이를 보완한 변형들이 있습니다.
+    </p>
+
+    <div class="sf">
+      <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" style="max-width:580px">
+        <rect x="0" y="0" width="600" height="200" rx="10" fill="#FAFBFF"/>
+        <!-- tanh -->
+        <rect x="10" y="10" width="280" height="180" rx="8" fill="#fff" stroke="#E5E7EB"/>
+        <text x="150" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#7C3AED">tanh &mdash; &minus;1 ~ 1 사이</text>
+        <line x1="30" y1="105" x2="270" y2="105" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="150" y1="35" x2="150" y2="175" stroke="#9CA3AF" stroke-width="1"/>
+        <text x="20" y="45" font-size="9" fill="#9CA3AF">1</text>
+        <text x="16" y="175" font-size="9" fill="#9CA3AF">&minus;1</text>
+        <text x="20" y="109" font-size="9" fill="#9CA3AF">0</text>
+        <path d="M30,170 C60,168 90,160 115,145 C130,132 140,118 150,105 C160,92 170,78 185,65 C210,48 240,40 270,38" fill="none" stroke="#8B5CF6" stroke-width="3.5"/>
+        <circle cx="150" cy="105" r="4" fill="#7C3AED"/>
+        <text x="165" y="100" font-size="9" fill="#7C3AED">z=0 &rarr; 0</text>
+        <text x="150" y="192" text-anchor="middle" font-size="9" fill="#6B7280">Sigmoid와 비슷하지만 0 중심!</text>
+        <!-- Leaky ReLU -->
+        <rect x="310" y="10" width="280" height="180" rx="8" fill="#fff" stroke="#E5E7EB"/>
+        <text x="450" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#059669">Leaky ReLU &mdash; 새지 않는 뉴런</text>
+        <line x1="330" y1="130" x2="570" y2="130" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="450" y1="35" x2="450" y2="175" stroke="#9CA3AF" stroke-width="1"/>
+        <!-- ReLU 비교선 (얇게) -->
+        <line x1="330" y1="130" x2="450" y2="130" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <!-- Leaky 라인 -->
+        <line x1="330" y1="134" x2="450" y2="130" stroke="#059669" stroke-width="3.5"/>
+        <line x1="450" y1="130" x2="570" y2="50" stroke="#059669" stroke-width="3.5"/>
+        <circle cx="450" cy="130" r="4" fill="#4F46E5"/>
+        <text x="370" y="120" font-size="9" fill="#059669" font-weight="600">0.01z (작은 기울기)</text>
+        <text x="530" y="75" font-size="9" fill="#059669" font-weight="600">z (그대로)</text>
+        <text x="390" y="150" font-size="9" fill="#DC2626">ReLU는 여기가 0</text>
+        <text x="450" y="192" text-anchor="middle" font-size="9" fill="#6B7280">음수에도 작은 값을 남겨 죽은 뉴런 방지</text>
+      </svg>
+    </div>
+
+    <table class="tb">
+      <thead><tr><th>함수</th><th>규칙</th><th>출력 범위</th><th>언제 쓰나?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>tanh</strong></td>
+          <td style="font-size:.78rem">Sigmoid와 비슷한 S자<br>but 0 중심</td>
+          <td>&minus;1 ~ 1</td>
+          <td style="font-size:.78rem;text-align:left;padding-left:.5rem">순서 데이터(RNN, LSTM)<br>0 중심이라 학습 빠름</td>
+        </tr>
+        <tr>
+          <td><strong>Leaky ReLU</strong></td>
+          <td style="font-size:.78rem">양수 &rarr; z<br>음수 &rarr; 0.01z</td>
+          <td>(&minus;&infin;, &infin;)</td>
+          <td style="font-size:.78rem;text-align:left;padding-left:.5rem">깊은 신경망에서<br>"죽은 뉴런" 방지 시</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ul class="sq">
+      <li><span class="sl">(1)</span> tanh(0) = <span class="bl n"></span> &nbsp;|&nbsp; Sigmoid(0) = <span class="bl n"></span> &nbsp;&mdash; 두 함수의 중심이 어떻게 다른가요?</li>
+      <li><span class="sl">(2)</span> Leaky ReLU(&minus;10) = 0.01 &times; (&minus;10) = <span class="bl n"></span> &nbsp;|&nbsp; ReLU(&minus;10) = <span class="bl n"></span></li>
+      <li><span class="sl">(3)</span> Leaky ReLU가 ReLU보다 나은 점은? <span class="bl w"></span></li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     P-1: 2차시 복습 + ReLU 워밍업
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-1</span><span class="qm">2차시 복습 + ReLU 워밍업</span><span class="qd m">연습</span></div>
+  <div class="qb">
+    <p class="cx">
+      2차시에서 배운 <strong>가중합</strong>을 복습하고, 이번에는 <strong>ReLU를 적용</strong>하는 연습까지 이어갑니다.
+    </p>
+
+    <div class="sf">
+      <svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg" style="max-width:540px">
+        <rect x="0" y="0" width="560" height="170" rx="10" fill="#FAFBFF"/>
+        <!-- 입력 -->
+        <circle cx="45" cy="42" r="26" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="45" y="36" text-anchor="middle" font-size="9" fill="#6B7280">x&#8321;</text>
+        <text x="45" y="53" text-anchor="middle" font-size="15" font-weight="800" fill="#3730A3">?</text>
+        <circle cx="45" cy="120" r="26" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="45" y="114" text-anchor="middle" font-size="9" fill="#6B7280">x&#8322;</text>
+        <text x="45" y="131" text-anchor="middle" font-size="15" font-weight="800" fill="#3730A3">?</text>
+        <!-- 가중치 -->
+        <line x1="71" y1="42" x2="168" y2="72" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="96" y="36" width="34" height="18" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="113" y="50" text-anchor="middle" font-size="11" font-weight="700" fill="#3730A3">2</text>
+        <line x1="71" y1="120" x2="168" y2="90" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="96" y="104" width="34" height="18" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="113" y="118" text-anchor="middle" font-size="11" font-weight="700" fill="#3730A3">3</text>
+        <!-- 합산 노드 -->
+        <circle cx="202" cy="80" r="30" fill="#4F46E5"/>
+        <text x="202" y="73" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">&#931;</text>
+        <text x="202" y="93" text-anchor="middle" font-size="10" fill="#C7D2FE">b=&minus;4</text>
+        <!-- z -->
+        <line x1="232" y1="80" x2="280" y2="80" stroke="#374151" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="256" y="72" text-anchor="middle" font-size="11" font-weight="600" fill="#D97706">z = ?</text>
+        <!-- ReLU -->
+        <rect x="284" y="60" width="56" height="40" rx="8" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="312" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">ReLU</text>
+        <text x="312" y="94" text-anchor="middle" font-size="8" fill="#065F46">max(0, z)</text>
+        <!-- 출력 -->
+        <line x1="340" y1="80" x2="388" y2="80" stroke="#059669" stroke-width="2" marker-end="url(#ag)"/>
+        <circle cx="418" cy="80" r="26" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="418" y="74" text-anchor="middle" font-size="9" fill="#065F46">출력</text>
+        <text x="418" y="92" text-anchor="middle" font-size="14" font-weight="800" fill="#059669">y=?</text>
+        <!-- 하단 -->
+        <rect x="30" y="140" width="500" height="22" rx="5" fill="#EEF2FF"/>
+        <text x="280" y="155" text-anchor="middle" font-size="10" font-weight="600" fill="#3730A3">w&#8321;=2, w&#8322;=3, b=&minus;4 &nbsp;|&nbsp; 가중합 &rarr; ReLU &rarr; 출력</text>
+      </svg>
+      <p class="sc3">위 다이어그램의 가중치로 입력을 바꿔가며 계산하세요</p>
+    </div>
+
+    <div class="ex">
+      <div class="lb">예시: w&#8321;=2, w&#8322;=3, b=&minus;1일 때</div>
+      x&#8321;=1, x&#8322;=1 &rarr; z = (1&times;2)+(1&times;3)+(&minus;1) = <span class="hl">4</span> &rarr; ReLU(4) = <span class="hlg">4</span>
+    </div>
+    <p class="qt">w&#8321;=2, w&#8322;=3, <strong>b=&minus;4</strong>로 계산하세요. (편향이 바뀐 것에 주의!)</p>
+    <ul class="sq">
+      <li><span class="sl">(1)</span> x&#8321;=1, x&#8322;=1 &rarr; z = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span></li>
+      <li><span class="sl">(2)</span> x&#8321;=0, x&#8322;=0 &rarr; z = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span></li>
+      <li><span class="sl">(3)</span> x&#8321;=1, x&#8322;=0 &rarr; z = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span></li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     P-2: 2층 순전파 — 입력 2개, 은닉 1개
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-2</span><span class="qm">2층 신경망 순전파 (입력 2개, 은닉 1개)</span><span class="qd m">연습</span></div>
+  <div class="qb">
+    <p class="cx">
+      처음으로 <strong>2층을 통과</strong>합니다! P-1에서 연습한 "가중합 &rarr; ReLU"를 <strong>두 번 반복</strong>하면 됩니다.<br>
+      입력이 2개이고, 은닉 노드 1개를 거쳐 출력으로 나옵니다.
+    </p>
+    <div class="sf">
+      <svg viewBox="0 0 660 210" xmlns="http://www.w3.org/2000/svg" style="max-width:640px">
+        <rect x="0" y="0" width="660" height="210" rx="10" fill="#FAFBFF"/>
+        <!-- 입력 2개 -->
+        <circle cx="42" cy="55" r="26" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="42" y="48" text-anchor="middle" font-size="9" fill="#6B7280">x&#8321;</text>
+        <text x="42" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="#3730A3">1</text>
+        <circle cx="42" cy="140" r="26" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+        <text x="42" y="133" text-anchor="middle" font-size="9" fill="#6B7280">x&#8322;</text>
+        <text x="42" y="151" text-anchor="middle" font-size="16" font-weight="800" fill="#3730A3">2</text>
+        <!-- 가중치 -->
+        <line x1="68" y1="55" x2="148" y2="90" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="85" y="54" width="34" height="18" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="102" y="67" text-anchor="middle" font-size="11" font-weight="700" fill="#3730A3">2</text>
+        <line x1="68" y1="140" x2="148" y2="105" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="85" y="122" width="34" height="18" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="102" y="135" text-anchor="middle" font-size="11" font-weight="700" fill="#3730A3">1</text>
+        <!-- 은닉 노드 -->
+        <circle cx="182" cy="97" r="30" fill="#4F46E5"/>
+        <text x="182" y="90" text-anchor="middle" font-size="10" fill="#C7D2FE">은닉</text>
+        <text x="182" y="108" text-anchor="middle" font-size="11" fill="#fff" font-family="monospace">b=&minus;1</text>
+        <circle cx="182" cy="148" r="14" fill="#4F46E5"/>
+        <text x="182" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">&#9312;</text>
+        <!-- ReLU 1 -->
+        <line x1="212" y1="97" x2="255" y2="97" stroke="#374151" stroke-width="1.5"/>
+        <rect x="258" y="78" width="50" height="38" rx="8" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="283" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">ReLU</text>
+        <circle cx="283" cy="148" r="14" fill="#059669"/>
+        <text x="283" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">&#9313;</text>
+        <!-- 출력층 가중치 -->
+        <line x1="308" y1="97" x2="368" y2="97" stroke="#374151" stroke-width="1.5"/>
+        <rect x="322" y="78" width="34" height="18" rx="4" fill="#D1FAE5" stroke="#059669" stroke-width="1"/>
+        <text x="339" y="91" text-anchor="middle" font-size="11" font-weight="700" fill="#065F46">3</text>
+        <!-- 출력 노드 -->
+        <circle cx="402" cy="97" r="30" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+        <text x="402" y="90" text-anchor="middle" font-size="10" fill="#92400E">출력</text>
+        <text x="402" y="108" text-anchor="middle" font-size="11" fill="#D97706" font-family="monospace">b=2</text>
+        <circle cx="402" cy="148" r="14" fill="#D97706"/>
+        <text x="402" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">&#9314;</text>
+        <!-- ReLU 2 -->
+        <line x1="432" y1="97" x2="475" y2="97" stroke="#374151" stroke-width="1.5"/>
+        <rect x="478" y="78" width="50" height="38" rx="8" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="503" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">ReLU</text>
+        <circle cx="503" cy="148" r="14" fill="#059669"/>
+        <text x="503" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">&#9315;</text>
+        <!-- 최종 출력 -->
+        <line x1="528" y1="97" x2="568" y2="97" stroke="#059669" stroke-width="2" marker-end="url(#ag)"/>
+        <text x="580" y="102" font-size="16" font-weight="800" fill="#059669">?</text>
+        <!-- 하단 -->
+        <rect x="40" y="180" width="580" height="22" rx="4" fill="#EEF2FF"/>
+        <text x="330" y="195" text-anchor="middle" font-size="10" font-weight="600" fill="#3730A3">x&#8321;=1, x&#8322;=2 | 은닉: w=2,1 b=&minus;1 | 출력: w=3 b=2 | &#9312;&#9313;&#9314;&#9315; 4단계</text>
+      </svg>
+      <p class="sc3">입력 2개 &rarr; 은닉 1개 &rarr; 출력 1개: P-1과 같은 방식을 두 번 반복!</p>
+    </div>
+    <ul class="sq">
+      <li><span class="sl">&#9312;</span> 은닉층 가중합: z&#8321; = (2&times;1) + (1&times;2) + (&minus;1) = <span class="bl n"></span></li>
+      <li><span class="sl">&#9313;</span> ReLU: h&#8321; = ReLU(<span class="bl n"></span>) = <span class="bl n"></span></li>
+      <li><span class="sl">&#9314;</span> 출력층 가중합: z&#8322; = 3 &times; <span class="bl n"></span> + 2 = <span class="bl n"></span></li>
+      <li><span class="sl">&#9315;</span> 최종: output = ReLU(<span class="bl n"></span>) = <span class="bl w"></span></li>
+    </ul>
+
+    <div class="ib ok">
+      <strong>계산 확인:</strong> 2+2&minus;1=3, ReLU(3)=3, 3&times;3+2=11, ReLU(11)=11. 모든 값이 정수!<br>
+      다음 P-3에서는 은닉 노드를 <strong>2개</strong>로 늘립니다. 나머지는 같은 방식!
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     P-3: 2층 순전파 — 은닉 2개 (최종 목표)
+     ═══════════════════════════════════════ -->
+<div class="pb"></div>
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-3</span><span class="qm">2층 신경망 순전파 (은닉 2개)</span><span class="qd h">도전</span></div>
+  <div class="qb">
+    <p class="cx">
+      <strong>입력 2개 &rarr; 은닉 2개 &rarr; 출력 1개.</strong> 각 은닉 노드를 따로 계산한 뒤, 출력에서 합칩니다.
+    </p>
+    <div class="sf">
+      <svg viewBox="0 0 700 310" xmlns="http://www.w3.org/2000/svg" style="max-width:680px">
+        <rect x="0" y="0" width="700" height="310" rx="12" fill="#FAFBFF"/>
+        <rect x="50" y="6" width="600" height="22" rx="5" fill="#EEF2FF"/>
+        <text x="350" y="21" text-anchor="middle" font-size="10" font-weight="600" fill="#3730A3">&#9312;&#9313; 은닉1 &rarr; &#9314;&#9315; 은닉2 &rarr; &#9316;&#9317; 출력</text>
+        <!-- 입력 -->
+        <circle cx="55" cy="95" r="30" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5"/>
+        <text x="55" y="87" text-anchor="middle" font-size="10" fill="#6B7280">x&#8321;</text>
+        <text x="55" y="107" text-anchor="middle" font-size="18" font-weight="800" fill="#3730A3">1</text>
+        <circle cx="55" cy="215" r="30" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5"/>
+        <text x="55" y="207" text-anchor="middle" font-size="10" fill="#6B7280">x&#8322;</text>
+        <text x="55" y="227" text-anchor="middle" font-size="18" font-weight="800" fill="#3730A3">2</text>
+        <!-- 은닉1 연결 -->
+        <line x1="85" y1="95" x2="218" y2="95" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="130" y="78" width="34" height="20" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="147" y="93" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">1</text>
+        <line x1="85" y1="215" x2="218" y2="110" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="118" y="148" width="34" height="20" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="135" y="163" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">2</text>
+        <!-- 은닉1 노드 -->
+        <circle cx="255" cy="95" r="30" fill="#4F46E5"/>
+        <text x="255" y="88" text-anchor="middle" font-size="10" fill="#C7D2FE">은닉 1</text>
+        <text x="255" y="108" text-anchor="middle" font-size="11" fill="#fff" font-family="monospace">b=0</text>
+        <!-- ReLU 1 -->
+        <line x1="285" y1="95" x2="325" y2="95" stroke="#374151" stroke-width="1.5"/>
+        <rect x="328" y="78" width="40" height="34" rx="6" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="348" y="99" text-anchor="middle" font-size="9" font-weight="700" fill="#059669">ReLU</text>
+        <!-- 단계 ①② -->
+        <circle cx="255" cy="138" r="12" fill="#4F46E5"/>
+        <text x="255" y="143" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9312;</text>
+        <circle cx="348" cy="138" r="12" fill="#059669"/>
+        <text x="348" y="143" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9313;</text>
+        <!-- 은닉2 연결 -->
+        <line x1="85" y1="95" x2="218" y2="210" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="110" y="177" width="42" height="20" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="131" y="192" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">&minus;1</text>
+        <line x1="85" y1="215" x2="218" y2="215" stroke="#4F46E5" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="135" y="222" width="34" height="20" rx="4" fill="#E0E7FF" stroke="#4F46E5" stroke-width="1"/>
+        <text x="152" y="237" text-anchor="middle" font-size="12" font-weight="700" fill="#3730A3">3</text>
+        <!-- 은닉2 노드 -->
+        <circle cx="255" cy="215" r="30" fill="#4F46E5"/>
+        <text x="255" y="208" text-anchor="middle" font-size="10" fill="#C7D2FE">은닉 2</text>
+        <text x="255" y="228" text-anchor="middle" font-size="11" fill="#fff" font-family="monospace">b=&minus;1</text>
+        <!-- ReLU 2 -->
+        <line x1="285" y1="215" x2="325" y2="215" stroke="#374151" stroke-width="1.5"/>
+        <rect x="328" y="198" width="40" height="34" rx="6" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="348" y="219" text-anchor="middle" font-size="9" font-weight="700" fill="#059669">ReLU</text>
+        <!-- 단계 ③④ -->
+        <circle cx="255" cy="258" r="12" fill="#4F46E5"/>
+        <text x="255" y="263" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9314;</text>
+        <circle cx="348" cy="258" r="12" fill="#059669"/>
+        <text x="348" y="263" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9315;</text>
+        <!-- 출력 연결 -->
+        <line x1="368" y1="95" x2="478" y2="148" stroke="#059669" stroke-width="2" marker-end="url(#ag)"/>
+        <rect x="405" y="98" width="34" height="20" rx="4" fill="#D1FAE5" stroke="#059669" stroke-width="1"/>
+        <text x="422" y="113" text-anchor="middle" font-size="12" font-weight="700" fill="#065F46">2</text>
+        <line x1="368" y1="215" x2="478" y2="168" stroke="#059669" stroke-width="2" marker-end="url(#ag)"/>
+        <rect x="400" y="198" width="42" height="20" rx="4" fill="#D1FAE5" stroke="#059669" stroke-width="1"/>
+        <text x="421" y="213" text-anchor="middle" font-size="12" font-weight="700" fill="#065F46">&minus;1</text>
+        <!-- 출력 노드 -->
+        <circle cx="515" cy="155" r="32" fill="#FEF3C7" stroke="#D97706" stroke-width="2.5"/>
+        <text x="515" y="148" text-anchor="middle" font-size="10" fill="#92400E">출력</text>
+        <text x="515" y="168" text-anchor="middle" font-size="11" fill="#D97706" font-family="monospace">b=1</text>
+        <!-- ReLU 출력 -->
+        <line x1="547" y1="155" x2="580" y2="155" stroke="#374151" stroke-width="1.5"/>
+        <rect x="583" y="138" width="40" height="34" rx="6" fill="#D1FAE5" stroke="#059669" stroke-width="2"/>
+        <text x="603" y="159" text-anchor="middle" font-size="9" font-weight="700" fill="#059669">ReLU</text>
+        <!-- 단계 ⑤⑥ -->
+        <circle cx="515" cy="200" r="12" fill="#D97706"/>
+        <text x="515" y="205" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9316;</text>
+        <circle cx="603" cy="200" r="12" fill="#059669"/>
+        <text x="603" y="205" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">&#9317;</text>
+        <!-- 최종 -->
+        <line x1="623" y1="155" x2="660" y2="155" stroke="#059669" stroke-width="2.5"/>
+        <text x="668" y="160" font-size="16" font-weight="800" fill="#059669">?</text>
+        <!-- 하단 -->
+        <rect x="35" y="280" width="630" height="24" rx="5" fill="#EEF2FF"/>
+        <text x="350" y="296" text-anchor="middle" font-size="10" font-weight="600" fill="#3730A3">x&#8321;=1, x&#8322;=2 | 은닉1: w=1,2 b=0 | 은닉2: w=&minus;1,3 b=&minus;1 | 출력: w=2,&minus;1 b=1</text>
+      </svg>
+    </div>
+
+    <p class="qt">6단계를 순서대로 채우세요. (x&#8321;=1, x&#8322;=2)</p>
+
+    <div class="ib" style="background:#F0FDF4;border-left:4px solid #059669;margin-bottom:.5rem">
+      <strong>은닉 노드 1</strong> (w=1, 2 / b=0)
+    </div>
+    <ul class="sq">
+      <li><span class="sl">&#9312;</span> z&#8321; = (1&times;1) + (2&times;2) + 0 = <span class="bl n"></span></li>
+      <li><span class="sl">&#9313;</span> h&#8321; = ReLU(<span class="bl n"></span>) = <span class="bl n"></span></li>
+    </ul>
+    <div class="ib" style="background:#F0FDF4;border-left:4px solid #059669;margin-bottom:.5rem;margin-top:.5rem">
+      <strong>은닉 노드 2</strong> (w=&minus;1, 3 / b=&minus;1)
+    </div>
+    <ul class="sq">
+      <li><span class="sl">&#9314;</span> z&#8322; = ((&minus;1)&times;1) + (3&times;2) + (&minus;1) = <span class="bl n"></span></li>
+      <li><span class="sl">&#9315;</span> h&#8322; = ReLU(<span class="bl n"></span>) = <span class="bl n"></span></li>
+    </ul>
+    <div class="ib" style="background:#FFFBEB;border-left:4px solid #D97706;margin-bottom:.5rem;margin-top:.5rem">
+      <strong>출력 노드</strong> (w=2, &minus;1 / b=1)
+    </div>
+    <ul class="sq">
+      <li><span class="sl">&#9316;</span> z&#8323; = (2&times;<span class="bl n">h&#8321;</span>) + ((&minus;1)&times;<span class="bl n">h&#8322;</span>) + 1 = <span class="bl n"></span></li>
+      <li><span class="sl">&#9317;</span> output = ReLU(<span class="bl n"></span>) = <span class="bl w"></span></li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     P-4: ReLU 없으면?
+     ═══════════════════════════════════════ -->
+<div class="qc">
+  <div class="qh"><span class="qn pr">P-4</span><span class="qm">같은 신경망에서 ReLU를 빼면?</span><span class="qd m">연습</span></div>
+  <div class="qb">
+    <p class="cx">P-3과 같은 신경망, 같은 가중치. ReLU만 빼면 결과가 달라질까요?</p>
+
+    <p class="qt">(1) P-3에서 모든 z가 양수였으므로, ReLU가 바꾸는 게 있었나요? <span class="bl w">(있었다 / 없었다)</span></p>
+
+    <p class="qt" style="margin-top:.5rem">(2) <strong>x&#8321;=1, x&#8322;=0</strong>으로 바꿔봅시다. (가중치/편향은 P-3과 동일)</p>
+
+    <div class="ib" style="background:#F0FDF4;border-left:4px solid #059669;margin-bottom:.4rem">
+      <strong>ReLU 있을 때:</strong>
+    </div>
+    <ul class="sq">
+      <li>은닉1: z&#8321; = (1&times;1)+(0&times;2)+0 = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span></li>
+      <li>은닉2: z&#8322; = ((&minus;1)&times;1)+(3&times;0)+(&minus;1) = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span> <span class="hlr">&larr; 잘림!</span></li>
+      <li>출력: z&#8323; = (2&times;<span class="bl n"></span>)+((&minus;1)&times;<span class="bl n"></span>)+1 = <span class="bl n"></span> &rarr; ReLU = <span class="bl n"></span></li>
+    </ul>
+
+    <div class="ib warn" style="margin-bottom:.4rem">
+      <strong>ReLU 없을 때:</strong>
+    </div>
+    <ul class="sq">
+      <li>은닉2: z&#8322; = &minus;2 &rarr; 그대로 h&#8322; = <span class="bl n"></span> <span class="hlr">&larr; 음수가 전달!</span></li>
+      <li>출력: z&#8323; = (2&times;1)+((&minus;1)&times;(&minus;2))+1 = <span class="bl n"></span></li>
+    </ul>
+
+    <p class="qt">(3) 두 결과가 다른가요? <span class="bl w"></span> &mdash; 이것이 S-1의 핵심 개념과 어떻게 연결되나요?</p>
+    <div class="an s" data-label="ReLU의 역할"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     C-1: 활성화함수 5종 비교
+     ═══════════════════════════════════════ -->
+<div class="pb"></div>
+<div class="qc">
+  <div class="qh"><span class="qn ch">C-1</span><span class="qm">활성화함수 5종 비교</span><span class="qd h">도전</span></div>
+  <div class="qb">
+    <div class="sf">
+      <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="max-width:680px">
+        <rect x="0" y="0" width="700" height="160" rx="10" fill="#FAFBFF"/>
+        <!-- 계단 -->
+        <rect x="5" y="5" width="132" height="150" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <text x="71" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#3730A3">계단함수</text>
+        <line x1="20" y1="120" x2="122" y2="120" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="71" y1="28" x2="71" y2="125" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="20" y1="120" x2="71" y2="120" stroke="#DC2626" stroke-width="3"/>
+        <line x1="71" y1="45" x2="122" y2="45" stroke="#059669" stroke-width="3"/>
+        <text x="71" y="142" text-anchor="middle" font-size="8" fill="#6B7280">{0,1} | 1958</text>
+        <!-- Sigmoid -->
+        <rect x="142" y="5" width="132" height="150" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <text x="208" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#7C3AED">Sigmoid</text>
+        <line x1="157" y1="120" x2="259" y2="120" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="208" y1="28" x2="208" y2="125" stroke="#9CA3AF" stroke-width="1"/>
+        <path d="M157,118 C175,116 190,108 200,95 C208,82 208,75 216,62 C225,50 240,42 259,40" fill="none" stroke="#8B5CF6" stroke-width="3"/>
+        <text x="208" y="142" text-anchor="middle" font-size="8" fill="#6B7280">(0,1) | 1986</text>
+        <!-- tanh -->
+        <rect x="279" y="5" width="132" height="150" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <text x="345" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#7C3AED">tanh</text>
+        <line x1="294" y1="80" x2="396" y2="80" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="345" y1="28" x2="345" y2="125" stroke="#9CA3AF" stroke-width="1"/>
+        <path d="M294,120 C315,118 330,108 338,95 C345,80 345,80 352,65 C360,52 375,42 396,40" fill="none" stroke="#8B5CF6" stroke-width="3"/>
+        <text x="345" y="142" text-anchor="middle" font-size="8" fill="#6B7280">(&minus;1,1) | 1986</text>
+        <!-- ReLU -->
+        <rect x="416" y="5" width="132" height="150" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <text x="482" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">ReLU</text>
+        <line x1="431" y1="100" x2="533" y2="100" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="482" y1="28" x2="482" y2="125" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="431" y1="100" x2="482" y2="100" stroke="#DC2626" stroke-width="3"/>
+        <line x1="482" y1="100" x2="533" y2="35" stroke="#059669" stroke-width="3"/>
+        <text x="482" y="142" text-anchor="middle" font-size="8" fill="#6B7280">[0,&infin;) | 2012</text>
+        <!-- Leaky ReLU -->
+        <rect x="553" y="5" width="142" height="150" rx="6" fill="#fff" stroke="#E5E7EB"/>
+        <text x="624" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">Leaky ReLU</text>
+        <line x1="568" y1="100" x2="680" y2="100" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="624" y1="28" x2="624" y2="125" stroke="#9CA3AF" stroke-width="1"/>
+        <line x1="568" y1="102" x2="624" y2="100" stroke="#059669" stroke-width="3"/>
+        <line x1="624" y1="100" x2="680" y2="35" stroke="#059669" stroke-width="3"/>
+        <text x="624" y="142" text-anchor="middle" font-size="8" fill="#6B7280">(&minus;&infin;,&infin;) | 2013</text>
+      </svg>
+      <p class="sc3">계단(1958) &rarr; Sigmoid(1986) &rarr; tanh(1986) &rarr; ReLU(2012) &rarr; Leaky ReLU(2013)</p>
+    </div>
+
+    <table class="tb">
+      <thead><tr><th>함수</th><th>규칙</th><th>출력 범위</th><th>장점</th><th>단점</th></tr></thead>
+      <tbody>
+        <tr><td><strong>계단</strong></td><td style="font-size:.78rem">z&gt;0&rarr;1, else 0</td><td>{0, 1}</td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td><strong>Sigmoid</strong></td><td class="bc"></td><td class="bc"></td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td><strong>tanh</strong></td><td class="bc"></td><td class="bc"></td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td><strong>ReLU</strong></td><td class="bc"></td><td class="bc"></td><td class="bc"></td><td class="bc"></td></tr>
+        <tr><td><strong>Leaky ReLU</strong></td><td class="bc"></td><td class="bc"></td><td class="bc"></td><td class="bc"></td></tr>
+      </tbody>
+    </table>
+    <div class="ib tip">
+      <strong>힌트:</strong> 계단=학습불가 | Sigmoid=부드럽지만 기울기소실 | tanh=0중심이라 더 빠르지만 여전히 소실 | ReLU=단순+신호유지, but 죽은뉴런 | Leaky ReLU=죽은뉴런 방지
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     자기 점검
+     ═══════════════════════════════════════ -->
+<div class="sh" style="border-left-color:var(--grn);background:var(--grn-lt)"><h2 style="color:#065F46">자기 점검</h2></div>
+<div class="qc"><div class="qb">
+  <table class="tb">
+    <thead><tr><th style="width:65%">확인 항목</th><th>O</th><th>X</th></tr></thead>
+    <tbody>
+      <tr><td style="text-align:left;padding-left:.7rem">활성화함수 없이 2층 연결 = 1층과 같다는 것을 이해했다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">Sigmoid의 기울기 소실 문제를 설명할 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">ReLU(z) = max(0, z)를 계산할 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">ReLU가 기울기 소실을 해결하는 이유를 안다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">tanh와 Leaky ReLU의 특징을 안다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">2층 신경망(은닉 2개)의 순전파를 풀 수 있다</td><td class="bc"></td><td class="bc"></td></tr>
+      <tr><td style="text-align:left;padding-left:.7rem">ReLU 유무에 따라 결과가 달라지는 것을 확인했다</td><td class="bc"></td><td class="bc"></td></tr>
+    </tbody>
+  </table>
+</div></div>
+
+</div>
+<div class="ft">AI 기초 | 고등학교 정보 교과 | 3차시 수학 연습 활동지</div>
+</body>
+</html>

@@ -15,7 +15,7 @@ const TEAM_COLORS = [
 
 // GP 스테이지별 포인트: 1등 = N점, 2등 = N-1점, ..., 이탈 = 0점
 function calcGpPoints(rank, totalTeams, status) {
-    if (status === 'escaped') return 0;
+    if (status !== 'converged') return 0;
     return Math.max(0, totalTeams - rank + 1);
 }
 
@@ -35,6 +35,7 @@ export const useRaceStore = create(
             stageResults: [[], [], []], // 각 스테이지 결과
             gpFinalResults: [],     // 종합 순위
             gpCountdown: 0,         // 스테이지 전환 카운트다운 (초)
+            racePaused: false,      // 레이스 일시정지 상태
 
             // ── 내 파라미터 설정 (localStorage 저장) ──
             myLearningRate: 0.1,
@@ -77,6 +78,7 @@ export const useRaceStore = create(
             setGpActive: (active) => set({ gpActive: active }),
             setGpStage: (stage) => set({ gpStage: stage }),
             setGpCountdown: (n) => set({ gpCountdown: n }),
+            setRacePaused: (paused) => set({ racePaused: paused }),
 
             addStageResult: (stageIndex, results) =>
                 set((state) => {
@@ -84,6 +86,8 @@ export const useRaceStore = create(
                     newStageResults[stageIndex] = results;
                     return { stageResults: newStageResults };
                 }),
+
+            setStageResults: (stageResults) => set({ stageResults }),
 
             setGpFinalResults: (finalResults) => set({ gpFinalResults: finalResults }),
 
@@ -103,6 +107,7 @@ export const useRaceStore = create(
                     stageResults: [[], [], []],
                     gpFinalResults: [],
                     gpCountdown: 0,
+                    racePaused: false,
                 }),
         }),
         {

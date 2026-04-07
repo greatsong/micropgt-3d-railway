@@ -1,37 +1,21 @@
 import { rooms, getRoomState, isTeacher, broadcastRoomUpdate } from './roomManager.js';
-import { getWordPosition, lossFunction, gradient, lossFunctionByLevel, gradientByLevel, GLOBAL_MINIMA } from './gameLogic.js';
+import { getWordPosition } from './gameLogic.js';
+import {
+  clampLearningRate,
+  clampMomentum,
+  createRaceBall,
+  createRaceResult,
+  getRandomizedStartPosition,
+  inspectRaceBall,
+  normalizeMapLevel,
+  rankRaceResults,
+  advanceRaceBall,
+} from '../src/lib/raceEngine.js';
 
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
 if (!TEACHER_PASSWORD) console.warn('⚠️ TEACHER_PASSWORD 환경변수가 설정되지 않았습니다. 교사 인증이 작동하지 않습니다.');
 
 const MAX_STUDENTS_PER_ROOM = 50;
-
-// ── 레벨별 게임 밸런스 상수 ──
-const START_POSITIONS = {
-  1: { x: -7, z: -7 },
-  2: { x: -6, z: -5 },
-  3: { x: -6, z: -4 },
-  4: { x: 5, z: 5 },
-  5: { x: -7, z: -7 },
-  6: { x: 0, z: 5 },     // Level 6: 두 계곡 사이 위쪽에서 출발
-  7: { x: 6, z: 6 },     // Level 7: 나선 바깥에서 출발
-  8: { x: 0, z: 0 },     // Level 8: 절벽 가장자리에서 출발
-};
-
-// 그래디언트 스케일 팩터 — 레벨이 높을수록 느리게 (더 많은 스텝 필요)
-const SPEED_SCALE = { 1: 0.5, 2: 0.4, 3: 0.35, 4: 0.3, 5: 0.25, 6: 0.35, 7: 0.3, 8: 0.3 };
-
-// 수렴 판정 최소 트레일 길이 — 레벨이 높을수록 더 오래 관찰
-const CONVERGE_TRAIL = { 1: 200, 2: 300, 3: 400, 4: 400, 5: 500, 6: 350, 7: 450, 8: 500 };
-
-// 레벨별 맵 경계 (escaped 판정) — 큰 맵은 경계 넓힘
-const MAP_BOUNDARY = { 1: 20, 2: 20, 3: 20, 4: 20, 5: 20, 6: 20, 7: 20, 8: 30 };
-
-// 수렴 속도 임계값 — 더 엄격하게 (0.001 → 0.0005)
-const CONVERGE_SPEED = 0.0005;
-
-// 속도 클램프 — 너무 빠른 이동 방지 (10 → 5)
-const VEL_CLAMP = 5;
 
 function sanitize(str, maxLen = 50) {
   if (typeof str !== 'string') return '';
@@ -48,6 +32,45 @@ function safeHandler(name, handler) {
     try { handler(...args); }
     catch (err) { console.error(`[${name}] Socket handler error:`, err); }
   };
+}
+
+function serializeRoomState(room, roomCode) {
+  return {
+    students: Array.from(room.students.values()),
+    roomCode,
+    raceTeams: room.raceTeams || {},
+    racePhase: room.racePhase || 'setup',
+    raceBalls: room.raceBalls || {},
+    mapLevel: normalizeMapLevel(room.mapLevel, 2),
+    raceMode: room.raceMode || 'competition',
+    results: room.raceResults || [],
+    gpActive: !!room.gpActive,
+    gpStage: room.gpStage || 0,
+    gpStageResults: room.gpStageResults || [[], [], []],
+    gpFinalResults: room.gpFinalResults || [],
+    gpCountdown: room.gpCountdown || 0,
+  };
+}
+
+function pruneDisconnectedRaceEntries(room) {
+  if (!room.raceTeams) room.raceTeams = {};
+  if (!room.raceBalls) room.raceBalls = {};
+  if (!room.raceFinished) room.raceFinished = {};
+
+  const activeStudentIds = new Set(room.students.keys());
+  let changed = false;
+
+  for (const teamId of Object.keys(room.raceTeams)) {
+    const memberId = room.raceTeams[teamId]?.memberId || teamId;
+    if (activeStudentIds.has(memberId)) continue;
+
+    delete room.raceTeams[teamId];
+    delete room.raceBalls[teamId];
+    delete room.raceFinished[teamId];
+    changed = true;
+  }
+
+  return changed;
 }
 
 export function registerSocketHandlers(io) {
@@ -103,15 +126,33 @@ export function registerSocketHandlers(io) {
         broadcastRoomUpdate(io, roomCode);
       }
 
+      // 재접속 시 보존된 레이스 팀 데이터 복구
+      if (room.disconnectedTeams?.[studentName]) {
+        const saved = room.disconnectedTeams[studentName];
+        const newId = socket.id;
+        // 기존 팀 데이터를 새 socket.id로 이전
+        room.raceTeams = room.raceTeams || {};
+        room.raceTeams[newId] = { ...saved.team, id: newId, memberId: newId };
+        if (saved.ball) {
+          room.raceBalls = room.raceBalls || {};
+          room.raceBalls[newId] = { ...saved.ball };
+        }
+        if (saved.finished) {
+          room.raceFinished = room.raceFinished || {};
+          room.raceFinished[newId] = { ...saved.finished, teamId: newId };
+        }
+        delete room.disconnectedTeams[studentName];
+        console.log(`🔄 ${studentName} 레이스 데이터 복구 완료 (${saved.oldSocketId} → ${newId})`);
+
+        // 복구된 팀/공 상태를 전체에 브로드캐스트
+        io.to(roomCode).emit('race_teams_updated', { teams: room.raceTeams });
+        if (room.racePhase === 'racing' || room.racePhase === 'preparing') {
+          io.to(roomCode).emit('race_tick', { balls: room.raceBalls });
+        }
+      }
+
       // room_state는 항상 발행 — 페이지 이동/재연결 복구용
-      socket.emit('room_state', {
-        students: Array.from(room.students.values()),
-        roomCode,
-        raceTeams: room.raceTeams || {},
-        racePhase: room.racePhase || 'waiting',
-        raceBalls: room.raceBalls || {},
-        mapLevel: room.mapLevel || 2,
-      });
+      socket.emit('room_state', serializeRoomState(room, roomCode));
     }));
 
     // ▸ 교사 관제탑 입장 (비밀번호 인증)
@@ -130,14 +171,7 @@ export function registerSocketHandlers(io) {
 
       console.log(`🎓 교사 관제탑 연결 → 방 [${roomCode}]`);
 
-      socket.emit('room_state', {
-        students: Array.from(room.students.values()),
-        roomCode,
-        raceTeams: room.raceTeams || {},
-        racePhase: room.racePhase || 'waiting',
-        raceBalls: room.raceBalls || {},
-        mapLevel: room.mapLevel || 2,
-      });
+      socket.emit('room_state', serializeRoomState(room, roomCode));
     }));
 
     // ▸ 3D 은하수: 단어 등록
@@ -232,18 +266,22 @@ export function registerSocketHandlers(io) {
       const room = getRoomState(currentRoom);
       if (!room.raceTeams) room.raceTeams = {};
 
-      const teamId = payload.teamId || socket.id;
+      const teamId = socket.id;
+      const existingTeam = room.raceTeams[teamId] || {};
+      const learningRate = clampLearningRate(payload.learningRate, existingTeam.learningRate || 0.1);
+      const momentum = clampMomentum(payload.momentum, existingTeam.momentum || 0.9);
+      const mapLevel = normalizeMapLevel(payload.mapLevel, room.mapLevel || existingTeam.mapLevel || 2);
       room.raceTeams[teamId] = {
         id: teamId,
-        name: payload.teamName || studentInfo?.studentName || 'Team',
-        color: payload.color || `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
-        learningRate: Math.max(0.001, Math.min(2.0, payload.learningRate || 0.1)),
-        momentum: Math.max(0, Math.min(0.99, payload.momentum || 0.9)),
-        mapLevel: payload.mapLevel || 2, // 레이스 맵 레벨 (1=초급, 2=중급, 3=고급)
+        name: sanitize(payload.teamName, 24) || existingTeam.name || studentInfo?.studentName || 'Team',
+        color: payload.color || existingTeam.color || `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
+        learningRate,
+        momentum,
+        mapLevel,
         memberId: socket.id,
       };
 
-      console.log(`🏎️ 팀 [${room.raceTeams[teamId].name}] 파라미터: lr=${payload.learningRate}, m=${payload.momentum}`);
+      console.log(`🏎️ 팀 [${room.raceTeams[teamId].name}] 파라미터: lr=${learningRate}, m=${momentum}`);
 
       io.to(currentRoom).emit('race_teams_updated', {
         teams: room.raceTeams,
@@ -252,67 +290,57 @@ export function registerSocketHandlers(io) {
       // 레이스 진행 중이거나 준비 중이면 해당 팀 공의 파라미터도 즉시 업데이트 (실시간 조절 반영)
       if (room.raceBalls && room.raceBalls[teamId] &&
           (room.raceBalls[teamId].status === 'racing' || room.raceBalls[teamId].status === 'preparing')) {
-        room.raceBalls[teamId].lr = room.raceTeams[teamId].learningRate;
-        room.raceBalls[teamId].momentum = room.raceTeams[teamId].momentum;
+        room.raceBalls[teamId].lr = learningRate;
+        room.raceBalls[teamId].momentum = momentum;
       }
     }));
 
     // ── 단일 스테이지 레이스 시작 (내부 헬퍼) ──
     function startStageRace(roomCode, mapLevel) {
       const room = rooms.get(roomCode);
-      if (!room || !room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
+      if (!room) return;
 
-      room.mapLevel = mapLevel;
+      pruneDisconnectedRaceEntries(room);
+      if (!room.raceTeams || Object.keys(room.raceTeams).length === 0) return;
+
+      const normalizedLevel = normalizeMapLevel(mapLevel, room.mapLevel || 2);
+      room.mapLevel = normalizedLevel;
       room.raceFinished = {};
+      room.raceResults = [];
+      room.gpCountdown = 0;
 
-      // preparing 단계에서 이미 공이 배치되어 있으면 위치 재사용, 없으면 새로 배치
-      const isFromPreparing = room.racePhase === 'preparing' && room.raceBalls && Object.keys(room.raceBalls).length > 0;
-      if (!isFromPreparing) {
-        // 레벨별 고정 시작점 사용 (교육적 의미 있는 위치)
-        const startPos = START_POSITIONS[mapLevel] || START_POSITIONS[2];
-        room.raceBalls = {};
-        for (const [teamId, team] of Object.entries(room.raceTeams)) {
-          // 같은 시작점에서 약간의 랜덤 오프셋 (겹침 방지)
-          const sx = startPos.x + (Math.random() - 0.5) * 0.5;
-          const sz = startPos.z + (Math.random() - 0.5) * 0.5;
-          room.raceBalls[teamId] = {
-            x: sx, z: sz,
-            y: 0, vx: 0, vz: 0,
-            trail: [], status: 'racing', loss: 0,
-            lr: team.learningRate, momentum: team.momentum,
-            cumulativeLoss: 0,
-          };
-          room.raceBalls[teamId].y = lossFunctionByLevel(room.raceBalls[teamId].x, room.raceBalls[teamId].z, mapLevel);
-          room.raceBalls[teamId].loss = room.raceBalls[teamId].y;
-        }
-      } else {
-        // preparing에서 시작: 위치 유지, lr/momentum 최신값으로 업데이트, status 'racing'으로
-        for (const [teamId, team] of Object.entries(room.raceTeams)) {
-          if (room.raceBalls[teamId]) {
-            room.raceBalls[teamId].lr = team.learningRate || 0.1;
-            room.raceBalls[teamId].momentum = team.momentum || 0.9;
-            room.raceBalls[teamId].status = 'racing';
-            room.raceBalls[teamId].vx = 0;
-            room.raceBalls[teamId].vz = 0;
-            room.raceBalls[teamId].trail = [];
-            room.raceBalls[teamId].cumulativeLoss = 0;
-          }
-        }
+      const preservePositions = room.racePhase === 'preparing' && room.raceBalls && Object.keys(room.raceBalls).length > 0;
+      const nextBalls = {};
+      for (const [teamId, team] of Object.entries(room.raceTeams)) {
+        const previousBall = preservePositions ? room.raceBalls?.[teamId] : null;
+        const position = previousBall
+          ? { x: previousBall.x, z: previousBall.z }
+          : getRandomizedStartPosition(normalizedLevel);
+        nextBalls[teamId] = createRaceBall({
+          level: normalizedLevel,
+          x: position.x,
+          z: position.z,
+          lr: team.learningRate,
+          momentum: team.momentum,
+          status: 'racing',
+        });
       }
+      room.raceBalls = nextBalls;
 
       room.racePhase = 'racing';
+      room.racePaused = false;
       room.raceStartTime = Date.now();
 
       io.to(roomCode).emit('race_started', {
         balls: room.raceBalls,
         teams: room.raceTeams,
         startTime: room.raceStartTime,
-        mapLevel,
+        mapLevel: normalizedLevel,
         gpStage: room.gpStage || 0,
         raceMode: room.raceMode || 'competition',
       });
 
-      console.log(`🏁 스테이지 ${room.gpStage || '?'} 시작! 방 [${roomCode}] 맵레벨=${mapLevel} — ${Object.keys(room.raceTeams).length}팀`);
+      console.log(`🏁 스테이지 ${room.gpStage || '?'} 시작! 방 [${roomCode}] 맵레벨=${normalizedLevel} — ${Object.keys(room.raceTeams).length}팀`);
 
       if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
       // Fix 1: let intervalId 클로저로 선언 → r이 null이어도 clearInterval 보장
@@ -324,6 +352,8 @@ export function registerSocketHandlers(io) {
           if (r) r.raceInterval = null;
           return;
         }
+        // 일시정지 중이면 tick 건너뜀
+        if (r.racePaused) return;
 
         let allDone = true;
 
@@ -331,78 +361,54 @@ export function registerSocketHandlers(io) {
           if (ball.status !== 'racing') continue;
           allDone = false;
 
-          const grad = gradientByLevel(ball.x, ball.z, r.mapLevel);
-          // 레벨별 속도 스케일 — 고레벨일수록 느리게 (더 정밀한 튜닝 필요)
-          const speedScale = SPEED_SCALE[r.mapLevel] || 0.25;
-          ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * speedScale;
-          ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * speedScale;
-          // 감속(damping) — 매 틱마다 속도를 2% 줄여서 빙빙 도는 것을 자연스럽게 수렴
-          ball.vx *= 0.98;
-          ball.vz *= 0.98;
-          ball.vx = Math.max(-VEL_CLAMP, Math.min(VEL_CLAMP, ball.vx));
-          ball.vz = Math.max(-VEL_CLAMP, Math.min(VEL_CLAMP, ball.vz));
-
-          ball.x += ball.vx;
-          ball.z += ball.vz;
-          ball.y = lossFunctionByLevel(ball.x, ball.z, r.mapLevel);
-          ball.loss = ball.y;
-          ball.cumulativeLoss = (ball.cumulativeLoss || 0) + (isFinite(ball.loss) ? ball.loss : 100);
-
           // 팀 파라미터 참조 (결과에 포함)
           const teamData = r.raceTeams[teamId];
-          const teamLR = teamData?.learningRate || ball.lr;
-          const teamMom = teamData?.momentum || ball.momentum;
-
-          if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) {
-            ball.status = 'escaped';
-            r.raceFinished[teamId] = { teamId, teamName: teamData?.name, finalLoss: NaN, status: 'escaped', time: Date.now() - r.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: teamLR, momentum: teamMom, distToGlobal: Infinity };
-            io.to(roomCode).emit('race_alert', { teamId, teamName: teamData?.name, message: `🚨 공이 날아가 버렸어요! 무엇이 너무 커졌을까요? (팀: ${teamData?.name})` });
-            continue;
-          }
-
-          if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) {
-            ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
-          }
-          if (ball.trail.length > 300) ball.trail.shift();
-
-          const boundary = MAP_BOUNDARY[r.mapLevel] || 20;
-          if (Math.abs(ball.x) > boundary || Math.abs(ball.z) > boundary || ball.y > 15) {
-            ball.status = 'escaped';
-            const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
-            const distG = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
-            r.raceFinished[teamId] = { teamId, teamName: teamData?.name, finalLoss: ball.loss, status: 'escaped', time: Date.now() - r.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: teamLR, momentum: teamMom, distToGlobal: distG };
-            io.to(roomCode).emit('race_alert', { teamId, teamName: teamData?.name, message: `💨 공이 맵을 벗어났어요! 어떤 파라미터를 조절하면 좋을까요? (팀: ${teamData?.name})` });
-          }
-
-          // 타임아웃: 30초 경과 시 현재 위치에서 강제 종료
           const elapsed = Date.now() - r.raceStartTime;
-          if (elapsed > 30000) {
-            const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
-            const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
-            ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
-            r.raceFinished[teamId] = { teamId, teamName: teamData?.name, finalLoss: ball.loss, status: ball.status, time: elapsed, cumulativeLoss: ball.cumulativeLoss || 0, lr: teamLR, momentum: teamMom, distToGlobal };
-            if (ball.status === 'local_minimum') {
-              io.to(roomCode).emit('race_alert', { teamId, teamName: teamData?.name, message: `⏱️ 시간 초과! 공이 최솟값에 도달하지 못했어요. (팀: ${teamData?.name})` });
-            }
-            continue;
-          }
+          advanceRaceBall(ball, r.mapLevel);
 
-          const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
-          const minTrail = CONVERGE_TRAIL[r.mapLevel] || 300;
-          if (speed < CONVERGE_SPEED && ball.trail.length > minTrail) {
-            const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
-            const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
-            if (distToGlobal < 0.8) {
-              ball.status = 'converged';
-              r.raceFinished[teamId] = { teamId, teamName: teamData?.name, finalLoss: ball.loss, status: 'converged', time: Date.now() - r.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: teamLR, momentum: teamMom, distToGlobal };
-            } else {
-              ball.status = 'local_minimum';
-              r.raceFinished[teamId] = { teamId, teamName: teamData?.name, finalLoss: ball.loss, status: 'local_minimum', time: Date.now() - r.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: teamLR, momentum: teamMom, distToGlobal };
-              io.to(roomCode).emit('race_alert', {
-                teamId, teamName: teamData?.name,
-                message: `🏔️ 공이 멈췄어요. 정말 최솟값에 도달했을까요? (팀: ${teamData?.name})`,
-              });
-            }
+          const teamLR = clampLearningRate(teamData?.learningRate, ball.lr);
+          const teamMom = clampMomentum(teamData?.momentum, ball.momentum);
+          const outcome = inspectRaceBall(ball, r.mapLevel, elapsed);
+          if (!outcome) continue;
+
+          ball.status = outcome.status;
+          r.raceFinished[teamId] = createRaceResult({
+            teamId,
+            teamName: teamData?.name || teamId,
+            ball,
+            level: r.mapLevel,
+            timeMs: elapsed,
+            status: outcome.status,
+            lr: teamLR,
+            momentum: teamMom,
+            finalLoss: outcome.reason === 'invalid' ? Number.NaN : ball.loss,
+            distToGlobal: outcome.distToGlobal,
+          });
+
+          if (outcome.reason === 'invalid') {
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: teamData?.name,
+              message: `🚨 공이 날아가 버렸어요! 무엇이 너무 커졌을까요? (팀: ${teamData?.name})`,
+            });
+          } else if (outcome.reason === 'boundary') {
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: teamData?.name,
+              message: `💨 공이 맵을 벗어났어요! 어떤 파라미터를 조절하면 좋을까요? (팀: ${teamData?.name})`,
+            });
+          } else if (outcome.reason === 'timeout' && outcome.status === 'local_minimum') {
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: teamData?.name,
+              message: `⏱️ 시간 초과! 공이 최솟값에 도달하지 못했어요. (팀: ${teamData?.name})`,
+            });
+          } else if (outcome.reason === 'stopped' && outcome.status === 'local_minimum') {
+            io.to(roomCode).emit('race_alert', {
+              teamId,
+              teamName: teamData?.name,
+              message: `🏔️ 공이 멈췄어요. 정말 최솟값에 도달했을까요? (팀: ${teamData?.name})`,
+            });
           }
         }
 
@@ -414,27 +420,8 @@ export function registerSocketHandlers(io) {
           clearInterval(r.raceInterval);
           r.raceInterval = null;
 
-          // 순위 기준: converged 여부 → 도달 시간 → 누적 Loss
-          // converged 팀이 local_minimum/escaped 팀보다 무조건 상위
-          const STATUS_PRIORITY = { converged: 0, local_minimum: 1, escaped: 2 };
-          const results = Object.values(r.raceFinished)
-            .map(res => ({
-              ...res,
-              cumulativeLoss: r.raceBalls[res.teamId]?.cumulativeLoss || Infinity,
-            }))
-            .sort((a, b) => {
-              // 1순위: converged > local_minimum > escaped
-              const pa = STATUS_PRIORITY[a.status] ?? 2;
-              const pb = STATUS_PRIORITY[b.status] ?? 2;
-              if (pa !== pb) return pa - pb;
-              // 2순위: 도달 시간 (빠를수록 상위)
-              if (a.time !== b.time) return a.time - b.time;
-              // 3순위: 누적 Loss (낮을수록 상위)
-              const ca = isFinite(a.cumulativeLoss) ? a.cumulativeLoss : Infinity;
-              const cb = isFinite(b.cumulativeLoss) ? b.cumulativeLoss : Infinity;
-              return ca - cb;
-            })
-            .map((res, i) => ({ ...res, rank: i + 1 }));
+          const results = rankRaceResults(Object.values(r.raceFinished));
+          r.raceResults = results;
 
           // GP 모드인 경우 스테이지별 처리
           if (r.gpActive && r.gpStage >= 1 && r.gpStage <= 3) {
@@ -447,7 +434,7 @@ export function registerSocketHandlers(io) {
             const stagePoints = results.map(res => ({
               teamId: res.teamId,
               teamName: res.teamName,
-              points: Math.max(0, totalT - res.rank + 1),  // 모든 팀에 rank 기반 포인트
+              points: res.status === 'converged' ? Math.max(0, totalT - res.rank + 1) : 0,
               rank: res.rank,
               finalLoss: res.finalLoss,
               cumulativeLoss: res.cumulativeLoss,
@@ -457,6 +444,7 @@ export function registerSocketHandlers(io) {
               distToGlobal: res.distToGlobal,
               time: res.time,
             }));
+            r.gpStageResults[stageIdx] = stagePoints;
 
             io.to(roomCode).emit('gp_stage_complete', {
               stage: r.gpStage,
@@ -470,6 +458,7 @@ export function registerSocketHandlers(io) {
               // 다음 스테이지로 자동 전환 (5초 카운트다운)
               r.racePhase = 'stageResult';
               let countdown = 5;
+              r.gpCountdown = countdown;
               io.to(roomCode).emit('gp_countdown', { seconds: countdown, nextStage: r.gpStage + 1 });
 
               // Fix 4: 카운트다운 인터벌을 room에 저장 → reset_race에서 취소 가능
@@ -477,11 +466,13 @@ export function registerSocketHandlers(io) {
               r.countdownInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
+                  r.gpCountdown = countdown;
                   io.to(roomCode).emit('gp_countdown', { seconds: countdown, nextStage: r.gpStage + 1 });
                 } else {
                   const rm = rooms.get(roomCode);
                   if (rm?.countdownInterval) { clearInterval(rm.countdownInterval); rm.countdownInterval = null; }
                   if (!rm || !rm.gpActive) return;
+                  rm.gpCountdown = 0;
                   rm.gpStage++;
                   startStageRace(roomCode, rm.gpStage); // level 1,2,3 = stage 1,2,3
                 }
@@ -492,12 +483,11 @@ export function registerSocketHandlers(io) {
               const combined = {};
               for (let si = 0; si < 3; si++) {
                 const stageRes = r.gpStageResults[si] || [];
-                const t = Object.keys(r.raceTeams).length;
                 for (const res of stageRes) {
                   if (!combined[res.teamId]) {
                     combined[res.teamId] = { teamId: res.teamId, teamName: res.teamName, totalPoints: 0, stageRanks: [0, 0, 0] };
                   }
-                  const pts = Math.max(0, t - res.rank + 1);
+                  const pts = res.points || 0;
                   combined[res.teamId].totalPoints += pts;
                   combined[res.teamId].stageRanks[si] = res.rank;
                 }
@@ -538,8 +528,11 @@ export function registerSocketHandlers(io) {
 
       room.gpActive = false;
       room.gpStage = 0;
+      room.gpStageResults = [[], [], []];
+      room.gpFinalResults = [];
+      room.gpCountdown = 0;
       const mode = payload?.mode || 'competition';
-      const level = payload?.level || (Object.values(room.raceTeams)[0]?.mapLevel || 2);
+      const level = normalizeMapLevel(payload?.level, Object.values(room.raceTeams)[0]?.mapLevel || room.mapLevel || 2);
       room.raceMode = mode;
       console.log(`🏁 레이스 모드: ${mode} (Level ${level}) 방 [${currentRoom}]`);
       startStageRace(currentRoom, level);
@@ -556,6 +549,7 @@ export function registerSocketHandlers(io) {
       room.gpStage = 1;
       room.gpStageResults = [[], [], []];
       room.gpFinalResults = [];
+      room.gpCountdown = 0;
 
       io.to(currentRoom).emit('gp_started', { totalStages: 3, currentStage: 1 });
       console.log(`🏎️🏎️🏎️ Grand Prix 시작! 방 [${currentRoom}] — ${Object.keys(room.raceTeams).length}팀`);
@@ -568,7 +562,7 @@ export function registerSocketHandlers(io) {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!isTeacher(socket.id, currentRoom)) return;
-      const level = payload?.level || 2;
+      const level = normalizeMapLevel(payload?.level, room.mapLevel || 2);
       room.mapLevel = level;
       io.to(currentRoom).emit('map_selected', { level });
       console.log(`🗺️ 교사가 맵 선택: Level ${level} 방 [${currentRoom}]`);
@@ -582,11 +576,15 @@ export function registerSocketHandlers(io) {
       // 방에 학생이 한 명도 없으면 준비 불가
       if (!room.students || room.students.size === 0) return;
 
-      const level = payload?.level || room.mapLevel || 2;
+      pruneDisconnectedRaceEntries(room);
+
+      const level = normalizeMapLevel(payload?.level, room.mapLevel || 2);
       room.mapLevel = level;
       room.racePhase = 'preparing';
       room.raceBalls = {};
       room.raceFinished = {};
+      room.raceResults = [];
+      room.gpCountdown = 0;
       if (!room.raceTeams) room.raceTeams = {};
 
       // 방에 있는 모든 학생을 raceTeams에 자동 등록 (params 미제출 학생 포함)
@@ -598,25 +596,23 @@ export function registerSocketHandlers(io) {
             color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
             learningRate: 0.1,
             momentum: 0.9,
+            mapLevel: level,
             memberId: socketId,
           };
         }
       }
 
-      // 레벨별 고정 시작점 + 팀별 약간의 오프셋 (교육적 의미 있는 위치)
-      const startPos = START_POSITIONS[level] || START_POSITIONS[2];
       for (const [teamId, team] of Object.entries(room.raceTeams)) {
-        const sx = startPos.x + (Math.random() - 0.5) * 0.5;
-        const sz = startPos.z + (Math.random() - 0.5) * 0.5;
-        room.raceBalls[teamId] = {
-          x: sx, z: sz,
-          y: lossFunctionByLevel(sx, sz, level),
-          vx: 0, vz: 0, trail: [], status: 'preparing',
-          loss: lossFunctionByLevel(sx, sz, level),
+        const position = getRandomizedStartPosition(level);
+        room.raceTeams[teamId].mapLevel = level;
+        room.raceBalls[teamId] = createRaceBall({
+          level,
+          x: position.x,
+          z: position.z,
           lr: team.learningRate || 0.1,
           momentum: team.momentum || 0.9,
-          cumulativeLoss: 0,
-        };
+          status: 'preparing',
+        });
       }
 
       io.to(currentRoom).emit('race_prepare', {
@@ -627,23 +623,43 @@ export function registerSocketHandlers(io) {
       console.log(`🎯 레이스 준비! 방 [${currentRoom}] 맵레벨=${level} — ${Object.keys(room.raceTeams).length}팀 위치 배치 완료`);
     }));
 
-    // 레이스 정지 — 교사 또는 학생이 요청
+    // 레이스 정지 — 교사만 가능 (멀티플레이), 솔로는 클라이언트에서 자체 처리
     socket.on('stop_race', safeHandler('stop_race', () => {
       if (!currentRoom) return;
       const room = rooms.get(currentRoom);
       if (!room || room.racePhase !== 'racing') return;
+      // 멀티플레이 레이스는 교사만 정지 가능
+      if (!isTeacher(socket.id, currentRoom)) {
+        socket.emit('auth_error', { message: '레이스 정지는 교사만 가능합니다.' });
+        return;
+      }
+      room.raceFinished = room.raceFinished || {};
       for (const [teamId, ball] of Object.entries(room.raceBalls)) {
         if (ball.status === 'racing') {
-          const gm = GLOBAL_MINIMA[room.mapLevel] || GLOBAL_MINIMA[2];
-          const dist = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
+          const outcome = inspectRaceBall(ball, room.mapLevel, Number.POSITIVE_INFINITY) || {
+            status: 'local_minimum',
+            distToGlobal: 0,
+          };
+          const dist = outcome.distToGlobal;
           ball.status = dist < 0.8 ? 'converged' : 'local_minimum';
           const td = room.raceTeams[teamId];
-          room.raceFinished[teamId] = { teamId, teamName: td?.name, finalLoss: ball.loss, status: ball.status, time: Date.now() - room.raceStartTime, cumulativeLoss: ball.cumulativeLoss || 0, lr: td?.learningRate || ball.lr, momentum: td?.momentum || ball.momentum, distToGlobal: dist };
+          room.raceFinished[teamId] = createRaceResult({
+            teamId,
+            teamName: td?.name || teamId,
+            ball,
+            level: room.mapLevel,
+            timeMs: Date.now() - room.raceStartTime,
+            status: ball.status,
+            lr: td?.learningRate || ball.lr,
+            momentum: td?.momentum || ball.momentum,
+            distToGlobal: dist,
+          });
         }
       }
       if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
       room.racePhase = 'finished';
-      io.to(currentRoom).emit('race_finished', { results: Object.values(room.raceFinished) });
+      room.raceResults = rankRaceResults(Object.values(room.raceFinished));
+      io.to(currentRoom).emit('race_finished', { results: room.raceResults });
     }));
 
     // 교사: 같은 맵 다시 도전 (retry_same_level) — 맵 유지, 공 초기화
@@ -656,25 +672,27 @@ export function registerSocketHandlers(io) {
       if (room.raceInterval) { clearInterval(room.raceInterval); room.raceInterval = null; }
       if (room.countdownInterval) { clearInterval(room.countdownInterval); room.countdownInterval = null; }
 
-      const level = room.mapLevel || 2;
+      pruneDisconnectedRaceEntries(room);
+
+      const level = normalizeMapLevel(room.mapLevel, 2);
       room.racePhase = 'preparing';
       room.raceFinished = {};
       room.raceBalls = {};
+      room.raceResults = [];
+      room.gpCountdown = 0;
 
       // 기존 팀 유지, 공 위치 리셋
-      const startPos = START_POSITIONS[level] || START_POSITIONS[2];
       for (const [teamId, team] of Object.entries(room.raceTeams || {})) {
-        const sx = startPos.x + (Math.random() - 0.5) * 0.5;
-        const sz = startPos.z + (Math.random() - 0.5) * 0.5;
-        room.raceBalls[teamId] = {
-          x: sx, z: sz,
-          y: lossFunctionByLevel(sx, sz, level),
-          vx: 0, vz: 0, trail: [], status: 'preparing',
-          loss: lossFunctionByLevel(sx, sz, level),
+        const position = getRandomizedStartPosition(level);
+        room.raceTeams[teamId].mapLevel = level;
+        room.raceBalls[teamId] = createRaceBall({
+          level,
+          x: position.x,
+          z: position.z,
           lr: team.learningRate || 0.1,
           momentum: team.momentum || 0.9,
-          cumulativeLoss: 0,
-        };
+          status: 'preparing',
+        });
       }
 
       io.to(currentRoom).emit('race_prepare', {
@@ -696,10 +714,13 @@ export function registerSocketHandlers(io) {
       room.racePhase = 'setup';
       room.raceBalls = {};
       room.raceFinished = {};
+      room.raceResults = [];
+      room.raceMode = 'competition';
       room.gpActive = false;
       room.gpStage = 0;
       room.gpStageResults = [[], [], []];
       room.gpFinalResults = [];
+      room.gpCountdown = 0;
       io.to(currentRoom).emit('race_reset', { teams: room.raceTeams });
       console.log(`🔄 레이스 리셋! 방 [${currentRoom}]`);
     }));
@@ -821,6 +842,61 @@ export function registerSocketHandlers(io) {
         socket.emit('auth_error', { message: '교사 권한이 필요합니다.' });
         return;
       }
+      const room = getRoomState(currentRoom);
+
+      // PAUSE/RESUME: 레이스 인터벌 실제 중지/재개
+      if (payload.command === 'PAUSE' && room.racePhase === 'racing') {
+        if (room.raceInterval) {
+          clearInterval(room.raceInterval);
+          room.raceInterval = null;
+        }
+        room.racePaused = true;
+        console.log(`⏸️ 레이스 일시정지! 방 [${currentRoom}]`);
+        io.to(currentRoom).emit('race_paused', { paused: true });
+      } else if (payload.command === 'RESUME' && room.racePaused) {
+        room.racePaused = false;
+        console.log(`▶️ 레이스 재개! 방 [${currentRoom}]`);
+        io.to(currentRoom).emit('race_paused', { paused: false });
+        // 레이스 tick 인터벌 재시작
+        if (!room.raceInterval && room.racePhase === 'racing') {
+          room.raceInterval = setInterval(() => {
+            let allDone = true;
+            for (const [teamId, ball] of Object.entries(room.raceBalls)) {
+              if (ball.status !== 'racing') continue;
+              allDone = false;
+              advanceRaceBall(ball, room.mapLevel);
+              const elapsed = Date.now() - room.raceStartTime;
+              const outcome = inspectRaceBall(ball, room.mapLevel, elapsed);
+              if (outcome) {
+                ball.status = outcome.status;
+                const td = room.raceTeams[teamId];
+                room.raceFinished[teamId] = createRaceResult({
+                  teamId, teamName: td?.name || teamId, ball, level: room.mapLevel,
+                  timeMs: elapsed, status: outcome.status,
+                  lr: td?.learningRate || ball.lr, momentum: td?.momentum || ball.momentum,
+                  distToGlobal: outcome.distToGlobal,
+                });
+                io.to(currentRoom).emit('race_alert', {
+                  teamId, teamName: td?.name || teamId,
+                  status: outcome.status, loss: ball.loss,
+                  message: outcome.status === 'converged'
+                    ? `🏆 ${td?.name || teamId} 수렴!`
+                    : `⚠️ ${td?.name || teamId} ${outcome.status}`,
+                });
+              }
+            }
+            io.to(currentRoom).emit('race_tick', { balls: room.raceBalls });
+            if (allDone) {
+              clearInterval(room.raceInterval);
+              room.raceInterval = null;
+              room.racePhase = 'finished';
+              room.raceResults = rankRaceResults(Object.values(room.raceFinished));
+              io.to(currentRoom).emit('race_finished', { results: room.raceResults });
+            }
+          }, 150);
+        }
+      }
+
       console.log(`🎓 교사 명령: ${payload.command}`);
       io.to(currentRoom).emit('teacher_command', payload);
     }));
@@ -834,8 +910,23 @@ export function registerSocketHandlers(io) {
         const student = room.students.get(socket.id);
 
         if (student) {
-          console.log(`💫 ${student.studentName} 퇴장 (방 [${currentRoom}])`);
+          const raceInProgress = room.racePhase === 'racing' || room.racePhase === 'preparing';
+
+          // 레이스 진행 중이면 팀/공 데이터를 보존하여 재접속 시 복귀 가능하게 함
+          if (raceInProgress && room.raceTeams?.[socket.id]) {
+            if (!room.disconnectedTeams) room.disconnectedTeams = {};
+            room.disconnectedTeams[student.studentName] = {
+              oldSocketId: socket.id,
+              team: { ...room.raceTeams[socket.id] },
+              ball: room.raceBalls?.[socket.id] ? { ...room.raceBalls[socket.id] } : null,
+              finished: room.raceFinished?.[socket.id] || null,
+              disconnectedAt: Date.now(),
+            };
+          }
+
+          console.log(`💫 ${student.studentName} 퇴장 (방 [${currentRoom}])${raceInProgress ? ' [레이스 데이터 보존]' : ''}`);
           room.students.delete(socket.id);
+          const raceStateChanged = pruneDisconnectedRaceEntries(room);
 
           io.to(currentRoom).emit('student_left', {
             studentId: socket.id,
@@ -844,6 +935,22 @@ export function registerSocketHandlers(io) {
           });
 
           broadcastRoomUpdate(io, currentRoom);
+
+          if (raceStateChanged) {
+            io.to(currentRoom).emit('race_teams_updated', {
+              teams: room.raceTeams,
+            });
+
+            if (room.racePhase === 'preparing') {
+              io.to(currentRoom).emit('race_prepare', {
+                balls: room.raceBalls,
+                teams: room.raceTeams,
+                mapLevel: normalizeMapLevel(room.mapLevel, 2),
+              });
+            } else if (room.racePhase === 'racing') {
+              io.to(currentRoom).emit('race_tick', { balls: room.raceBalls });
+            }
+          }
         }
 
         if (room.teacherId === socket.id) {
@@ -857,6 +964,7 @@ export function registerSocketHandlers(io) {
             clearInterval(room.countdownInterval);
             room.countdownInterval = null;
           }
+          room.gpCountdown = 0;
         }
 
         if (room.students.size === 0 && !room.teacherId) {

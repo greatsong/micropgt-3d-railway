@@ -71,13 +71,20 @@ export default function HomePage() {
     socket.off('room_full');
     socket.off('connect_error');
 
-    socket.on('connect', () => {
+    const emitJoin = () => {
       setConnected(true);
       socket.emit('join_class', {
         studentName: name.trim(),
         roomCode: room.trim(),
       });
-    });
+    };
+
+    socket.on('connect', emitJoin);
+
+    // 이미 연결되어 있으면 즉시 join_class emit
+    if (socket.connected) {
+      emitJoin();
+    }
 
     socket.on('room_state', () => {
       router.push('/hub');
