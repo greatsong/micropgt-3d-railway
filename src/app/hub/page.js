@@ -53,7 +53,7 @@ export default function HubPage() {
                     <span className="text-gradient">🚀 미션 센터</span>
                 </h1>
                 <p className={s.headerSub}>
-                    {studentName ? `${studentName}님, ` : ''}학습할 모듈을 선택하세요!
+                    {studentName ? `${studentName} 팀, ` : ''}학습할 모듈을 선택하세요!
                 </p>
             </div>
 

@@ -82,7 +82,9 @@ export function registerSocketHandlers(io) {
     // ▸ 학생 입장
     socket.on('join_class', safeHandler('join_class', (payload) => {
       const studentName = sanitize(payload.studentName, 20);
+      const memberNames = sanitize(payload.memberNames || '', 100);
       const roomCode = sanitize(payload.roomCode, 10);
+      const stableId = sanitize(payload.stableId || '', 50);
       if (!studentName || !roomCode) return;
 
       // 방 인원 제한 체크
@@ -100,6 +102,8 @@ export function registerSocketHandlers(io) {
       studentInfo = {
         id: socket.id,
         studentName,
+        memberNames,
+        stableId,
         roomCode,
         joinedAt: Date.now(),
         word: null,
@@ -116,7 +120,7 @@ export function registerSocketHandlers(io) {
       const alreadyInRoom = room.students.has(socket.id);
       room.students.set(socket.id, studentInfo);
 
-      console.log(`🚀 ${studentName} → 방 [${roomCode}] 입장 (${room.students.size}명)${alreadyInRoom ? ' [재입장]' : ''}`);
+      console.log(`🚀 팀 [${studentName}] (${memberNames}) → 방 [${roomCode}] 입장 (${room.students.size}팀)${alreadyInRoom ? ' [재입장]' : ''}`);
 
       if (!alreadyInRoom) {
         io.to(roomCode).emit('student_joined', {
@@ -126,11 +130,11 @@ export function registerSocketHandlers(io) {
         broadcastRoomUpdate(io, roomCode);
       }
 
-      // 재접속 시 보존된 레이스 팀 데이터 복구
-      if (room.disconnectedTeams?.[studentName]) {
-        const saved = room.disconnectedTeams[studentName];
+      // 재접속 시 보존된 레이스 팀 데이터 복구 (stableId 우선, 없으면 studentName 폴백)
+      const recoveryKey = stableId || studentName;
+      if (room.disconnectedTeams?.[recoveryKey]) {
+        const saved = room.disconnectedTeams[recoveryKey];
         const newId = socket.id;
-        // 기존 팀 데이터를 새 socket.id로 이전
         room.raceTeams = room.raceTeams || {};
         room.raceTeams[newId] = { ...saved.team, id: newId, memberId: newId };
         if (saved.ball) {
@@ -141,10 +145,9 @@ export function registerSocketHandlers(io) {
           room.raceFinished = room.raceFinished || {};
           room.raceFinished[newId] = { ...saved.finished, teamId: newId };
         }
-        delete room.disconnectedTeams[studentName];
+        delete room.disconnectedTeams[recoveryKey];
         console.log(`🔄 ${studentName} 레이스 데이터 복구 완료 (${saved.oldSocketId} → ${newId})`);
 
-        // 복구된 팀/공 상태를 전체에 브로드캐스트
         io.to(roomCode).emit('race_teams_updated', { teams: room.raceTeams });
         if (room.racePhase === 'racing' || room.racePhase === 'preparing') {
           io.to(roomCode).emit('race_tick', { balls: room.raceBalls });
@@ -274,11 +277,13 @@ export function registerSocketHandlers(io) {
       room.raceTeams[teamId] = {
         id: teamId,
         name: sanitize(payload.teamName, 24) || existingTeam.name || studentInfo?.studentName || 'Team',
+        memberNames: existingTeam.memberNames || studentInfo?.memberNames || '',
         color: payload.color || existingTeam.color || `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
         learningRate,
         momentum,
         mapLevel,
         memberId: socket.id,
+        paramsConfirmed: true,
       };
 
       console.log(`🏎️ 팀 [${room.raceTeams[teamId].name}] 파라미터: lr=${learningRate}, m=${momentum}`);
@@ -562,6 +567,11 @@ export function registerSocketHandlers(io) {
       if (!currentRoom) return;
       const room = getRoomState(currentRoom);
       if (!isTeacher(socket.id, currentRoom)) return;
+      // 레이스 진행 중에는 맵 변경 불가
+      if (room.racePhase === 'racing') {
+        socket.emit('auth_error', { message: '레이스 중에는 맵을 변경할 수 없습니다.' });
+        return;
+      }
       const level = normalizeMapLevel(payload?.level, room.mapLevel || 2);
       room.mapLevel = level;
       io.to(currentRoom).emit('map_selected', { level });
@@ -593,6 +603,7 @@ export function registerSocketHandlers(io) {
           room.raceTeams[socketId] = {
             id: socketId,
             name: student.studentName || '익명',
+            memberNames: student.memberNames || '',
             color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
             learningRate: 0.1,
             momentum: 0.9,
@@ -915,7 +926,8 @@ export function registerSocketHandlers(io) {
           // 레이스 진행 중이면 팀/공 데이터를 보존하여 재접속 시 복귀 가능하게 함
           if (raceInProgress && room.raceTeams?.[socket.id]) {
             if (!room.disconnectedTeams) room.disconnectedTeams = {};
-            room.disconnectedTeams[student.studentName] = {
+            const recoveryKey = student.stableId || student.studentName;
+            room.disconnectedTeams[recoveryKey] = {
               oldSocketId: socket.id,
               team: { ...room.raceTeams[socket.id] },
               ball: room.raceBalls?.[socket.id] ? { ...room.raceBalls[socket.id] } : null,

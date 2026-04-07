@@ -3,11 +3,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// 브라우저 탭 고유 ID (새로고침해도 유지, 탭마다 다름)
+function getOrCreateStableId() {
+    if (typeof window === 'undefined') return '';
+    let id = sessionStorage.getItem('microgpt-stableId');
+    if (!id) {
+        id = crypto.randomUUID();
+        sessionStorage.setItem('microgpt-stableId', id);
+    }
+    return id;
+}
+
 export const useClassStore = create(
     persist(
         (set, get) => ({
             // ── 접속 정보 (localStorage 저장) ──
-            studentName: '',
+            studentName: '',   // 팀 이름 (레이싱 팀명으로 사용)
+            memberNames: '',   // 팀원 학번/이름 (기록용)
             roomCode: '',
 
             // ── 실시간 상태 (저장 안 함) ──
@@ -17,9 +29,12 @@ export const useClassStore = create(
             currentWeek: 3,
             notifications: [],
 
+            // ── 안정적 식별자 ──
+            getStableId: () => getOrCreateStableId(),
+
             // ── 액션: 학생 입장 정보 설정 ──
-            setStudentInfo: (name, room) =>
-                set({ studentName: name, roomCode: room }),
+            setStudentInfo: (name, room, members) =>
+                set({ studentName: name, roomCode: room, memberNames: members || '' }),
 
             setConnected: (val) => set({ isConnected: val }),
             setTeacher: (val) => set({ isTeacher: val }),
@@ -56,6 +71,7 @@ export const useClassStore = create(
             name: 'microgpt-class',
             partialize: (state) => ({
                 studentName: state.studentName,
+                memberNames: state.memberNames,
                 roomCode: state.roomCode,
             }),
         }

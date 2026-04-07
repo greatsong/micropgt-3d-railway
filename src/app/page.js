@@ -23,8 +23,10 @@ export default function HomePage() {
   const setStudentInfo = useClassStore((st) => st.setStudentInfo);
   const setConnected = useClassStore((st) => st.setConnected);
   const addNotification = useClassStore((st) => st.addNotification);
+  const getStableId = useClassStore((st) => st.getStableId);
 
-  const [name, setName] = useState('');
+  const [teamName, setTeamName] = useState('');
+  const [memberNames, setMemberNames] = useState('');
   const [room, setRoom] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -51,7 +53,8 @@ export default function HomePage() {
 
   const handleJoin = () => {
     const errors = {};
-    if (!name.trim()) errors.name = true;
+    if (!teamName.trim()) errors.teamName = true;
+    if (!memberNames.trim()) errors.memberNames = true;
     if (!room.trim()) errors.room = true;
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -60,7 +63,7 @@ export default function HomePage() {
     setFieldErrors({});
 
     setIsJoining(true);
-    setStudentInfo(name.trim(), room.trim());
+    setStudentInfo(teamName.trim(), room.trim(), memberNames.trim());
 
     const socket = connectSocket();
     setSocketRef(socket);
@@ -74,8 +77,10 @@ export default function HomePage() {
     const emitJoin = () => {
       setConnected(true);
       socket.emit('join_class', {
-        studentName: name.trim(),
+        studentName: teamName.trim(),
+        memberNames: memberNames.trim(),
         roomCode: room.trim(),
+        stableId: getStableId(),
       });
     };
 
@@ -136,15 +141,27 @@ export default function HomePage() {
         {/* 입력 폼 */}
         <div className={s.form}>
           <div>
-            <label className="label-cosmic">닉네임</label>
+            <label className="label-cosmic">팀 이름</label>
             <input
-              className={`input-cosmic ${fieldErrors.name ? s.inputError : ''}`}
-              placeholder="예: 스페이스 라이더 석리"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setFieldErrors(prev => ({ ...prev, name: false })); }}
+              className={`input-cosmic ${fieldErrors.teamName ? s.inputError : ''}`}
+              placeholder="예: 1조, A팀"
+              value={teamName}
+              onChange={(e) => { setTeamName(e.target.value); setFieldErrors(prev => ({ ...prev, teamName: false })); }}
               maxLength={20}
             />
-            {fieldErrors.name && <p className={s.errorMsg}>필수 입력 항목입니다</p>}
+            {fieldErrors.teamName && <p className={s.errorMsg}>필수 입력 항목입니다</p>}
+          </div>
+
+          <div>
+            <label className="label-cosmic">팀원 (학번 이름)</label>
+            <input
+              className={`input-cosmic ${fieldErrors.memberNames ? s.inputError : ''}`}
+              placeholder="예: 20101 홍길동, 20102 김철수"
+              value={memberNames}
+              onChange={(e) => { setMemberNames(e.target.value); setFieldErrors(prev => ({ ...prev, memberNames: false })); }}
+              maxLength={100}
+            />
+            {fieldErrors.memberNames && <p className={s.errorMsg}>필수 입력 항목입니다</p>}
           </div>
 
           <div>
@@ -161,7 +178,7 @@ export default function HomePage() {
           <button
             className={`btn-nova ${s.joinBtn}`}
             onClick={handleJoin}
-            disabled={isJoining || !name.trim() || !room.trim()}
+            disabled={isJoining || !teamName.trim() || !memberNames.trim() || !room.trim()}
           >
             <span>{isJoining ? '🌠 우주로 진입 중...' : '🚀 우주선 탑승하기'}</span>
           </button>

@@ -4,7 +4,7 @@
     {
       "name": "micropgt",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/greatsong/greatsong-project/micropgt-3d-railway && npm run dev"],
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/greatsong/greatsong-project/micropgt-3d-railway && npm run dev"],
       "port": 3000
     },
     {

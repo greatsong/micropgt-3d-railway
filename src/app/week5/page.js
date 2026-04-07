@@ -63,8 +63,10 @@ export default function Week5Page() {
     const router = useRouter();
     const isMobile = useIsMobile();
     const studentName = useClassStore((st) => st.studentName);
+    const memberNames = useClassStore((st) => st.memberNames);
     const roomCode = useClassStore((st) => st.roomCode);
     const addNotification = useClassStore((st) => st.addNotification);
+    const getStableId = useClassStore((st) => st.getStableId);
 
     const racePhase = useRaceStore((st) => st.racePhase);
     const setRacePhase = useRaceStore((st) => st.setRacePhase);
@@ -120,7 +122,9 @@ export default function Week5Page() {
             if (roomCode) {
                 socket.emit('join_class', {
                     studentName: studentName || '익명',
+                    memberNames: memberNames || '',
                     roomCode,
+                    stableId: getStableId(),
                 });
             }
         };
@@ -213,6 +217,13 @@ export default function Week5Page() {
         };
 
         const handleRacePrepare = (data) => {
+            // 솔로 모드 중이면 자동 해제하여 수업 레이스로 합류
+            if (isSoloMode) {
+                if (soloIntervalRef.current) { clearInterval(soloIntervalRef.current); soloIntervalRef.current = null; }
+                setIsSoloMode(false);
+                setSoloSingleMode(false);
+                addNotification('🎓 선생님이 레이스를 준비했습니다! 수업 레이스로 전환됩니다.');
+            }
             setRacePhase('preparing');
             setResults([]);
             setGpCountdown(0);
@@ -433,9 +444,11 @@ export default function Week5Page() {
             socket.emit('join_class', {
                 roomCode,
                 studentName: studentName || '익명',
+                memberNames: memberNames || '',
+                stableId: getStableId(),
             });
         }
-    }, [reset, resetSoloProgress, roomCode, studentName]);
+    }, [reset, resetSoloProgress, roomCode, studentName, memberNames, getStableId]);
 
     // ── 혼자 연습 모드 (GP 3스테이지) ──
     const handleSoloPractice = useCallback(() => {

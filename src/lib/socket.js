@@ -55,12 +55,14 @@ export function setupReconnectHandler(getStoreState) {
     s.io.on('reconnect', (attemptNumber) => {
         console.log(`[socket] 재연결 성공 (시도 ${attemptNumber}회)`);
 
-        const { roomCode, studentName } = getStoreState();
+        const { roomCode, studentName, memberNames, getStableId } = getStoreState();
         if (roomCode) {
             console.log(`[socket] 방 재입장: ${roomCode}`);
             s.emit('join_class', {
                 studentName: studentName || '익명',
+                memberNames: memberNames || '',
                 roomCode,
+                stableId: getStableId(),
             });
         }
     });

@@ -543,10 +543,12 @@ export default function DashboardPage() {
                                         key={m.level}
                                         className={`btn-nova ${s.btnSmall}`}
                                         onClick={() => handleSelectMap(m.level)}
+                                        disabled={racePhase === 'racing'}
                                         style={{
                                             borderColor: selectedMap === m.level ? '#a78bfa' : 'rgba(255,255,255,0.15)',
                                             background: selectedMap === m.level ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
                                             fontWeight: selectedMap === m.level ? 700 : 400,
+                                            opacity: racePhase === 'racing' ? 0.4 : 1,
                                             fontSize: '0.68rem',
                                             padding: '4px 8px',
                                         }}
@@ -658,11 +660,11 @@ export default function DashboardPage() {
                 <div className={`${s.sidebar} ${isMobile ? s.sidebarMobile : ''}`}>
                     {/* 학생 현황 */}
                     <div className={`glass-card ${s.sideSection}`}>
-                        <label className="label-cosmic">접속 학생 현황</label>
+                        <label className="label-cosmic">접속 팀 현황</label>
                         {students.length === 0 ? (
                             <div className={s.emptyState}>
                                 <span className={s.emptyIcon}>👨‍🚀</span>
-                                <p>학생들이 입장하면 여기에 표시됩니다</p>
+                                <p>팀이 입장하면 여기에 표시됩니다</p>
                             </div>
                         ) : (
                             <div className={s.studentGrid}>
@@ -672,8 +674,20 @@ export default function DashboardPage() {
                                             className={s.cardDot}
                                             style={{ background: st.color || 'var(--accent-nova)' }}
                                         />
-                                        <div>
-                                            <div className={s.cardName}>{st.studentName}</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className={s.cardName}>
+                                                {st.studentName}
+                                                {raceTeams[st.id] && racePhase === 'preparing' && (
+                                                    <span style={{ marginLeft: 6, fontSize: '0.65rem', color: raceTeams[st.id]?.paramsConfirmed ? '#10b981' : '#f59e0b' }}>
+                                                        {raceTeams[st.id]?.paramsConfirmed ? '✅' : '⏳'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {st.memberNames && (
+                                                <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                                                    {st.memberNames}
+                                                </div>
+                                            )}
                                         </div>
                                         {stars[st.id] && (
                                             <span className={s.cardWord}>{stars[st.id].word}</span>
