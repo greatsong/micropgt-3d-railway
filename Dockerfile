@@ -20,6 +20,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/backend ./backend
+COPY --from=builder /app/src/lib ./src/lib
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/public ./public
