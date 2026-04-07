@@ -84,9 +84,9 @@ function gradientLevel1(x, z) {
 }
 
 // ── Level 3: 중급 — "로컬 미니마 + 모멘텀" ──
-// 핵심 교육 레벨! 로컬 미니마가 글로벌과 거의 같은 깊이
-// 모멘텀 없이(0): 로컬에 갇힘 / 모멘텀 0.5+: 탈출 가능
-// 글로벌 최솟값: (1, 2) 깊이 -3.0 / 로컬들: -2.5 ~ -2.8
+// 핵심 교육 레벨! 로컬 미니마가 글로벌보다 훨씬 얕음
+// 모멘텀 없이(0): 로컬에 갇힘 / 모멘텀 0.7+: 탈출 가능
+// 글로벌 최솟값: (1, 2) 깊이 -3.0 / 로컬들: -1.0 ~ -1.8 (얕아서 모멘텀으로 탈출 가능)
 function lossLevel3(x, z) {
     const r2 = x * x + z * z;
     // 완만한 기본 포물면
@@ -95,11 +95,11 @@ function lossLevel3(x, z) {
     // 글로벌 최솟값 (좁고 깊음) — (1, 2)에 위치
     const globalMin = -3.0 * Math.exp(-((x - 1) * (x - 1) + (z - 2) * (z - 2)) / 1.5);
 
-    // 로컬 최솟값들: 깊이를 글로벌에 가깝게 → 모멘텀 없으면 구분 불가
-    const local1 = -2.8 * Math.exp(-((x + 4) * (x + 4) + (z + 1) * (z + 1)) / 2);
-    const local2 = -2.5 * Math.exp(-((x - 4) * (x - 4) + (z - 3) * (z - 3)) / 2);
-    const local3 = -2.6 * Math.exp(-((x + 2) * (x + 2) + (z - 4) * (z - 4)) / 1.5);
-    const local4 = -2.5 * Math.exp(-((x - 2) * (x - 2) + (z + 4) * (z + 4)) / 1.5);
+    // 로컬 최솟값들: 얕게 변경 → 모멘텀 0.7+이면 탈출 가능
+    const local1 = -1.5 * Math.exp(-((x + 4) * (x + 4) + (z + 1) * (z + 1)) / 2);
+    const local2 = -1.8 * Math.exp(-((x - 4) * (x - 4) + (z - 3) * (z - 3)) / 2);
+    const local3 = -1.3 * Math.exp(-((x + 2) * (x + 2) + (z - 4) * (z - 4)) / 1.5);
+    const local4 = -1.0 * Math.exp(-((x - 2) * (x - 2) + (z + 4) * (z + 4)) / 1.5);
 
     // 노이즈 낮게 — 교육 목적상 깔끔하게
     const noise = 0.15 * Math.sin(2 * x) * Math.cos(2 * z);
@@ -120,25 +120,25 @@ function gradientLevel3(x, z) {
     gx += (2 * 3.0 / 1.5) * (x - 1) * expG;   // = 4.0*(x-1)*expG
     gz += (2 * 3.0 / 1.5) * (z - 2) * expG;   // = 4.0*(z-2)*expG
 
-    // 로컬1: -2.8 * exp(-((x+4)² + (z+1)²) / 2)
+    // 로컬1: -1.5 * exp(-((x+4)² + (z+1)²) / 2)
     const expL1 = Math.exp(-((x + 4) * (x + 4) + (z + 1) * (z + 1)) / 2);
-    gx += (2 * 2.8 / 2) * (x + 4) * expL1;    // = 2.8*(x+4)*expL1
-    gz += (2 * 2.8 / 2) * (z + 1) * expL1;    // = 2.8*(z+1)*expL1
+    gx += (2 * 1.5 / 2) * (x + 4) * expL1;    // = 1.5*(x+4)*expL1
+    gz += (2 * 1.5 / 2) * (z + 1) * expL1;    // = 1.5*(z+1)*expL1
 
-    // 로컬2: -2.5 * exp(-((x-4)² + (z-3)²) / 2)
+    // 로컬2: -1.8 * exp(-((x-4)² + (z-3)²) / 2)
     const expL2 = Math.exp(-((x - 4) * (x - 4) + (z - 3) * (z - 3)) / 2);
-    gx += (2 * 2.5 / 2) * (x - 4) * expL2;    // = 2.5*(x-4)*expL2
-    gz += (2 * 2.5 / 2) * (z - 3) * expL2;    // = 2.5*(z-3)*expL2
+    gx += (2 * 1.8 / 2) * (x - 4) * expL2;    // = 1.8*(x-4)*expL2
+    gz += (2 * 1.8 / 2) * (z - 3) * expL2;    // = 1.8*(z-3)*expL2
 
-    // 로컬3: -2.6 * exp(-((x+2)² + (z-4)²) / 1.5)
+    // 로컬3: -1.3 * exp(-((x+2)² + (z-4)²) / 1.5)
     const expL3 = Math.exp(-((x + 2) * (x + 2) + (z - 4) * (z - 4)) / 1.5);
-    gx += (2 * 2.6 / 1.5) * (x + 2) * expL3;  // ≈ 3.467*(x+2)*expL3
-    gz += (2 * 2.6 / 1.5) * (z - 4) * expL3;  // ≈ 3.467*(z-4)*expL3
+    gx += (2 * 1.3 / 1.5) * (x + 2) * expL3;  // ≈ 1.733*(x+2)*expL3
+    gz += (2 * 1.3 / 1.5) * (z - 4) * expL3;  // ≈ 1.733*(z-4)*expL3
 
-    // 로컬4: -2.5 * exp(-((x-2)² + (z+4)²) / 1.5)
+    // 로컬4: -1.0 * exp(-((x-2)² + (z+4)²) / 1.5)
     const expL4 = Math.exp(-((x - 2) * (x - 2) + (z + 4) * (z + 4)) / 1.5);
-    gx += (2 * 2.5 / 1.5) * (x - 2) * expL4;  // ≈ 3.333*(x-2)*expL4
-    gz += (2 * 2.5 / 1.5) * (z + 4) * expL4;  // ≈ 3.333*(z+4)*expL4
+    gx += (2 * 1.0 / 1.5) * (x - 2) * expL4;  // ≈ 1.333*(x-2)*expL4
+    gz += (2 * 1.0 / 1.5) * (z + 4) * expL4;  // ≈ 1.333*(z+4)*expL4
 
     // 노이즈: 0.15*sin(2x)*cos(2z)
     gx += 0.15 * 2 * Math.cos(2 * x) * Math.cos(2 * z);   // = 0.3*cos(2x)*cos(2z)
@@ -169,21 +169,21 @@ function gradientLevel4(x, z) {
 
 // ── Level 5: 마스터 — "종합 전략" ──
 // 로컬 함정 7개 + 하나의 깊은 글로벌 최솟값
-// 로컬 함정 깊이: -3.0 ~ -3.3 (글로벌 -3.5에 매우 가까움)
+// 로컬 함정 깊이: -1.8 ~ -2.3 (글로벌 -3.5보다 훨씬 얕음 → 모멘텀으로 탈출 가능)
 // LR ~0.15 AND 모멘텀 ~0.7 필요
 // 글로벌 최솟값: (1, 1)
 function lossLevel5(x, z) {
     const bowl      = 0.03 * (x * x + z * z);
     const globalMin = -3.5 * Math.exp(-((x - 1) * (x - 1) + (z - 1) * (z - 1)) / 1.2);
-    // 깊은 로컬 함정들 (글로벌과 거의 같은 깊이)
-    const t1 = -3.0 * Math.exp(-((x + 4) * (x + 4) + (z - 1) * (z - 1)) / 1.5);
-    const t2 = -3.1 * Math.exp(-((x + 2) * (x + 2) + (z + 4) * (z + 4)) / 1.5);
-    const t3 = -3.2 * Math.exp(-((x - 4) * (x - 4) + (z + 2) * (z + 2)) / 1.5);
-    const t4 = -3.0 * Math.exp(-((x + 1) * (x + 1) + (z - 4) * (z - 4)) / 1.5);
-    const t5 = -3.3 * Math.exp(-((x - 3) * (x - 3) + (z - 4) * (z - 4)) / 1.5);
-    const t6 = -3.0 * Math.exp(-((x - 2) * (x - 2) + (z + 3) * (z + 3)) / 1.2);
-    // 새 함정: 글로벌 최솟값으로 가는 경로 근처에 배치
-    const t7 = -3.1 * Math.exp(-((x - 0) * (x - 0) + (z - 0) * (z - 0)) / 1.5);
+    // 얕은 로컬 함정들 (글로벌보다 훨씬 얕아서 높은 모멘텀으로 탈출 가능)
+    const t1 = -1.8 * Math.exp(-((x + 4) * (x + 4) + (z - 1) * (z - 1)) / 1.5);
+    const t2 = -2.0 * Math.exp(-((x + 2) * (x + 2) + (z + 4) * (z + 4)) / 1.5);
+    const t3 = -2.3 * Math.exp(-((x - 4) * (x - 4) + (z + 2) * (z + 2)) / 1.5);
+    const t4 = -1.8 * Math.exp(-((x + 1) * (x + 1) + (z - 4) * (z - 4)) / 1.5);
+    const t5 = -2.1 * Math.exp(-((x - 3) * (x - 3) + (z - 4) * (z - 4)) / 1.5);
+    const t6 = -1.9 * Math.exp(-((x - 2) * (x - 2) + (z + 3) * (z + 3)) / 1.2);
+    // 함정: 글로벌 최솟값으로 가는 경로 근처에 배치
+    const t7 = -2.0 * Math.exp(-((x - 0) * (x - 0) + (z - 0) * (z - 0)) / 1.5);
     const noise = 0.2 * Math.sin(1.5 * x) * Math.cos(1.5 * z);
     return bowl + globalMin + t1 + t2 + t3 + t4 + t5 + t6 + t7 + noise + 4;
 }
@@ -197,40 +197,40 @@ function gradientLevel5(x, z) {
     gx += (2 * 3.5 / 1.2) * (x - 1) * expG;
     gz += (2 * 3.5 / 1.2) * (z - 1) * expG;
 
-    // t1: -3.0 * exp(-((x+4)²+(z-1)²)/1.5)
+    // t1: -1.8 * exp(-((x+4)²+(z-1)²)/1.5)
     const eT1 = Math.exp(-((x + 4) * (x + 4) + (z - 1) * (z - 1)) / 1.5);
-    gx += (2 * 3.0 / 1.5) * (x + 4) * eT1;
-    gz += (2 * 3.0 / 1.5) * (z - 1) * eT1;
+    gx += (2 * 1.8 / 1.5) * (x + 4) * eT1;
+    gz += (2 * 1.8 / 1.5) * (z - 1) * eT1;
 
-    // t2: -3.1 * exp(-((x+2)²+(z+4)²)/1.5)
+    // t2: -2.0 * exp(-((x+2)²+(z+4)²)/1.5)
     const eT2 = Math.exp(-((x + 2) * (x + 2) + (z + 4) * (z + 4)) / 1.5);
-    gx += (2 * 3.1 / 1.5) * (x + 2) * eT2;
-    gz += (2 * 3.1 / 1.5) * (z + 4) * eT2;
+    gx += (2 * 2.0 / 1.5) * (x + 2) * eT2;
+    gz += (2 * 2.0 / 1.5) * (z + 4) * eT2;
 
-    // t3: -3.2 * exp(-((x-4)²+(z+2)²)/1.5)
+    // t3: -2.3 * exp(-((x-4)²+(z+2)²)/1.5)
     const eT3 = Math.exp(-((x - 4) * (x - 4) + (z + 2) * (z + 2)) / 1.5);
-    gx += (2 * 3.2 / 1.5) * (x - 4) * eT3;
-    gz += (2 * 3.2 / 1.5) * (z + 2) * eT3;
+    gx += (2 * 2.3 / 1.5) * (x - 4) * eT3;
+    gz += (2 * 2.3 / 1.5) * (z + 2) * eT3;
 
-    // t4: -3.0 * exp(-((x+1)²+(z-4)²)/1.5)
+    // t4: -1.8 * exp(-((x+1)²+(z-4)²)/1.5)
     const eT4 = Math.exp(-((x + 1) * (x + 1) + (z - 4) * (z - 4)) / 1.5);
-    gx += (2 * 3.0 / 1.5) * (x + 1) * eT4;
-    gz += (2 * 3.0 / 1.5) * (z - 4) * eT4;
+    gx += (2 * 1.8 / 1.5) * (x + 1) * eT4;
+    gz += (2 * 1.8 / 1.5) * (z - 4) * eT4;
 
-    // t5: -3.3 * exp(-((x-3)²+(z-4)²)/1.5)
+    // t5: -2.1 * exp(-((x-3)²+(z-4)²)/1.5)
     const eT5 = Math.exp(-((x - 3) * (x - 3) + (z - 4) * (z - 4)) / 1.5);
-    gx += (2 * 3.3 / 1.5) * (x - 3) * eT5;
-    gz += (2 * 3.3 / 1.5) * (z - 4) * eT5;
+    gx += (2 * 2.1 / 1.5) * (x - 3) * eT5;
+    gz += (2 * 2.1 / 1.5) * (z - 4) * eT5;
 
-    // t6: -3.0 * exp(-((x-2)²+(z+3)²)/1.2)
+    // t6: -1.9 * exp(-((x-2)²+(z+3)²)/1.2)
     const eT6 = Math.exp(-((x - 2) * (x - 2) + (z + 3) * (z + 3)) / 1.2);
-    gx += (2 * 3.0 / 1.2) * (x - 2) * eT6;
-    gz += (2 * 3.0 / 1.2) * (z + 3) * eT6;
+    gx += (2 * 1.9 / 1.2) * (x - 2) * eT6;
+    gz += (2 * 1.9 / 1.2) * (z + 3) * eT6;
 
-    // t7: -3.1 * exp(-(x²+z²)/1.5) — 원점 근처 함정
+    // t7: -2.0 * exp(-(x²+z²)/1.5) — 원점 근처 함정
     const eT7 = Math.exp(-(x * x + z * z) / 1.5);
-    gx += (2 * 3.1 / 1.5) * x * eT7;
-    gz += (2 * 3.1 / 1.5) * z * eT7;
+    gx += (2 * 2.0 / 1.5) * x * eT7;
+    gz += (2 * 2.0 / 1.5) * z * eT7;
 
     // 노이즈: 0.2*sin(1.5x)*cos(1.5z)
     gx += 0.2 * 1.5 * Math.cos(1.5 * x) * Math.cos(1.5 * z);
@@ -290,13 +290,13 @@ function lossLevel7(x, z) {
     const r = Math.sqrt(x * x + z * z);
     const theta = Math.atan2(z, x);
     // 나선형 골짜기: r과 theta를 결합한 주기 함수
-    const spiral = 0.5 * Math.sin(2 * theta - r * 1.2) * Math.exp(-r * 0.08);
-    // 중심으로 갈수록 낮아지는 기본 깔때기
-    const funnel = 0.15 * r - 2.5 * Math.exp(-(r * r) / 3.0);
-    // 나선형 능선 (장벽 역할)
-    const ridges = 0.6 * Math.cos(2 * theta - r * 1.2) * Math.exp(-r * 0.05) * (r > 1 ? 1 : r);
-    const noise = 0.05 * Math.sin(3 * x) * Math.cos(3 * z);
-    return funnel + spiral + ridges + noise + 3.0;
+    const spiral = 0.3 * Math.sin(2 * theta - r * 1.0) * Math.exp(-r * 0.1);
+    // 중심으로 갈수록 낮아지는 기본 깔때기 (강한 기울기)
+    const funnel = 0.25 * r - 3.0 * Math.exp(-(r * r) / 4.0);
+    // 나선형 능선 (낮은 장벽 — 모멘텀 0.7+이면 넘을 수 있음)
+    const ridges = 0.25 * Math.cos(2 * theta - r * 1.0) * Math.exp(-r * 0.08) * (r > 1 ? 1 : r);
+    const noise = 0.03 * Math.sin(3 * x) * Math.cos(3 * z);
+    return funnel + spiral + ridges + noise + 3.5;
 }
 
 function gradientLevel7(x, z) {
@@ -310,43 +310,41 @@ function gradientLevel7(x, z) {
     const dtx = -z / (r * r);
     const dtz = x / (r * r);
 
-    // spiral = 0.5 * sin(2θ - 1.2r) * exp(-0.08r)
-    const spiralArg = 2 * theta - r * 1.2;
+    // spiral = 0.3 * sin(2θ - 1.0r) * exp(-0.1r)
+    const spiralArg = 2 * theta - r * 1.0;
     const cosArg = Math.cos(spiralArg);
     const sinArg = Math.sin(spiralArg);
-    const expDecay = Math.exp(-r * 0.08);
-    // ∂spiral/∂x = 0.5 * [cos(arg)*(2*dtx - 1.2*drx)*exp + sin(arg)*(-0.08*drx)*exp]
-    const spiralGx = 0.5 * (cosArg * (2 * dtx - 1.2 * drx) * expDecay + sinArg * (-0.08 * drx) * expDecay);
-    const spiralGz = 0.5 * (cosArg * (2 * dtz - 1.2 * drz) * expDecay + sinArg * (-0.08 * drz) * expDecay);
+    const expDecay = Math.exp(-r * 0.1);
+    const spiralGx = 0.3 * (cosArg * (2 * dtx - 1.0 * drx) * expDecay + sinArg * (-0.1 * drx) * expDecay);
+    const spiralGz = 0.3 * (cosArg * (2 * dtz - 1.0 * drz) * expDecay + sinArg * (-0.1 * drz) * expDecay);
 
-    // funnel = 0.15*r - 2.5*exp(-r²/3.0)
-    const expFunnel = Math.exp(-(r * r) / 3.0);
-    const funnelGx = 0.15 * drx + 2.5 * (2 * x / 3.0) * expFunnel;
-    const funnelGz = 0.15 * drz + 2.5 * (2 * z / 3.0) * expFunnel;
+    // funnel = 0.25*r - 3.0*exp(-r²/4.0)
+    const expFunnel = Math.exp(-(r * r) / 4.0);
+    const funnelGx = 0.25 * drx + 3.0 * (2 * x / 4.0) * expFunnel;
+    const funnelGz = 0.25 * drz + 3.0 * (2 * z / 4.0) * expFunnel;
 
-    // ridges = 0.6 * cos(2θ - 1.2r) * exp(-0.05r) * clamp(r,0,1)
-    const ridgeArg = 2 * theta - r * 1.2;
+    // ridges = 0.25 * cos(2θ - 1.0r) * exp(-0.08r) * clamp(r,0,1)
+    const ridgeArg = 2 * theta - r * 1.0;
     const cosRidge = Math.cos(ridgeArg);
     const sinRidge = Math.sin(ridgeArg);
-    const expRidge = Math.exp(-r * 0.05);
+    const expRidge = Math.exp(-r * 0.08);
     const rClamp = r > 1 ? 1 : r;
     const rClampDrx = r > 1 ? 0 : drx;
     const rClampDrz = r > 1 ? 0 : drz;
-    // 곱 규칙: d(cos*exp*clamp)/dx
-    const ridgeGx = 0.6 * (
-        (-sinRidge) * (2 * dtx - 1.2 * drx) * expRidge * rClamp +
-        cosRidge * (-0.05 * drx) * expRidge * rClamp +
+    const ridgeGx = 0.25 * (
+        (-sinRidge) * (2 * dtx - 1.0 * drx) * expRidge * rClamp +
+        cosRidge * (-0.08 * drx) * expRidge * rClamp +
         cosRidge * expRidge * rClampDrx
     );
-    const ridgeGz = 0.6 * (
-        (-sinRidge) * (2 * dtz - 1.2 * drz) * expRidge * rClamp +
-        cosRidge * (-0.05 * drz) * expRidge * rClamp +
+    const ridgeGz = 0.25 * (
+        (-sinRidge) * (2 * dtz - 1.0 * drz) * expRidge * rClamp +
+        cosRidge * (-0.08 * drz) * expRidge * rClamp +
         cosRidge * expRidge * rClampDrz
     );
 
-    // noise: 0.05*sin(3x)*cos(3z)
-    const noiseGx = 0.05 * 3 * Math.cos(3 * x) * Math.cos(3 * z);
-    const noiseGz = -0.05 * 3 * Math.sin(3 * x) * Math.sin(3 * z);
+    // noise: 0.03*sin(3x)*cos(3z)
+    const noiseGx = 0.03 * 3 * Math.cos(3 * x) * Math.cos(3 * z);
+    const noiseGz = -0.03 * 3 * Math.sin(3 * x) * Math.sin(3 * z);
 
     return {
         gx: funnelGx + spiralGx + ridgeGx + noiseGx,
@@ -357,17 +355,17 @@ function gradientLevel7(x, z) {
 // ── Level 8: 마스터 — "절벽과 평원" (Cliff and Plateau) + 롤러코스터 ──
 // 넓은 평원(gradient≈0) → 절벽 → 깊은 계곡 → 다시 언덕 → 골짜기 연속
 // 범위: ±25 크기의 대형 맵 (롤러코스터 체험)
-// 글로벌 최솟값: (-5, -5) (절벽 아래)  /  시작점: (3, 3) (평원 위)
+// 글로벌 최솟값: (-3, -3) (절벽 아래)  /  시작점: (0, 0) (절벽 가장자리)
 // 교훈: 다단계 전략 — 평원에서는 높은 모멘텀, 절벽 후에는 낮은 LR
 function lossLevel8(x, z) {
-    // 평원 (x>0, z>0 영역): gradient가 거의 0
-    const plateau = 2.0 / (1 + Math.exp(-0.8 * (x + z - 2)));
+    // 평원 (x>0, z>0 영역): 약한 기울기로 절벽 쪽으로 유도
+    const plateau = 1.5 / (1 + Math.exp(-0.5 * (x + z - 2)));
 
-    // 절벽: 급격한 하강 (x<-2, z<-2 영역)
-    const cliff = -3.5 / (1 + Math.exp(1.5 * (x + z + 4)));
+    // 절벽: 급격한 하강 (x<-1, z<-1 영역)
+    const cliff = -3.5 / (1 + Math.exp(1.5 * (x + z + 2)));
 
-    // 글로벌 최솟값: (-5, -5) 깊은 구덩이
-    const globalMin = -4.0 * Math.exp(-((x + 5) * (x + 5) + (z + 5) * (z + 5)) / 3.0);
+    // 글로벌 최솟값: (-3, -3) 깊은 구덩이 — 시작점(0,0)에서 거리 4.2
+    const globalMin = -4.0 * Math.exp(-((x + 3) * (x + 3) + (z + 3) * (z + 3)) / 3.0);
 
     // 롤러코스터 언덕들 (큰 진폭의 sin/cos)
     const rollerX = 1.5 * Math.sin(0.4 * x) * Math.exp(-0.01 * x * x);
@@ -389,24 +387,24 @@ function lossLevel8(x, z) {
 function gradientLevel8(x, z) {
     let gx = 0, gz = 0;
 
-    // plateau: 2.0 / (1 + exp(-0.8*(x+z-2)))
-    // ∂/∂x = 2.0 * 0.8 * σ * (1-σ) where σ = 1/(1+exp(-0.8*(x+z-2)))
-    const sigP = 1.0 / (1 + Math.exp(-0.8 * (x + z - 2)));
-    const dPlat = 2.0 * 0.8 * sigP * (1 - sigP);
+    // plateau: 1.5 / (1 + exp(-0.5*(x+z-2)))
+    // ∂/∂x = 1.5 * 0.5 * σ * (1-σ) where σ = 1/(1+exp(-0.5*(x+z-2)))
+    const sigP = 1.0 / (1 + Math.exp(-0.5 * (x + z - 2)));
+    const dPlat = 1.5 * 0.5 * sigP * (1 - sigP);
     gx += dPlat;
     gz += dPlat;
 
-    // cliff: -3.5 / (1 + exp(1.5*(x+z+4)))
+    // cliff: -3.5 / (1 + exp(1.5*(x+z+2)))
     // ∂/∂x = -3.5 * (-1.5) * σc * (1-σc) = 5.25 * σc * (1-σc)
-    const sigC = 1.0 / (1 + Math.exp(1.5 * (x + z + 4)));
+    const sigC = 1.0 / (1 + Math.exp(1.5 * (x + z + 2)));
     const dCliff = 3.5 * 1.5 * sigC * (1 - sigC);
     gx += dCliff;
     gz += dCliff;
 
-    // globalMin: -4.0 * exp(-((x+5)²+(z+5)²)/3.0)
-    const expG = Math.exp(-((x + 5) * (x + 5) + (z + 5) * (z + 5)) / 3.0);
-    gx += (2 * 4.0 / 3.0) * (x + 5) * expG;
-    gz += (2 * 4.0 / 3.0) * (z + 5) * expG;
+    // globalMin: -4.0 * exp(-((x+3)²+(z+3)²)/3.0)
+    const expG = Math.exp(-((x + 3) * (x + 3) + (z + 3) * (z + 3)) / 3.0);
+    gx += (2 * 4.0 / 3.0) * (x + 3) * expG;
+    gz += (2 * 4.0 / 3.0) * (z + 3) * expG;
 
     // rollerX: 1.5 * sin(0.4x) * exp(-0.01x²)
     const expRX = Math.exp(-0.01 * x * x);
@@ -479,5 +477,5 @@ export const GLOBAL_MINIMA = {
     5: { x: 1, z: 1 },    // Level 5: 함정 미로 최솟값
     6: { x: -3, z: 0 },   // Level 6: 왼쪽 계곡 (미세하게 더 깊음)
     7: { x: 0, z: 0 },    // Level 7: 나선 중심
-    8: { x: -5, z: -5 },  // Level 8: 절벽 아래
+    8: { x: -3, z: -3 },  // Level 8: 절벽 아래
 };

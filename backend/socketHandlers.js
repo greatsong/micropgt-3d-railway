@@ -15,11 +15,11 @@ const START_POSITIONS = {
   5: { x: -7, z: -7 },
   6: { x: 0, z: 5 },     // Level 6: 두 계곡 사이 위쪽에서 출발
   7: { x: 6, z: 6 },     // Level 7: 나선 바깥에서 출발
-  8: { x: 3, z: 3 },     // Level 8: 평원 위에서 출발
+  8: { x: 0, z: 0 },     // Level 8: 절벽 가장자리에서 출발
 };
 
 // 그래디언트 스케일 팩터 — 레벨이 높을수록 느리게 (더 많은 스텝 필요)
-const SPEED_SCALE = { 1: 0.3, 2: 0.25, 3: 0.2, 4: 0.2, 5: 0.15, 6: 0.2, 7: 0.18, 8: 0.2 };
+const SPEED_SCALE = { 1: 0.5, 2: 0.4, 3: 0.35, 4: 0.3, 5: 0.25, 6: 0.35, 7: 0.3, 8: 0.3 };
 
 // 수렴 판정 최소 트레일 길이 — 레벨이 높을수록 더 오래 관찰
 const CONVERGE_TRAIL = { 1: 200, 2: 300, 3: 400, 4: 400, 5: 500, 6: 350, 7: 450, 8: 500 };
@@ -374,9 +374,9 @@ export function registerSocketHandlers(io) {
             io.to(roomCode).emit('race_alert', { teamId, teamName: teamData?.name, message: `💨 공이 맵을 벗어났어요! 어떤 파라미터를 조절하면 좋을까요? (팀: ${teamData?.name})` });
           }
 
-          // 타임아웃: 20초 경과 시 현재 위치에서 강제 종료
+          // 타임아웃: 30초 경과 시 현재 위치에서 강제 종료
           const elapsed = Date.now() - r.raceStartTime;
-          if (elapsed > 20000) {
+          if (elapsed > 30000) {
             const gm = GLOBAL_MINIMA[r.mapLevel] || GLOBAL_MINIMA[2];
             const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
             ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
