@@ -323,14 +323,38 @@
 
 .stageFrame {
   position: relative;
-  min-height: clamp(980px, 84vh, 1240px);
   overflow: hidden;
+  padding: 18px;
   border-radius: 34px;
   border: 1px solid rgba(103, 232, 249, 0.18);
   background:
     linear-gradient(160deg, rgba(4, 10, 22, 0.94), rgba(8, 17, 34, 0.88)),
     radial-gradient(circle at top, rgba(103, 232, 249, 0.08), transparent 34%);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+}
+
+.stageCockpit {
+  display: grid;
+  grid-template-columns: minmax(460px, 540px) minmax(0, 1fr);
+  gap: 18px;
+  min-height: clamp(980px, 84vh, 1240px);
+}
+
+.sceneViewport {
+  position: relative;
+  min-height: clamp(980px, 84vh, 1240px);
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  background:
+    radial-gradient(circle at top, rgba(103, 232, 249, 0.06), transparent 40%),
+    linear-gradient(180deg, rgba(3, 10, 22, 0.98), rgba(5, 12, 24, 0.92));
+}
+
+.sceneCanvas {
+  width: 100%;
+  height: 100%;
+  min-height: clamp(980px, 84vh, 1240px);
 }
 
 .sceneLoading {
@@ -400,14 +424,10 @@
 }
 
 .tracksideHud {
-  position: absolute;
-  left: 24px;
-  right: auto;
-  bottom: 24px;
-  z-index: 3;
-  width: min(680px, calc(100% - 48px));
+  position: relative;
+  min-height: clamp(980px, 84vh, 1240px);
   padding: 18px;
-  border-radius: 24px;
+  border-radius: 28px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   background: rgba(7, 13, 27, 0.78);
   backdrop-filter: blur(20px);
@@ -415,6 +435,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
 }
 
 .hudHeader,
@@ -444,6 +465,10 @@
   margin: 0;
   color: var(--codex-dim);
   line-height: 1.55;
+}
+
+.hudFooter {
+  margin-top: auto;
 }
 
 .hudStats {
@@ -509,6 +534,31 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   width: min(100%, 420px);
+}
+
+.sceneLegend {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+.sceneLegendText {
+  display: inline-flex;
+  align-items: center;
+  max-width: min(100%, 560px);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(7, 13, 27, 0.78);
+  color: var(--codex-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
 }
 
 .overlayCard,
@@ -865,13 +915,23 @@
     grid-template-columns: 1fr;
   }
 
+  .stageCockpit,
   .supportDeck,
   .hudSliderGrid {
     grid-template-columns: 1fr;
   }
 
-  .tracksideHud {
-    width: min(720px, calc(100% - 48px));
+  .tracksideHud,
+  .sceneViewport,
+  .sceneCanvas {
+    min-height: auto;
+  }
+
+  .sceneViewport,
+  .sceneCanvas,
+  .sceneLoading {
+    min-height: 820px;
+    height: 820px;
   }
 }
 
@@ -885,12 +945,15 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .stageFrame {
-    min-height: 860px;
+  .stageCockpit {
+    min-height: 0;
   }
 
+  .sceneViewport,
+  .sceneCanvas,
   .sceneLoading {
-    height: 860px;
+    min-height: 760px;
+    height: 760px;
   }
 
   .hudMapPicker,
@@ -925,28 +988,10 @@
     grid-template-columns: 1fr;
   }
 
-  .stageFrame {
-    min-height: 760px;
-  }
-
-  .sceneLoading {
-    height: 760px;
-  }
-
-  .overlayTop,
   .tracksideHud {
-    position: static;
-  }
-
-  .overlayTop,
-  .tracksideHud {
-    padding: 14px 14px 0;
-  }
-
-  .tracksideHud {
-    margin: 14px;
     width: 100%;
     padding: 16px;
+    min-height: auto;
   }
 
   .quickBar {
@@ -967,5 +1012,23 @@
   .hudPresetRow,
   .teamMetrics {
     grid-template-columns: 1fr;
+  }
+
+  .sceneViewport,
+  .sceneCanvas,
+  .sceneLoading {
+    min-height: 620px;
+    height: 620px;
+  }
+
+  .sceneLegend {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .sceneLegendText {
+    max-width: 100%;
+    font-size: 0.74rem;
   }
 }

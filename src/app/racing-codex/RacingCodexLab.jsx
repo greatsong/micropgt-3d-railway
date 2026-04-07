@@ -1422,176 +1422,190 @@ export default function RacingCodexLab() {
         <section className={styles.arenaLayout}>
           <div className={styles.arenaColumn}>
             <div className={styles.stageFrame}>
-              <WebGLErrorBoundary
-                fallbackProps={{
-                  weekTitle: 'Racing Codex',
-                  conceptSummary: '손실 지형 위에서 학습률과 모멘텀을 실시간으로 읽는 3D 레이싱 화면입니다.',
-                }}
-              >
-                <GradientRaceScene />
-              </WebGLErrorBoundary>
-
-              <div className={styles.overlayTop}>
-                <div className={styles.overlayCluster}>
-                  <span className={styles.overlayPill}>{phaseMeta.label}</span>
-                  <span className={styles.overlayPill}>{modeMeta.label}</span>
-                  <span className={styles.overlayPill}>{currentMap.emoji} Level {normalizedMapLevel}</span>
-                </div>
-                {gpCountdown > 0 ? (
-                  <div className={styles.countdownBadge}>
-                    다음 스테이지까지 {gpCountdown}s
-                  </div>
-                ) : null}
-              </div>
-
-              <div className={styles.tracksideHud}>
-                <div className={styles.hudHeader}>
-                  <div className={styles.hudIntro}>
-                    <span className={styles.overlayLabel}>Trackside HUD</span>
-                    <strong>{isSoloMode ? '맵을 보면서 바로 세팅하고 달릴 수 있습니다.' : '맵 옆에서 바로 전략을 확정합니다.'}</strong>
-                    <p>{sliderSummary}</p>
-                  </div>
-                  <div className={styles.hudStats}>
-                    <span>LR {formatNumber(myLearningRate, 2)}</span>
-                    <span>Momentum {formatNumber(myMomentum, 2)}</span>
-                    <TeamStatusBadge status={myStatus} />
-                  </div>
-                </div>
-
-                <div className={styles.hudMapLine}>
-                  <div>
-                    <span className={styles.mapBadge}>{currentMap.difficulty}</span>
-                    <strong>{currentMap.emoji} {currentMap.name}</strong>
-                  </div>
-                  <p>{currentMap.description}</p>
-                </div>
-
-                {isSoloMode ? (
-                  <div className={styles.hudMapPicker}>
-                    {MAP_LEVELS.map((level) => (
-                      <button
-                        key={level.level}
-                        type="button"
-                        className={`${styles.mapButton} ${normalizedMapLevel === level.level ? styles.mapButtonActive : ''}`}
-                        onClick={() => handleSelectMap(level.level)}
-                      >
-                        <span>{level.emoji}</span>
-                        <strong>Level {level.level}</strong>
-                        <small>{level.name}</small>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className={styles.hudPresetRow}>
-                  {recommendedPresets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      className={`${styles.presetButton} ${selectedPresetId === preset.id ? styles.presetActive : ''}`}
-                      onClick={() => handleApplyPreset(preset)}
-                    >
-                      <strong>{preset.label}</strong>
-                      <span>{preset.summary}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className={styles.hudSliderGrid}>
-                  <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
-                    <div className={styles.sliderHeader}>
-                      <span>Learning Rate</span>
-                      <strong>{formatNumber(myLearningRate, 3)}</strong>
+              <div className={styles.stageCockpit}>
+                <aside className={styles.tracksideHud}>
+                  <div className={styles.hudHeader}>
+                    <div className={styles.hudIntro}>
+                      <span className={styles.overlayLabel}>Trackside HUD</span>
+                      <strong>{isSoloMode ? '맵을 보면서 바로 세팅하고 달릴 수 있습니다.' : '맵 옆에서 바로 전략을 확정합니다.'}</strong>
+                      <p>{sliderSummary}</p>
                     </div>
-                    <input
-                      type="range"
-                      min="0.001"
-                      max="0.6"
-                      step="0.001"
-                      value={myLearningRate}
-                      onChange={(event) => setMyLearningRate(Number(event.target.value))}
-                    />
-                    <p>클수록 빠르지만, 최솟값을 지나치며 진동하거나 이탈할 수 있습니다.</p>
-                  </label>
-
-                  <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
-                    <div className={styles.sliderHeader}>
-                      <span>Momentum</span>
-                      <strong>{formatNumber(myMomentum, 2)}</strong>
+                    <div className={styles.hudStats}>
+                      <span>LR {formatNumber(myLearningRate, 2)}</span>
+                      <span>Momentum {formatNumber(myMomentum, 2)}</span>
+                      <TeamStatusBadge status={myStatus} />
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="0.99"
-                      step="0.01"
-                      value={myMomentum}
-                      onChange={(event) => setMyMomentum(Number(event.target.value))}
-                    />
-                    <p>높으면 관성이 커지고, 낮으면 더 안정적으로 감속합니다.</p>
-                  </label>
-                </div>
+                  </div>
 
-                <div className={styles.hudFooter}>
-                  <div className={styles.hudFootnote}>
-                    {myBall ? (
-                      <p className={styles.overlayHint}>
-                        좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) / Loss {formatNumber(myBall.loss, 3)} / {levelGuide.coachingFocus}
-                      </p>
-                    ) : (
-                      <p className={styles.overlayHint}>
-                        {isSoloMode ? '맵을 고르고 출발 위치를 잡은 뒤 바로 시작하거나 멈춰보세요.' : '선생님이 준비를 누르면 출발 위치가 보이고, 학생은 여기서 바로 전략을 확정할 수 있습니다.'}
-                      </p>
-                    )}
+                  <div className={styles.hudMapLine}>
+                    <div>
+                      <span className={styles.mapBadge}>{currentMap.difficulty}</span>
+                      <strong>{currentMap.emoji} {currentMap.name}</strong>
+                    </div>
+                    <p>{currentMap.description}</p>
                   </div>
 
                   {isSoloMode ? (
-                    <div className={styles.hudActionRow}>
+                    <div className={styles.hudMapPicker}>
+                      {MAP_LEVELS.map((level) => (
+                        <button
+                          key={level.level}
+                          type="button"
+                          className={`${styles.mapButton} ${normalizedMapLevel === level.level ? styles.mapButtonActive : ''}`}
+                          onClick={() => handleSelectMap(level.level)}
+                        >
+                          <span>{level.emoji}</span>
+                          <strong>Level {level.level}</strong>
+                          <small>{level.name}</small>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className={styles.hudPresetRow}>
+                    {recommendedPresets.map((preset) => (
                       <button
+                        key={preset.id}
                         type="button"
-                        className={styles.primaryButton}
-                        onClick={handleSubmitParams}
-                        disabled={racePhase === 'racing'}
+                        className={`${styles.presetButton} ${selectedPresetId === preset.id ? styles.presetActive : ''}`}
+                        onClick={() => handleApplyPreset(preset)}
                       >
-                        {racePhase === 'preparing'
-                          ? '셀프 연습 시작'
-                          : racePhase === 'finished'
-                            ? '같은 위치에서 다시 달리기'
+                        <strong>{preset.label}</strong>
+                        <span>{preset.summary}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className={styles.hudSliderGrid}>
+                    <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
+                      <div className={styles.sliderHeader}>
+                        <span>Learning Rate</span>
+                        <strong>{formatNumber(myLearningRate, 3)}</strong>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.001"
+                        max="0.6"
+                        step="0.001"
+                        value={myLearningRate}
+                        onChange={(event) => setMyLearningRate(Number(event.target.value))}
+                      />
+                      <p>클수록 빠르지만, 최솟값을 지나치며 진동하거나 이탈할 수 있습니다.</p>
+                    </label>
+
+                    <label className={`${styles.sliderGroup} ${styles.hudSlider}`}>
+                      <div className={styles.sliderHeader}>
+                        <span>Momentum</span>
+                        <strong>{formatNumber(myMomentum, 2)}</strong>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="0.99"
+                        step="0.01"
+                        value={myMomentum}
+                        onChange={(event) => setMyMomentum(Number(event.target.value))}
+                      />
+                      <p>높으면 관성이 커지고, 낮으면 더 안정적으로 감속합니다.</p>
+                    </label>
+                  </div>
+
+                  <div className={styles.hudFooter}>
+                    <div className={styles.hudFootnote}>
+                      {myBall ? (
+                        <p className={styles.overlayHint}>
+                          좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) / Loss {formatNumber(myBall.loss, 3)} / {levelGuide.coachingFocus}
+                        </p>
+                      ) : (
+                        <p className={styles.overlayHint}>
+                          {isSoloMode ? '버튼 바로 오른쪽에서 3D 맵을 보며 출발하고 멈춰보세요.' : '선생님이 준비를 누르면 오른쪽 맵에서 출발 위치를 보며 바로 전략을 확정할 수 있습니다.'}
+                        </p>
+                      )}
+                    </div>
+
+                    {isSoloMode ? (
+                      <div className={styles.hudActionRow}>
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={handleSubmitParams}
+                          disabled={racePhase === 'racing'}
+                        >
+                          {racePhase === 'preparing'
+                            ? '셀프 연습 시작'
+                            : racePhase === 'finished'
+                              ? '같은 위치에서 다시 달리기'
+                              : racePhase === 'racing'
+                                ? '셀프 연습 진행 중'
+                                : '셀프 연습 시작'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={handleStopSoloPractice}
+                          disabled={racePhase !== 'racing'}
+                        >
+                          셀프 연습 멈추기
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={() => prepareSoloPractice()}
+                        >
+                          출발 위치 다시 배치
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={styles.hudActionRow}>
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={handleSubmitParams}
+                          disabled={!studentName || !roomCode || joinBusy}
+                        >
+                          {racePhase === 'preparing'
+                            ? '출발 위치 확인 후 전략 확정'
                             : racePhase === 'racing'
-                              ? '셀프 연습 진행 중'
-                              : '셀프 연습 시작'}
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.secondaryButton}
-                        onClick={handleStopSoloPractice}
-                        disabled={racePhase !== 'racing'}
-                      >
-                        셀프 연습 멈추기
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.secondaryButton}
-                        onClick={() => prepareSoloPractice()}
-                      >
-                        출발 위치 다시 배치
-                      </button>
+                              ? '현재 전략 다시 전송'
+                              : '전략 제출'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <div className={styles.sceneViewport}>
+                  <div className={styles.sceneCanvas}>
+                    <WebGLErrorBoundary
+                      fallbackProps={{
+                        weekTitle: 'Racing Codex',
+                        conceptSummary: '손실 지형 위에서 학습률과 모멘텀을 실시간으로 읽는 3D 레이싱 화면입니다.',
+                      }}
+                    >
+                      <GradientRaceScene />
+                    </WebGLErrorBoundary>
+                  </div>
+
+                  <div className={styles.overlayTop}>
+                    <div className={styles.overlayCluster}>
+                      <span className={styles.overlayPill}>{phaseMeta.label}</span>
+                      <span className={styles.overlayPill}>{modeMeta.label}</span>
+                      <span className={styles.overlayPill}>{currentMap.emoji} Level {normalizedMapLevel}</span>
                     </div>
-                  ) : (
-                    <div className={styles.hudActionRow}>
-                      <button
-                        type="button"
-                        className={styles.primaryButton}
-                        onClick={handleSubmitParams}
-                        disabled={!studentName || !roomCode || joinBusy}
-                      >
-                        {racePhase === 'preparing'
-                          ? '출발 위치 확인 후 전략 확정'
-                          : racePhase === 'racing'
-                            ? '현재 전략 다시 전송'
-                            : '전략 제출'}
-                      </button>
-                    </div>
-                  )}
+                    {gpCountdown > 0 ? (
+                      <div className={styles.countdownBadge}>
+                        다음 스테이지까지 {gpCountdown}s
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className={styles.sceneLegend}>
+                    <span className={styles.sceneLegendText}>
+                      {myBall
+                        ? `내 공 위치 (${formatNumber(myBall.x, 1)}, ${formatNumber(myBall.z, 1)}) · Loss ${formatNumber(myBall.loss, 3)}`
+                        : '오른쪽 3D 코스를 보면서 세팅 결과를 바로 확인하세요.'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
