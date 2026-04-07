@@ -358,6 +358,12 @@ export default function DashboardPage() {
         if (socket) socket.emit('reset_race');
     };
 
+    // 교사: 같은 맵 다시 도전
+    const handleRetrySameLevel = () => {
+        const socket = getSocket();
+        if (socket) socket.emit('retry_same_level');
+    };
+
     // 퀴즈 전송
     const handleSendQuiz = () => {
         if (!quizQuestion.trim()) return;
@@ -482,27 +488,34 @@ export default function DashboardPage() {
                 <div className={s.topRight}>
                     {activeWeek === 5 && (
                         <>
-                            {/* 맵 선택 */}
-                            {[
-                                { level: 1, emoji: '⛳', label: '완만한 언덕' },
-                                { level: 2, emoji: '🏔️', label: '함정 지형' },
-                                { level: 3, emoji: '🌋', label: '악마의 지형' },
-                                { level: 4, emoji: '🌊', label: '긴 계곡' },
-                                { level: 5, emoji: '🎯', label: '함정 미로' },
-                            ].map(m => (
-                                <button
-                                    key={m.level}
-                                    className={`btn-nova ${s.btnSmall}`}
-                                    onClick={() => handleSelectMap(m.level)}
-                                    style={{
-                                        borderColor: selectedMap === m.level ? '#a78bfa' : 'rgba(255,255,255,0.15)',
-                                        background: selectedMap === m.level ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
-                                        fontWeight: selectedMap === m.level ? 700 : 400,
-                                    }}
-                                >
-                                    <span>{m.emoji} {m.label}</span>
-                                </button>
-                            ))}
+                            {/* 맵 선택 (8개 레벨) */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {[
+                                    { level: 1, emoji: '⛳', label: '완만한 언덕' },
+                                    { level: 2, emoji: '🏔️', label: '함정 지형' },
+                                    { level: 3, emoji: '🌋', label: '로컬 미니마' },
+                                    { level: 4, emoji: '🌊', label: '긴 계곡' },
+                                    { level: 5, emoji: '🎯', label: '함정 미로' },
+                                    { level: 6, emoji: '⚖️', label: '쌍봉 계곡' },
+                                    { level: 7, emoji: '🌀', label: '나선 계곡' },
+                                    { level: 8, emoji: '🏜️', label: '절벽+롤러코스터' },
+                                ].map(m => (
+                                    <button
+                                        key={m.level}
+                                        className={`btn-nova ${s.btnSmall}`}
+                                        onClick={() => handleSelectMap(m.level)}
+                                        style={{
+                                            borderColor: selectedMap === m.level ? '#a78bfa' : 'rgba(255,255,255,0.15)',
+                                            background: selectedMap === m.level ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
+                                            fontWeight: selectedMap === m.level ? 700 : 400,
+                                            fontSize: '0.68rem',
+                                            padding: '4px 8px',
+                                        }}
+                                    >
+                                        <span>{m.emoji} {m.label}</span>
+                                    </button>
+                                ))}
+                            </div>
                             {/* 구분선 */}
                             <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1.2rem' }}>|</span>
                             {/* 모드별 시작 */}
@@ -526,6 +539,16 @@ export default function DashboardPage() {
                             >
                                 <span>🚀 시작!</span>
                             </button>
+                            {/* 같은 맵 재도전 (finished 상태에서만 표시) */}
+                            {racePhase === 'finished' && (
+                                <button
+                                    className={`btn-nova ${s.btnSmall}`}
+                                    onClick={handleRetrySameLevel}
+                                    style={{ borderColor: '#f59e0b66', background: 'rgba(245,158,11,0.12)' }}
+                                >
+                                    <span>🔁 같은 맵 재도전</span>
+                                </button>
+                            )}
                             {gpActive && gpStage > 0 && (
                                 <span style={{ fontSize: '0.75rem', color: '#a78bfa', fontWeight: 700, padding: '0 4px' }}>
                                     Stage {gpStage}/3 {racePhase === 'stageResult' ? `(${gpCountdown}s)` : ''}

@@ -1,0 +1,140 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.headerBadge {
+  display: inline-block;
+  padding: 0.2rem 0.8rem;
+  border-radius: 50px;
+  background: rgba(124, 92, 252, 0.15);
+  color: #7c5cfc;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary, #e8e8f0);
+  margin-bottom: 0.8rem;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-dim, #a5a0c0);
+  line-height: 1.7;
+  margin-bottom: 0.4rem;
+}
+
+.subtitle strong {
+  color: var(--text-primary, #e8e8f0);
+}
+
+.desc {
+  font-size: 0.82rem;
+  color: var(--text-dim, #8b85a8);
+  line-height: 1.7;
+}
+
+.desc strong {
+  color: var(--text-secondary, #c0bcd8);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  .title { font-size: 1.5rem; }
+}
+
+.card {
+  background: var(--card-bg, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  border-top: 3px solid;
+  border-radius: 12px;
+  padding: 1.2rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.cardEmoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #e8e8f0);
+  margin-bottom: 0.2rem;
+}
+
+.cardQuestion {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.cardDesc {
+  font-size: 0.78rem;
+  color: var(--text-dim, #8b85a8);
+  margin-bottom: 0.8rem;
+  line-height: 1.6;
+}
+
+.cardCta {
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+}
+
+.backBtn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.15));
+  background: transparent;
+  color: var(--text-dim, #a5a0c0);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.backBtn:hover {
+  background: rgba(255,255,255,0.05);
+}

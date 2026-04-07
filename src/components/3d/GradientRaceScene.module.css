@@ -14,7 +14,7 @@
 /* ── 카메라 전환 토글 버튼 ── */
 .camToggle {
     position: absolute;
-    top: 12px;
+    bottom: 60px;
     right: 12px;
     display: flex;
     align-items: center;

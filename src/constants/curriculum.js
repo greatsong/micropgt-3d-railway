@@ -167,4 +167,16 @@ export const CURRICULUM = [
         status: 'ready',
         tags: ['Transformer', 'PyTorch', '아키텍처'],
     },
+    {
+        week: '기초반',
+        title: '딥러닝 기초반',
+        emoji: '📚',
+        subtitle: '활성화함수 → 평가 → 최적화 → LLM',
+        description: '인공지능의 역사는 문제해결의 역사. 활동지 · 수업자료 · 인터랙티브 랩 통합 허브.',
+        introPath: '/deep-learning-basic',
+        labPath: '/deep-learning-basic',
+        color: '#2979ff',
+        status: 'ready',
+        tags: ['딥러닝', '활동지', '평가', 'LLM'],
+    },
 ];

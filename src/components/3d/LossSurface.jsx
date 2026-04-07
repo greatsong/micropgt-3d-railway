@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { lossFunctionByLevel } from '@/lib/lossFunction';
+import { lossFunctionByLevel, MAP_SIZES } from '@/lib/lossFunction';
 import { useRaceStore } from '@/stores/useRaceStore';
 
 export default function LossSurface() {
@@ -10,8 +10,8 @@ export default function LossSurface() {
     const mapLevel = useRaceStore((s) => s.mapLevel);
 
     const { geometry, colors } = useMemo(() => {
-        const size = 20;
-        const segments = 80;
+        const size = MAP_SIZES[mapLevel] || 20;
+        const segments = size > 30 ? 120 : 80; // 큰 맵은 해상도 높여서 디테일 유지
         const geo = new THREE.PlaneGeometry(size, size, segments, segments);
         const positions = geo.attributes.position;
         const colorArray = new Float32Array(positions.count * 3);

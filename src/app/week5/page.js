@@ -36,6 +36,18 @@ const GP_STAGES = [
     { stage: 3, level: 3, name: '악마의 지형', emoji: '🌋', description: '안장점과 좁은 계곡의 최종전!' },
 ];
 
+// 솔로 연습용 맵 선택지 (전체 8개)
+const SOLO_MAP_OPTIONS = [
+    { level: 1, emoji: '⛳', label: '완만한 언덕', difficulty: '입문' },
+    { level: 2, emoji: '🏔️', label: '함정 지형', difficulty: '초급' },
+    { level: 3, emoji: '🌋', label: '로컬 미니마', difficulty: '중급' },
+    { level: 4, emoji: '🌊', label: '긴 계곡', difficulty: '고급' },
+    { level: 5, emoji: '🎯', label: '함정 미로', difficulty: '마스터' },
+    { level: 6, emoji: '⚖️', label: '쌍봉 계곡', difficulty: '중급' },
+    { level: 7, emoji: '🌀', label: '나선 계곡', difficulty: '고급' },
+    { level: 8, emoji: '🏜️', label: '절벽+롤러코스터', difficulty: '마스터' },
+];
+
 export default function Week5Page() {
     const router = useRouter();
     const isMobile = useIsMobile();
@@ -79,6 +91,8 @@ export default function Week5Page() {
     const [pendingSoloStage, setPendingSoloStage] = useState(null); // { stage, myId, botId }
     const [showDeepDive, setShowDeepDive] = useState(false);
     const [raceMode, setRaceMode] = useState('competition'); // 'practice' | 'competition'
+    const [soloMapLevel, setSoloMapLevel] = useState(1); // 솔로 연습 맵 레벨
+    const [soloSingleMode, setSoloSingleMode] = useState(false); // true = 단일 맵 연습 (GP 아님)
     const soloIntervalRef = useRef(null);
     const paramThrottleRef = useRef(null);
 
@@ -224,6 +238,7 @@ export default function Week5Page() {
         if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
         reset();
         setIsSoloMode(false);
+        setSoloSingleMode(false);
         setIsParamsSet(false);
         // 소켓 재연결 및 방 참여
         const socket = getSocket();
@@ -239,6 +254,7 @@ export default function Week5Page() {
     // ── 혼자 연습 모드 (GP 3스테이지) ──
     const handleSoloPractice = useCallback(() => {
         setIsSoloMode(true);
+        setSoloSingleMode(false);
         setGpActive(true);
         setGpStage(1);
 
@@ -255,6 +271,105 @@ export default function Week5Page() {
         // 솔로 GP: 스테이지 1부터 시작
         runSoloStage(1, myId, botId);
     }, [studentName, myLearningRate, myMomentum]);
+
+    // ── 혼자 연습: 단일 맵 모드 (선택한 맵에서 반복 연습) ──
+    const handleSoloSingleMap = useCallback((level) => {
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        setIsSoloMode(true);
+        setSoloSingleMode(true);
+        setGpActive(false);
+        setSoloMapLevel(level);
+        setMapLevel(level);
+        setRacePhase('racing');
+        setResults([]);
+
+        const myId = 'solo-me';
+        const botId = 'solo-bot';
+
+        setTeams({
+            [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
+            [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
+        });
+        setMyTeamId(myId);
+        setIsParamsSet(true);
+
+        runSoloSingleRace(level, myId, botId);
+    }, [studentName, myLearningRate, myMomentum]);
+
+    // 솔로 단일 맵 레이스 실행
+    function runSoloSingleRace(level, myId, botId) {
+        setMapLevel(level);
+        setRacePhase('racing');
+        setResults([]);
+
+        // 레벨별 시작점 (서버와 동일)
+        const startPositions = {
+            1: { x: -7, z: -7 }, 2: { x: -6, z: -5 }, 3: { x: -6, z: -4 },
+            4: { x: 5, z: 5 }, 5: { x: -7, z: -7 }, 6: { x: 0, z: 5 },
+            7: { x: 6, z: 6 }, 8: { x: 3, z: 3 },
+        };
+        const startPos = startPositions[level] || startPositions[2];
+        const startX = startPos.x + (Math.random() - 0.5) * 0.5;
+        const startZ = startPos.z + (Math.random() - 0.5) * 0.5;
+
+        const localBalls = {
+            [myId]: { x: startX, z: startZ, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: myLearningRate, momentum: myMomentum },
+            [botId]: { x: startX + 0.5, z: startZ + 0.5, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: 0.1, momentum: 0.9 },
+        };
+        localBalls[myId].y = lossFunctionByLevel(localBalls[myId].x, localBalls[myId].z, level);
+        localBalls[myId].loss = localBalls[myId].y;
+        localBalls[botId].y = lossFunctionByLevel(localBalls[botId].x, localBalls[botId].z, level);
+        localBalls[botId].loss = localBalls[botId].y;
+
+        updateBalls(localBalls);
+
+        const boundary = level === 8 ? 30 : 20;
+
+        if (soloIntervalRef.current) clearInterval(soloIntervalRef.current);
+        soloIntervalRef.current = setInterval(() => {
+            let allDone = true;
+            for (const [, ball] of Object.entries(localBalls)) {
+                if (ball.status !== 'racing') continue;
+                allDone = false;
+                const grad = gradientByLevel(ball.x, ball.z, level);
+                ball.vx = ball.momentum * ball.vx - ball.lr * grad.gx * 0.4;
+                ball.vz = ball.momentum * ball.vz - ball.lr * grad.gz * 0.4;
+                ball.vx = Math.max(-10, Math.min(10, ball.vx));
+                ball.vz = Math.max(-10, Math.min(10, ball.vz));
+                ball.x += ball.vx;
+                ball.z += ball.vz;
+                ball.y = lossFunctionByLevel(ball.x, ball.z, level);
+                ball.loss = ball.y;
+                if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) { ball.status = 'escaped'; continue; }
+                if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+                if (ball.trail.length > 300) ball.trail.shift();
+                if (Math.abs(ball.x) > boundary || Math.abs(ball.z) > boundary || ball.y > 15) ball.status = 'escaped';
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
+                if (speed < 0.001 && ball.trail.length > 150) {
+                    const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
+                    const distToGlobal = Math.sqrt((ball.x - gm.x) ** 2 + (ball.z - gm.z) ** 2);
+                    ball.status = distToGlobal < 0.8 ? 'converged' : 'local_minimum';
+                }
+            }
+            updateBalls({ ...localBalls });
+            if (allDone) {
+                clearInterval(soloIntervalRef.current);
+                const res = Object.entries(localBalls)
+                    .map(([id, b]) => ({
+                        teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
+                        finalLoss: b.loss, status: b.status,
+                        distToGlobal: (() => { const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2]; return Math.sqrt((b.x - gm.x) ** 2 + (b.z - gm.z) ** 2); })(),
+                    }))
+                    .sort((a, b) => {
+                        const order = { converged: 0, local_minimum: 1, escaped: 2 };
+                        return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.finalLoss - b.finalLoss;
+                    })
+                    .map((r, i) => ({ ...r, rank: i + 1 }));
+                setResults(res);
+                setRacePhase('finished');
+            }
+        }, 33);
+    }
 
     // ── 레이스 중 파라미터 실시간 전송 (throttle 300ms) ──
     useEffect(() => {
@@ -282,10 +397,15 @@ export default function Week5Page() {
         setMapLevel(level);
         setRacePhase('racing');
 
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 6 + Math.random() * 2;
-        const startX = Math.cos(angle) * radius;
-        const startZ = Math.sin(angle) * radius;
+        // 레벨별 시작점 (서버와 동일)
+        const startPositions = {
+            1: { x: -7, z: -7 }, 2: { x: -6, z: -5 }, 3: { x: -6, z: -4 },
+            4: { x: 5, z: 5 }, 5: { x: -7, z: -7 }, 6: { x: 0, z: 5 },
+            7: { x: 6, z: 6 }, 8: { x: 3, z: 3 },
+        };
+        const sp = startPositions[level] || startPositions[2];
+        const startX = sp.x + (Math.random() - 0.5) * 0.5;
+        const startZ = sp.z + (Math.random() - 0.5) * 0.5;
 
         const localBalls = {
             [myId]: { x: startX, z: startZ, y: 0, vx: 0, vz: 0, trail: [], status: 'racing', loss: 0, lr: myLearningRate, momentum: myMomentum },
@@ -320,7 +440,8 @@ export default function Week5Page() {
                 if (!isFinite(ball.x) || !isFinite(ball.z) || !isFinite(ball.y)) { ball.status = 'escaped'; continue; }
                 if (isFinite(ball.x) && isFinite(ball.y) && isFinite(ball.z)) ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
                 if (ball.trail.length > 200) ball.trail.shift();
-                if (Math.abs(ball.x) > 20 || Math.abs(ball.z) > 20 || ball.y > 15) ball.status = 'escaped';
+                const soloBoundary = level === 8 ? 30 : 20;
+                if (Math.abs(ball.x) > soloBoundary || Math.abs(ball.z) > soloBoundary || ball.y > 15) ball.status = 'escaped';
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vz * ball.vz);
                 // 서버와 동일한 converged/local_minimum 판정 (최소 5초 = trail 150)
                 if (speed < 0.001 && ball.trail.length > 150) {
@@ -335,10 +456,15 @@ export default function Week5Page() {
             if (allDone) {
                 clearInterval(soloIntervalRef.current);
                 const res = Object.entries(localBalls)
-                    .map(([id, b]) => ({
-                        teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
-                        finalLoss: b.loss, status: b.status,
-                    }))
+                    .map(([id, b]) => {
+                        const gm = GLOBAL_MINIMA[level] || GLOBAL_MINIMA[2];
+                        const distToGlobal = Math.sqrt((b.x - gm.x) ** 2 + (b.z - gm.z) ** 2);
+                        return {
+                            teamId: id, teamName: id === myId ? (studentName || '나') : 'AI 봇',
+                            finalLoss: b.loss, status: b.status,
+                            lr: b.lr, momentum: b.momentum, distToGlobal,
+                        };
+                    })
                     // Fix 12: converged > local_minimum > escaped 정렬
                     .sort((a, b) => {
                         const order = { converged: 0, local_minimum: 1, escaped: 2 };
@@ -353,6 +479,7 @@ export default function Week5Page() {
                 soloStageResultsRef.current[stage - 1] = res;
                 addStageResult(stage - 1, res);
 
+                // Don't auto-progress; show stageResult and let student choose
                 if (stage < 3) {
                     setRacePhase('stageResult');
                     setPendingSoloStage({ stage: stage + 1, myId, botId });
@@ -584,9 +711,16 @@ export default function Week5Page() {
 
                         <div className={s.submitBtnRow}>
                             {racePhase !== 'preparing' && (
-                                <button className={`btn-nova ${s.submitBtn}`} onClick={handleSoloPractice}>
-                                    🎮 혼자 GP 연습
-                                </button>
+                                <>
+                                    <button className={`btn-nova ${s.submitBtn}`} onClick={handleSoloPractice}>
+                                        🎮 혼자 GP 연습
+                                    </button>
+                                    <button className={`btn-nova ${s.submitBtn}`}
+                                        style={{ background: 'rgba(124,92,252,0.12)', borderColor: '#7c5cfc44' }}
+                                        onClick={() => handleSoloSingleMap(soloMapLevel)}>
+                                        🗺️ 맵 선택 연습
+                                    </button>
+                                </>
                             )}
                             {roomCode && (
                                 <button
@@ -604,6 +738,31 @@ export default function Week5Page() {
                                 </button>
                             )}
                         </div>
+                        {/* 솔로 맵 선택 (preparing이 아닐 때만) */}
+                        {racePhase !== 'preparing' && (
+                            <div style={{ marginTop: 10 }}>
+                                <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginBottom: 6 }}>
+                                    맵 선택 (솔로 연습용):
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                    {SOLO_MAP_OPTIONS.map(m => (
+                                        <button
+                                            key={m.level}
+                                            onClick={() => setSoloMapLevel(m.level)}
+                                            style={{
+                                                padding: '4px 8px', borderRadius: 8, fontSize: '0.68rem',
+                                                border: `1px solid ${m.level === soloMapLevel ? '#a78bfa' : 'rgba(255,255,255,0.1)'}`,
+                                                background: m.level === soloMapLevel ? 'rgba(167,139,250,0.2)' : 'transparent',
+                                                color: m.level === soloMapLevel ? '#a78bfa' : 'var(--text-dim)',
+                                                cursor: 'pointer', fontWeight: m.level === soloMapLevel ? 700 : 400,
+                                            }}
+                                        >
+                                            {m.emoji} {m.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -631,27 +790,34 @@ export default function Week5Page() {
                         <div className={s.resultList}>
                             {(stageResults[gpStage - 1] || []).map((r) => (
                                 <div key={r.teamId}
-                                    className={`${s.resultItem} ${r.teamId === myTeamId ? s.resultItemMine : ''}`}>
-                                    <span className={s.resultRank}>
-                                        {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
-                                    </span>
-                                    <span className={s.resultName}>{r.teamName}</span>
-                                    {/* Fix 12: local_minimum 결과 포인트 표시 */}
-                                    <span className={s.resultLoss} style={{
-                                        color: r.status === 'escaped' ? '#f43f5e'
-                                            : r.status === 'local_minimum' ? '#f97316'
-                                            : '#10b981',
-                                    }}>
-                                        {r.status === 'escaped' ? '💥 이탈 (0pt)'
-                                            : r.status === 'local_minimum' ? '🏔️ 로컬 미니마 (0pt)'
-                                            : `🏁 ${r.points || 0}pt`}
-                                    </span>
+                                    className={`${s.resultItem} ${r.teamId === myTeamId ? s.resultItemMine : ''}`}
+                                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span className={s.resultRank}>
+                                            {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
+                                        </span>
+                                        <span className={s.resultName}>{r.teamName}</span>
+                                        <span className={s.resultLoss} style={{
+                                            color: r.status === 'converged' ? '#10b981'
+                                                : r.status === 'local_minimum' ? '#f97316'
+                                                : '#f43f5e',
+                                        }}>
+                                            {r.status === 'converged' ? `✅ 수렴 (${r.points || 0}pt)`
+                                                : r.status === 'local_minimum' ? '🏔️ 로컬 (0pt)'
+                                                : '💥 이탈 (0pt)'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.65rem', color: '#94a3b8', paddingLeft: 28 }}>
+                                        <span>LR: {r.lr?.toFixed(3) || '?'}</span>
+                                        <span>모멘텀: {r.momentum?.toFixed(2) || '?'}</span>
+                                        <span>거리: {isFinite(r.distToGlobal) ? r.distToGlobal?.toFixed(2) : '∞'}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                        {isSoloMode && pendingSoloStage && (
+                        {isSoloMode && racePhase === 'stageResult' && (
                             <div style={{ marginTop: 16 }}>
-                                <label className="label-cosmic" style={{ marginBottom: 8 }}>🎛️ 다음 스테이지 파라미터 조정</label>
+                                <label className="label-cosmic" style={{ marginBottom: 8 }}>🎛️ 파라미터 조정</label>
                                 <div className={s.paramRow}>
                                     <span className={s.paramLabel}>학습률</span>
                                     <input type="range" className="slider-cosmic" min={0.01} max={1.5} step={0.01}
@@ -668,13 +834,35 @@ export default function Week5Page() {
                                     className={`btn-nova ${s.submitBtn}`}
                                     style={{ marginTop: 10, width: '100%' }}
                                     onClick={() => {
-                                        const { stage, myId, botId } = pendingSoloStage;
-                                        setPendingSoloStage(null);
-                                        runSoloStage(stage, myId, botId);
+                                        // Retry same stage with updated params
+                                        const myId = 'solo-me';
+                                        const botId = 'solo-bot';
+                                        setTeams({
+                                            [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
+                                            [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
+                                        });
+                                        runSoloStage(gpStage, myId, botId);
                                     }}
                                 >
-                                    🚀 Stage {pendingSoloStage.stage} 시작!
+                                    🔁 같은 맵 다시 도전
                                 </button>
+                                {pendingSoloStage && (
+                                    <button
+                                        className={`btn-nova ${s.submitBtn}`}
+                                        style={{ marginTop: 8, width: '100%' }}
+                                        onClick={() => {
+                                            const { stage, myId, botId } = pendingSoloStage;
+                                            setPendingSoloStage(null);
+                                            setTeams({
+                                                [myId]: { id: myId, name: studentName || '나', color: TEAM_COLORS[0], learningRate: myLearningRate, momentum: myMomentum },
+                                                [botId]: { id: botId, name: 'AI 봇 (lr=0.1, m=0.9)', color: TEAM_COLORS[3], learningRate: 0.1, momentum: 0.9 },
+                                            });
+                                            runSoloStage(stage, myId, botId);
+                                        }}
+                                    >
+                                        🚀 Stage {pendingSoloStage.stage} 시작!
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -893,26 +1081,44 @@ export default function Week5Page() {
                             ))}
                         </div>
 
-                        {/* 솔로 연습 후 전체 레이싱 참여 버튼 */}
+                        {/* 솔로 연습 후 액션 버튼 */}
                         {isSoloMode && (
-                            <div style={{ marginTop: 16, textAlign: 'center' }}>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 10 }}>
-                                    연습 완료! 이제 친구들과 진짜 레이싱에 도전해보세요 🚀
+                            <div style={{ marginTop: 16 }}>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 10, textAlign: 'center' }}>
+                                    GP 연습 완료! 다시 도전하거나 친구들과 레이싱해보세요
                                 </p>
-                                <button
-                                    className={`btn-nova ${s.submitBtn}`}
-                                    onClick={handleJoinCompetition}
-                                    style={{ background: 'linear-gradient(135deg, #7c5cfc, #a78bfa)', width: '100%' }}
-                                >
-                                    🏆 전체 레이싱 참여하기
-                                </button>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                                    <button
+                                        className={`btn-nova ${s.submitBtn}`}
+                                        onClick={handleSoloPractice}
+                                        style={{ flex: 1, background: 'rgba(245,158,11,0.18)', borderColor: '#f59e0b' }}
+                                    >
+                                        🔁 GP 다시 도전
+                                    </button>
+                                    <button
+                                        className={`btn-nova ${s.submitBtn}`}
+                                        onClick={() => handleSoloSingleMap(1)}
+                                        style={{ flex: 1, background: 'rgba(124,92,252,0.12)', borderColor: '#7c5cfc44' }}
+                                    >
+                                        🗺️ 맵 선택 연습
+                                    </button>
+                                </div>
+                                {roomCode && (
+                                    <button
+                                        className={`btn-nova ${s.submitBtn}`}
+                                        onClick={handleJoinCompetition}
+                                        style={{ background: 'linear-gradient(135deg, #7c5cfc, #a78bfa)', width: '100%' }}
+                                    >
+                                        🏆 전체 레이싱 참여하기
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* 일반 모드 결과 */}
-                {racePhase === 'finished' && !gpActive && results.length > 0 && (
+                {/* 일반 모드 결과 (멀티 소켓) */}
+                {racePhase === 'finished' && !gpActive && !isSoloMode && results.length > 0 && (
                     <div className={`glass-card ${s.resultCard}`}>
                         <label className="label-cosmic" style={{ color: raceMode === 'practice' ? '#60a5fa' : undefined }}>
                             {raceMode === 'practice' ? '🔵 연습 게임 결과 (순위 참고용)' : '🏆 레이스 결과'}
@@ -925,17 +1131,123 @@ export default function Week5Page() {
                         <div className={s.resultList}>
                             {results.map((r) => (
                                 <div key={r.teamId}
-                                    className={`${s.resultItem} ${r.teamId === myTeamId ? s.resultItemMine : ''}`}>
-                                    <span className={s.resultRank}>
-                                        {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
-                                    </span>
-                                    <span className={s.resultName}>{r.teamName}</span>
-                                    <span className={s.resultLoss} style={{ color: r.status === 'escaped' ? '#f43f5e' : '#10b981' }}>
-                                        {r.status === 'escaped' ? `💥 이탈` : `📊 ${r.cumulativeLoss?.toFixed(1)}`}
-                                    </span>
+                                    className={`${s.resultItem} ${r.teamId === myTeamId ? s.resultItemMine : ''}`}
+                                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span className={s.resultRank}>
+                                            {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
+                                        </span>
+                                        <span className={s.resultName}>{r.teamName}</span>
+                                        <span className={s.resultLoss} style={{
+                                            color: r.status === 'converged' ? '#10b981' : r.status === 'local_minimum' ? '#f59e0b' : '#f43f5e'
+                                        }}>
+                                            {r.status === 'converged' ? '✅ 수렴!' : r.status === 'local_minimum' ? '🏔️ 로컬' : '💥 이탈'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.65rem', color: '#94a3b8', paddingLeft: 28 }}>
+                                        <span>LR: {r.lr?.toFixed(3) || '?'}</span>
+                                        <span>모멘텀: {r.momentum?.toFixed(2) || '?'}</span>
+                                        <span>거리: {isFinite(r.distToGlobal) ? r.distToGlobal?.toFixed(2) : '∞'}</span>
+                                        <span>시간: {(r.time / 1000)?.toFixed(1)}s</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: 12, textAlign: 'center' }}>
+                            선생님이 &quot;같은 맵 재도전&quot; 또는 &quot;다른 맵&quot;을 선택할 때까지 대기합니다.
+                        </p>
+                    </div>
+                )}
+
+                {/* 솔로 단일 맵 결과 */}
+                {racePhase === 'finished' && isSoloMode && soloSingleMode && results.length > 0 && (
+                    <div className={`glass-card ${s.resultCard}`}>
+                        <label className="label-cosmic">
+                            🏁 {SOLO_MAP_OPTIONS.find(m => m.level === soloMapLevel)?.emoji || ''} {SOLO_MAP_OPTIONS.find(m => m.level === soloMapLevel)?.label || ''} 결과
+                        </label>
+                        <div className={s.resultList}>
+                            {results.map((r) => (
+                                <div key={r.teamId}
+                                    className={`${s.resultItem} ${r.teamId === myTeamId ? s.resultItemMine : ''}`}
+                                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span className={s.resultRank}>
+                                            {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `#${r.rank}`}
+                                        </span>
+                                        <span className={s.resultName}>{r.teamName}</span>
+                                        <span className={s.resultLoss} style={{
+                                            color: r.status === 'converged' ? '#10b981' : r.status === 'local_minimum' ? '#f59e0b' : '#f43f5e'
+                                        }}>
+                                            {r.status === 'converged' ? '✅ 수렴!' : r.status === 'local_minimum' ? '🏔️ 로컬' : '💥 이탈'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.65rem', color: '#94a3b8', paddingLeft: 28 }}>
+                                        <span>거리: {isFinite(r.distToGlobal) ? r.distToGlobal?.toFixed(2) : '∞'}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 파라미터 조정 */}
+                        <div style={{ marginTop: 16 }}>
+                            <label className="label-cosmic" style={{ marginBottom: 8 }}>🎛️ 파라미터 조정 후 재도전</label>
+                            <div className={s.paramRow}>
+                                <span className={s.paramLabel}>학습률</span>
+                                <input type="range" className="slider-cosmic" min={0.01} max={1.5} step={0.01}
+                                    value={myLearningRate} onChange={(e) => setMyLearningRate(parseFloat(e.target.value))} />
+                                <span className={s.paramValue}>{myLearningRate.toFixed(2)}</span>
+                            </div>
+                            <div className={s.paramRow}>
+                                <span className={s.paramLabel}>모멘텀</span>
+                                <input type="range" className="slider-cosmic" min={0} max={0.99} step={0.01}
+                                    value={myMomentum} onChange={(e) => setMyMomentum(parseFloat(e.target.value))} />
+                                <span className={s.paramValue}>{myMomentum.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* 같은 맵 다시 도전 / 다른 맵 선택 */}
+                        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                            <button
+                                className={`btn-nova ${s.submitBtn}`}
+                                style={{ flex: 1, background: 'rgba(245,158,11,0.18)', borderColor: '#f59e0b' }}
+                                onClick={() => handleSoloSingleMap(soloMapLevel)}
+                            >
+                                🔁 같은 맵 다시 도전
+                            </button>
+                        </div>
+
+                        {/* 맵 선택 */}
+                        <div style={{ marginTop: 16 }}>
+                            <label className="label-cosmic" style={{ marginBottom: 8 }}>🗺️ 다른 맵 선택</label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {SOLO_MAP_OPTIONS.map(m => (
+                                    <button
+                                        key={m.level}
+                                        className={`btn-nova ${s.submitBtn}`}
+                                        style={{
+                                            flex: '0 0 auto', padding: '6px 10px', fontSize: '0.72rem',
+                                            borderColor: m.level === soloMapLevel ? '#a78bfa' : 'rgba(255,255,255,0.15)',
+                                            background: m.level === soloMapLevel ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.05)',
+                                            fontWeight: m.level === soloMapLevel ? 700 : 400,
+                                        }}
+                                        onClick={() => handleSoloSingleMap(m.level)}
+                                    >
+                                        {m.emoji} {m.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 전체 레이싱 참여 */}
+                        {roomCode && (
+                            <button
+                                className={`btn-nova ${s.submitBtn}`}
+                                style={{ marginTop: 12, width: '100%', background: 'linear-gradient(135deg, #7c5cfc, #a78bfa)' }}
+                                onClick={handleJoinCompetition}
+                            >
+                                🏆 전체 레이싱 참여하기
+                            </button>
+                        )}
                     </div>
                 )}
 
