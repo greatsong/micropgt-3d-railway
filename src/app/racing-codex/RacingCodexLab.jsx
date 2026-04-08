@@ -77,6 +77,25 @@ const MODE_META = {
 const PREPARED_PHASES = new Set(['preparing', 'racing']);
 const CUSTOM_PRESET_ID = 'custom';
 const PRESET_EPSILON = 0.0001;
+const SOLO_CHALLENGE_STARTS = {
+  5: [
+    { x: 2, z: 10 },
+    { x: 8, z: 4 },
+    { x: 10, z: 6 },
+  ],
+  8: [
+    { x: -4, z: 2 },
+    { x: 4, z: -2 },
+  ],
+};
+const SOLO_SUCCESS_DISTANCE = {
+  5: 0.35,
+  8: 0.4,
+};
+const SOLO_BENCHMARK_PRESET_IDS = {
+  5: 'aggressive',
+  8: 'aggressive',
+};
 
 function formatNumber(value, digits = 2) {
   if (!Number.isFinite(value)) return '-';
@@ -103,6 +122,48 @@ function getPresetIdForValues(learningRate, momentum) {
 
 function getStatusMeta(status) {
   return STATUS_META[status] || STATUS_META.waiting;
+}
+
+function cloneStartPosition(position) {
+  return {
+    x: position.x,
+    z: position.z,
+  };
+}
+
+function getSoloChallengePositions(level, random = Math.random) {
+  const normalizedLevel = normalizeMapLevel(level, 2);
+  const curatedStarts = SOLO_CHALLENGE_STARTS[normalizedLevel];
+
+  if (!curatedStarts?.length) {
+    const start = getRandomizedStartPosition(normalizedLevel, 0.35, random);
+    return {
+      player: start,
+      bot: cloneStartPosition(start),
+      curated: false,
+    };
+  }
+
+  const start = curatedStarts[Math.floor(random() * curatedStarts.length)];
+
+  return {
+    player: cloneStartPosition(start),
+    bot: cloneStartPosition(start),
+    curated: true,
+  };
+}
+
+function classifySoloChallengeStatus(status, distToGlobal, level) {
+  if (status === 'escaped') {
+    return 'escaped';
+  }
+
+  if (!Number.isFinite(distToGlobal)) {
+    return 'local_minimum';
+  }
+
+  const successDistance = SOLO_SUCCESS_DISTANCE[normalizeMapLevel(level, 2)] ?? 0.8;
+  return distToGlobal <= successDistance ? 'converged' : 'local_minimum';
 }
 
 function buildFieldErrors(values, requiredFields) {
@@ -272,6 +333,7 @@ function simulateSoloForecast({ level, startPosition, learningRate, momentum }) 
     status: 'local_minimum',
     distToGlobal: Number.POSITIVE_INFINITY,
   };
+  const finalStatus = classifySoloChallengeStatus(finalOutcome.status, finalOutcome.distToGlobal, level);
 
   const result = createRaceResult({
     teamId: 'forecast',
@@ -279,7 +341,7 @@ function simulateSoloForecast({ level, startPosition, learningRate, momentum }) 
     ball,
     level,
     timeMs: elapsed,
-    status: finalOutcome.status,
+    status: finalStatus,
     lr: learningRate,
     momentum,
     distToGlobal: finalOutcome.distToGlobal,
@@ -519,12 +581,34 @@ export default function RacingCodexLab() {
   );
   const levelGuide = useMemo(() => getLevelGuide(normalizedMapLevel), [normalizedMapLevel]);
   const recommendedPresets = useMemo(
-    () => RACING_PRESETS.filter((preset) => preset.fitLevels.includes(normalizedMapLevel)),
+    () => {
+      const basePresets = RACING_PRESETS.filter((preset) => preset.fitLevels.includes(normalizedMapLevel));
+      const benchmarkPresetId = SOLO_BENCHMARK_PRESET_IDS[normalizedMapLevel];
+      const benchmarkPreset = benchmarkPresetId
+        ? RACING_PRESETS.find((preset) => preset.id === benchmarkPresetId)
+        : null;
+
+      if (!benchmarkPreset || basePresets.some((preset) => preset.id === benchmarkPreset.id)) {
+        return basePresets;
+      }
+
+      return [...basePresets, benchmarkPreset];
+    },
     [normalizedMapLevel]
   );
   const soloBenchmarkPreset = useMemo(
-    () => recommendedPresets[0] || RACING_PRESETS[1] || RACING_PRESETS[0],
-    [recommendedPresets]
+    () => {
+      const benchmarkPresetId = SOLO_BENCHMARK_PRESET_IDS[normalizedMapLevel];
+      if (benchmarkPresetId) {
+        const benchmarkPreset = RACING_PRESETS.find((preset) => preset.id === benchmarkPresetId);
+        if (benchmarkPreset) {
+          return benchmarkPreset;
+        }
+      }
+
+      return recommendedPresets[0] || RACING_PRESETS[1] || RACING_PRESETS[0];
+    },
+    [normalizedMapLevel, recommendedPresets]
   );
 
   const liveTeams = useMemo(
@@ -674,13 +758,15 @@ export default function RacingCodexLab() {
     const nextLearningRate = clampLearningRate(options.learningRate ?? myLearningRate, 0.1);
     const nextMomentum = clampMomentum(options.momentum ?? myMomentum, 0.9);
     const shouldKeepStart = Boolean(options.keepStart) && soloStartPositions?.level === nextLevel;
+    const challengePositions = getSoloChallengePositions(nextLevel);
     const nextStartPositions = shouldKeepStart && soloStartPositions
       ? soloStartPositions
       : {
           key: `${nextLevel}-${Date.now().toString(36)}`,
           level: nextLevel,
-          player: getRandomizedStartPosition(nextLevel),
-          bot: getRandomizedStartPosition(nextLevel),
+          player: challengePositions.player,
+          bot: challengePositions.bot,
+          curated: challengePositions.curated,
         };
     const myStart = nextStartPositions.player;
     const botStart = nextStartPositions.bot;
@@ -848,7 +934,8 @@ export default function RacingCodexLab() {
 
         if (!outcome) continue;
 
-        ball.status = outcome.status;
+        const nextStatus = classifySoloChallengeStatus(outcome.status, outcome.distToGlobal, nextLevel);
+        ball.status = nextStatus;
         const currentTeam = teamId === SOLO_PLAYER_ID ? playerTeam : botTeam;
         const finishResult = createRaceResult({
           teamId,
@@ -856,7 +943,7 @@ export default function RacingCodexLab() {
           ball,
           level: nextLevel,
           timeMs: elapsed,
-          status: outcome.status,
+          status: nextStatus,
           lr: teamId === SOLO_PLAYER_ID ? clampLearningRate(myLearningRate, 0.1) : currentTeam.learningRate,
           momentum: teamId === SOLO_PLAYER_ID ? clampMomentum(myMomentum, 0.9) : currentTeam.momentum,
           distToGlobal: outcome.distToGlobal,
@@ -864,7 +951,7 @@ export default function RacingCodexLab() {
 
         ball.finishResult = finishResult;
         finishedResults[teamId] = finishResult;
-        pushAlert(createLocalAlert(currentTeam.name, outcome), { teamId });
+        pushAlert(createLocalAlert(currentTeam.name, { ...outcome, status: nextStatus }), { teamId });
       }
 
       updateBalls({ ...localBalls });
@@ -924,11 +1011,7 @@ export default function RacingCodexLab() {
           distToGlobal: Number.POSITIVE_INFINITY,
         };
 
-        const nextStatus = outcome.status === 'escaped'
-          ? 'escaped'
-          : outcome.distToGlobal < 0.8
-            ? 'converged'
-            : 'local_minimum';
+        const nextStatus = classifySoloChallengeStatus(outcome.status, outcome.distToGlobal, normalizedMapLevel);
 
         ball.status = nextStatus;
         ball.finishResult = createRaceResult({
@@ -1757,11 +1840,11 @@ export default function RacingCodexLab() {
                     <div className={styles.hudFootnote}>
                       {myBall ? (
                         <p className={styles.overlayHint}>
-                          좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) / Loss {formatNumber(myBall.loss, 3)} / {levelGuide.coachingFocus}
+                          좌표 ({formatNumber(myBall.x, 1)}, {formatNumber(myBall.z, 1)}) · Loss {formatNumber(myBall.loss, 3)} · {tuningForecast?.label || getStatusMeta(myStatus).label}
                         </p>
                       ) : (
                         <p className={styles.overlayHint}>
-                          {isSoloMode ? '버튼 바로 오른쪽에서 3D 맵을 보며 출발하고 멈춰보세요.' : '선생님이 준비를 누르면 오른쪽 맵에서 출발 위치를 보며 바로 전략을 확정할 수 있습니다.'}
+                          {isSoloMode ? '오른쪽 맵을 보면서 바로 출발하거나 멈춰보세요.' : '선생님이 준비를 누르면 오른쪽 맵을 보며 바로 전략을 확정할 수 있습니다.'}
                         </p>
                       )}
                     </div>
@@ -1777,7 +1860,7 @@ export default function RacingCodexLab() {
                           {racePhase === 'preparing'
                             ? '셀프 연습 시작'
                             : racePhase === 'finished'
-                              ? '같은 위치에서 다시 달리기'
+                              ? '같은 출발로 재도전'
                               : racePhase === 'racing'
                                 ? '셀프 연습 진행 중'
                                 : '셀프 연습 시작'}
@@ -1788,14 +1871,14 @@ export default function RacingCodexLab() {
                           onClick={handleStopSoloPractice}
                           disabled={racePhase !== 'racing'}
                         >
-                          셀프 연습 멈추기
+                          정지
                         </button>
                         <button
                           type="button"
                           className={styles.secondaryButton}
                           onClick={() => prepareSoloPractice()}
                         >
-                          출발 위치 다시 배치
+                          출발점 리셋
                         </button>
                       </div>
                     ) : (
