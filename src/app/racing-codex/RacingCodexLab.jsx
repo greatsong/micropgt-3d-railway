@@ -181,6 +181,124 @@ function createLocalAlert(teamName, outcome) {
   return `🏁 ${teamName}이 글로벌 최솟값에 수렴했습니다.`;
 }
 
+function scoreSoloResult(result) {
+  if (!result) return 0;
+
+  const baseByStatus = {
+    converged: 100,
+    local_minimum: 58,
+    escaped: 12,
+  };
+
+  const base = baseByStatus[result.status] ?? 0;
+  const timePenalty = Number.isFinite(result.time) ? Math.min(28, result.time / 850) : 28;
+  const distancePenalty = Number.isFinite(result.distToGlobal) ? Math.min(32, result.distToGlobal * 11) : 32;
+  const lossPenalty = Number.isFinite(result.finalLoss) ? Math.min(18, Math.max(0, result.finalLoss) * 3.6) : 18;
+
+  return Math.max(0, Math.round(base - timePenalty - distancePenalty - lossPenalty));
+}
+
+function getSoloOutcomeMeta({ status, learningRate, momentum, score }) {
+  if (status === 'converged') {
+    return score >= 85
+      ? {
+          label: '도달권 세팅',
+          tone: 'success',
+          copy: '이 조합이면 글로벌 미니마까지 밀어붙일 가능성이 큽니다.',
+        }
+      : {
+          label: '도달 가능',
+          tone: 'info',
+          copy: '성공은 가능하지만 더 빠른 조합이 있을 수 있습니다.',
+        };
+  }
+
+  if (status === 'escaped') {
+    return {
+      label: '과속 위험',
+      tone: 'danger',
+      copy: learningRate > 0.24 || momentum > 0.88
+        ? '학습률이나 모멘텀이 너무 커서 골짜기를 지나치고 이탈할 가능성이 큽니다.'
+        : '속도는 빠르지만 제어가 풀려 맵 밖으로 튀는 조합입니다.',
+    };
+  }
+
+  if (momentum < 0.45) {
+    return {
+      label: '함정 정체',
+      tone: 'warning',
+      copy: '모멘텀이 낮아 얕은 로컬 미니마를 못 넘고 중간에 멈출 가능성이 큽니다.',
+    };
+  }
+
+  if (learningRate < 0.06) {
+    return {
+      label: '너무 조심',
+      tone: 'warning',
+      copy: '안정적이지만 너무 느려서 글로벌 미니마까지 못 밀고 멈출 수 있습니다.',
+    };
+  }
+
+  return {
+    label: '재튜닝 필요',
+    tone: 'warning',
+    copy: '조합이 애매해서 글로벌 미니마 직전에 멈추거나 길을 잃을 수 있습니다.',
+  };
+}
+
+function simulateSoloForecast({ level, startPosition, learningRate, momentum }) {
+  if (!startPosition) return null;
+
+  const ball = createRaceBall({
+    level,
+    x: startPosition.x,
+    z: startPosition.z,
+    lr: learningRate,
+    momentum,
+    status: 'racing',
+  });
+
+  let elapsed = 0;
+  let outcome = null;
+
+  for (let step = 0; step < 1200; step += 1) {
+    advanceRaceBall(ball, level);
+    elapsed += 33;
+    outcome = inspectRaceBall(ball, level, elapsed);
+    if (outcome) break;
+  }
+
+  const finalOutcome = outcome || inspectRaceBall(ball, level, Number.POSITIVE_INFINITY) || {
+    status: 'local_minimum',
+    distToGlobal: Number.POSITIVE_INFINITY,
+  };
+
+  const result = createRaceResult({
+    teamId: 'forecast',
+    teamName: 'forecast',
+    ball,
+    level,
+    timeMs: elapsed,
+    status: finalOutcome.status,
+    lr: learningRate,
+    momentum,
+    distToGlobal: finalOutcome.distToGlobal,
+  });
+
+  const score = scoreSoloResult(result);
+
+  return {
+    result,
+    score,
+    ...getSoloOutcomeMeta({
+      status: result.status,
+      learningRate,
+      momentum,
+      score,
+    }),
+  };
+}
+
 function InitialJoinState({
   fieldErrors,
   joinBusy,
@@ -385,6 +503,8 @@ export default function RacingCodexLab() {
   const [showIdentityForm, setShowIdentityForm] = useState(() => !studentName);
   const [selectedPresetId, setSelectedPresetId] = useState(() => getPresetIdForValues(myLearningRate, myMomentum));
   const [isParamsConfirmed, setIsParamsConfirmed] = useState(false);
+  const [soloStartPositions, setSoloStartPositions] = useState(null);
+  const [soloAttempts, setSoloAttempts] = useState([]);
 
   const alertSequenceRef = useRef(0);
   const paramThrottleRef = useRef(null);
@@ -421,6 +541,26 @@ export default function RacingCodexLab() {
   const teamCount = Object.keys(teams).length;
   const latestStageResults = gpActive && gpStage > 0 ? stageResults[gpStage - 1] || [] : [];
   const primaryResults = racePhase === 'stageResult' ? latestStageResults : results;
+  const activeSoloStart = isSoloMode && soloStartPositions?.level === normalizedMapLevel ? soloStartPositions : null;
+  const lastSoloAttempt = soloAttempts.length > 0 ? soloAttempts[soloAttempts.length - 1] : null;
+  const previousSoloAttempt = soloAttempts.length > 1 ? soloAttempts[soloAttempts.length - 2] : null;
+  const bestSoloAttempt = useMemo(() => {
+    if (soloAttempts.length === 0) return null;
+    return [...soloAttempts].sort((left, right) => {
+      if (left.playerScore !== right.playerScore) return right.playerScore - left.playerScore;
+      return (left.playerResult?.time || Number.POSITIVE_INFINITY) - (right.playerResult?.time || Number.POSITIVE_INFINITY);
+    })[0];
+  }, [soloAttempts]);
+  const tuningForecast = useMemo(() => {
+    if (!isSoloMode || !activeSoloStart?.player) return null;
+
+    return simulateSoloForecast({
+      level: normalizedMapLevel,
+      startPosition: activeSoloStart.player,
+      learningRate: clampLearningRate(myLearningRate, 0.1),
+      momentum: clampMomentum(myMomentum, 0.9),
+    });
+  }, [activeSoloStart, isSoloMode, myLearningRate, myMomentum, normalizedMapLevel]);
   const coachSummary = racePaused
     ? '교사가 레이스를 잠시 멈췄습니다. 현재 위치와 팀들의 경로를 다시 읽어보세요.'
     : isSoloMode
@@ -433,6 +573,31 @@ export default function RacingCodexLab() {
       soloIntervalRef.current = null;
     }
     soloStartTimeRef.current = null;
+  }, []);
+
+  const recordSoloAttempt = useCallback((rankedResults, level, startPositions) => {
+    const playerResult = rankedResults.find((entry) => entry.teamId === SOLO_PLAYER_ID);
+    const botResult = rankedResults.find((entry) => entry.teamId === SOLO_BOT_ID) || null;
+    if (!playerResult || !startPositions) return;
+
+    setSoloAttempts((previous) => {
+      const sameStartHistory = previous.filter((attempt) => attempt.startKey === startPositions.key);
+      const attemptNumber = sameStartHistory.length + 1;
+
+      return [
+        ...sameStartHistory,
+        {
+          id: `${startPositions.key}-${attemptNumber}`,
+          attemptNumber,
+          level,
+          startKey: startPositions.key,
+          playerResult,
+          botResult,
+          playerScore: scoreSoloResult(playerResult),
+          botScore: botResult ? scoreSoloResult(botResult) : 0,
+        },
+      ].slice(-8);
+    });
   }, []);
 
   const resetRaceViewport = useCallback(() => {
@@ -452,6 +617,8 @@ export default function RacingCodexLab() {
     setRacePaused(false);
     setIsParamsConfirmed(false);
     setRaceMode('competition');
+    setSoloStartPositions(null);
+    setSoloAttempts([]);
   }, [
     clearSoloInterval,
     setGpActive,
@@ -506,8 +673,17 @@ export default function RacingCodexLab() {
     const nextMemberNames = options.memberNames?.trim() || memberNames || joinForm.memberNames.trim() || '';
     const nextLearningRate = clampLearningRate(options.learningRate ?? myLearningRate, 0.1);
     const nextMomentum = clampMomentum(options.momentum ?? myMomentum, 0.9);
-    const myStart = getRandomizedStartPosition(nextLevel);
-    const botStart = getRandomizedStartPosition(nextLevel);
+    const shouldKeepStart = Boolean(options.keepStart) && soloStartPositions?.level === nextLevel;
+    const nextStartPositions = shouldKeepStart && soloStartPositions
+      ? soloStartPositions
+      : {
+          key: `${nextLevel}-${Date.now().toString(36)}`,
+          level: nextLevel,
+          player: getRandomizedStartPosition(nextLevel),
+          bot: getRandomizedStartPosition(nextLevel),
+        };
+    const myStart = nextStartPositions.player;
+    const botStart = nextStartPositions.bot;
 
     clearSoloInterval();
     disconnectSocket();
@@ -530,6 +706,10 @@ export default function RacingCodexLab() {
     setMyTeamId(SOLO_PLAYER_ID);
     setIsParamsConfirmed(true);
     setAlerts([]);
+    setSoloStartPositions(nextStartPositions);
+    if (!shouldKeepStart) {
+      setSoloAttempts([]);
+    }
 
     setTeams({
       [SOLO_PLAYER_ID]: {
@@ -593,6 +773,7 @@ export default function RacingCodexLab() {
     soloBenchmarkPreset.label,
     soloBenchmarkPreset.learningRate,
     soloBenchmarkPreset.momentum,
+    soloStartPositions,
     studentName,
     updateBalls,
   ]);
@@ -615,20 +796,31 @@ export default function RacingCodexLab() {
     setRacePhase('racing');
     setRaceMode('solo');
     setRacePaused(false);
+    const startPositions = soloStartPositions?.level === nextLevel
+      ? soloStartPositions
+      : {
+          key: `${nextLevel}-${Date.now().toString(36)}`,
+          level: nextLevel,
+          player: { x: playerBall.x, z: playerBall.z },
+          bot: { x: botBall.x, z: botBall.z },
+        };
+    if (!soloStartPositions || soloStartPositions.level !== nextLevel) {
+      setSoloStartPositions(startPositions);
+    }
 
     const localBalls = {
       [SOLO_PLAYER_ID]: createRaceBall({
         level: nextLevel,
-        x: playerBall.x,
-        z: playerBall.z,
+        x: startPositions.player.x,
+        z: startPositions.player.z,
         lr: clampLearningRate(myLearningRate, 0.1),
         momentum: clampMomentum(myMomentum, 0.9),
         status: 'racing',
       }),
       [SOLO_BOT_ID]: createRaceBall({
         level: nextLevel,
-        x: botBall.x,
-        z: botBall.z,
+        x: startPositions.bot.x,
+        z: startPositions.bot.z,
         lr: botTeam.learningRate,
         momentum: botTeam.momentum,
         status: 'racing',
@@ -689,6 +881,7 @@ export default function RacingCodexLab() {
         );
         setResults(rankedResults);
         setRacePhase('finished');
+        recordSoloAttempt(rankedResults, nextLevel, startPositions);
       }
     }, 33);
   }, [
@@ -700,9 +893,11 @@ export default function RacingCodexLab() {
     prepareSoloPractice,
     pushAlert,
     racePhase,
+    recordSoloAttempt,
     setRacePaused,
     setRacePhase,
     setResults,
+    soloStartPositions,
     teams,
     updateBalls,
   ]);
@@ -754,11 +949,14 @@ export default function RacingCodexLab() {
 
     clearSoloInterval();
     updateBalls(currentBalls);
-    setResults(rankRaceResults(finalizedResults));
+    const rankedResults = rankRaceResults(finalizedResults);
+    setResults(rankedResults);
     setRacePaused(false);
     setRacePhase('finished');
     pushAlert('⏸️ 셀프 연습을 멈추고 현재 위치를 기준으로 결과를 정리했습니다.');
+    recordSoloAttempt(rankedResults, normalizedMapLevel, activeSoloStart);
   }, [
+    activeSoloStart,
     clearSoloInterval,
     isSoloMode,
     myLearningRate,
@@ -766,6 +964,7 @@ export default function RacingCodexLab() {
     normalizedMapLevel,
     pushAlert,
     racePhase,
+    recordSoloAttempt,
     setRacePaused,
     setRacePhase,
     setResults,
@@ -1324,6 +1523,12 @@ export default function RacingCodexLab() {
     ? `${studentName || joinForm.teamName || '학생'}의 셀프 연습 세션`
     : `${roomCode} 방에서 멀티플레이 레이스 참여 중`;
   const myStatus = myBall?.status || (isParamsConfirmed ? 'armed' : 'waiting');
+  const soloAttemptDelta = lastSoloAttempt && previousSoloAttempt
+    ? lastSoloAttempt.playerScore - previousSoloAttempt.playerScore
+    : null;
+  const soloStartLabel = activeSoloStart
+    ? `(${formatNumber(activeSoloStart.player.x, 1)}, ${formatNumber(activeSoloStart.player.z, 1)})`
+    : null;
 
   return (
     <div className={styles.page}>
@@ -1444,6 +1649,44 @@ export default function RacingCodexLab() {
                     </div>
                     <p>{currentMap.description}</p>
                   </div>
+
+                  {isSoloMode ? (
+                    <div className={styles.challengeStrip}>
+                      <article className={styles.challengeCard}>
+                        <span className={styles.challengeLabel}>Same Start</span>
+                        <strong>{soloStartLabel || '출발점 준비 중'}</strong>
+                        <p>
+                          {soloAttempts.length > 0
+                            ? `같은 출발점으로 ${soloAttempts.length}번 도전 중`
+                            : '출발 위치를 고정하고 LR/Momentum만 바꿔 비교합니다.'}
+                        </p>
+                      </article>
+
+                      <article className={`${styles.challengeCard} ${styles[`tone${tuningForecast?.tone || 'neutral'}`]}`}>
+                        <span className={styles.challengeLabel}>Tuning Verdict</span>
+                        <strong>
+                          {tuningForecast ? `${tuningForecast.label} · ${tuningForecast.score}점` : '세팅 분석 중'}
+                        </strong>
+                        <p>{tuningForecast?.copy || '출발 위치가 정해지면 현재 세팅의 경향을 예측합니다.'}</p>
+                      </article>
+
+                      <article className={styles.challengeCard}>
+                        <span className={styles.challengeLabel}>Replay Board</span>
+                        <strong>
+                          {lastSoloAttempt
+                            ? `직전 ${lastSoloAttempt.playerScore}점 / 최고 ${bestSoloAttempt?.playerScore ?? lastSoloAttempt.playerScore}점`
+                            : '첫 도전 대기'}
+                        </strong>
+                        <p>
+                          {soloAttemptDelta === null
+                            ? '같은 출발점에서 여러 번 달리면 점수 차이가 쌓입니다.'
+                            : soloAttemptDelta >= 0
+                              ? `직전보다 ${soloAttemptDelta}점 상승했습니다.`
+                              : `직전보다 ${Math.abs(soloAttemptDelta)}점 하락했습니다.`}
+                        </p>
+                      </article>
+                    </div>
+                  ) : null}
 
                   {isSoloMode ? (
                     <div className={styles.hudMapPicker}>
@@ -1602,8 +1845,10 @@ export default function RacingCodexLab() {
                   <div className={styles.sceneLegend}>
                     <span className={styles.sceneLegendText}>
                       {myBall
-                        ? `내 공 위치 (${formatNumber(myBall.x, 1)}, ${formatNumber(myBall.z, 1)}) · Loss ${formatNumber(myBall.loss, 3)}`
-                        : '오른쪽 3D 코스를 보면서 세팅 결과를 바로 확인하세요.'}
+                        ? `내 공 위치 (${formatNumber(myBall.x, 1)}, ${formatNumber(myBall.z, 1)}) · Loss ${formatNumber(myBall.loss, 3)} · ${tuningForecast?.label || '튜닝 실험 중'}`
+                        : activeSoloStart
+                          ? `고정 출발점 ${soloStartLabel}에서 글로벌 미니마를 노려보세요.`
+                          : '오른쪽 3D 코스를 보면서 세팅 결과를 바로 확인하세요.'}
                     </span>
                   </div>
                 </div>
@@ -1689,29 +1934,29 @@ export default function RacingCodexLab() {
 
                 <section className={styles.panelCard}>
                   <div className={styles.panelHeader}>
-                    <span className={styles.eyebrow}>{isSoloMode ? 'Solo Drill' : 'Room Roster'}</span>
-                    <h2>{isSoloMode ? '혼자 연습 추천 시나리오' : '현재 방에 들어온 학생들'}</h2>
-                    <p>{isSoloMode ? '다른 학생 없이도 바로 실험할 수 있는 흐름을 넣었습니다.' : '아직 전략을 안 낸 학생도 바로 확인할 수 있습니다.'}</p>
+                    <span className={styles.eyebrow}>{isSoloMode ? 'Solo Challenge' : 'Room Roster'}</span>
+                    <h2>{isSoloMode ? '같은 출발점에서 글로벌 미니마를 노립니다.' : '현재 방에 들어온 학생들'}</h2>
+                    <p>{isSoloMode ? '맵은 고정하고 LR, Momentum만 바꿔 결과가 얼마나 달라지는지 비교합니다.' : '아직 전략을 안 낸 학생도 바로 확인할 수 있습니다.'}</p>
                   </div>
 
                   {isSoloMode ? (
                     <div className={styles.rosterList}>
                       <div className={styles.rosterItem}>
                         <div>
-                          <strong>1. 맵 선택</strong>
-                          <small>로컬 미니마, 계곡 진동, 종합 전략 맵을 바꿔가며 차이를 봅니다.</small>
+                          <strong>1. 같은 출발점 유지</strong>
+                          <small>{soloStartLabel ? `현재 고정 시작점은 ${soloStartLabel} 입니다.` : '출발점을 먼저 준비하면 동일한 조건으로 비교할 수 있습니다.'}</small>
                         </div>
                       </div>
                       <div className={styles.rosterItem}>
                         <div>
-                          <strong>2. 세팅 후 즉시 출발</strong>
-                          <small>맵 옆 HUD에서 LR, Momentum을 조절한 뒤 바로 시작합니다.</small>
+                          <strong>2. 도달권 판정 보기</strong>
+                          <small>{tuningForecast ? `${tuningForecast.label}: ${tuningForecast.copy}` : '현재 세팅을 평가한 뒤 출발하면 비교가 더 쉬워집니다.'}</small>
                         </div>
                       </div>
                       <div className={styles.rosterItem}>
                         <div>
-                          <strong>3. 멈추고 비교</strong>
-                          <small>{soloBenchmarkPreset.label} 기준선과 내 공을 멈춘 시점 기준으로 비교해 전략을 설명합니다.</small>
+                          <strong>3. 직전 기록 갱신</strong>
+                          <small>{lastSoloAttempt ? `직전 ${lastSoloAttempt.playerScore}점, 최고 ${bestSoloAttempt?.playerScore ?? lastSoloAttempt.playerScore}점입니다.` : `${soloBenchmarkPreset.label} 기준선보다 더 빨리 도달하는 조합을 찾아보세요.`}</small>
                         </div>
                       </div>
                     </div>
