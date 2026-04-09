@@ -24,7 +24,7 @@ const SECTIONS = [
     title: '경사하강법 레이싱',
     question: '수십억 개의 파라미터는 어떻게 자동으로 업데이트되나?',
     desc: '8개 맵에서 학습률과 모멘텀을 조절하며 최적화 레이싱',
-    url: '/week5',
+    url: 'https://gradient-descent-race-production.up.railway.app',
     color: '#f43f5e',
     emoji: '🏎️',
   },
