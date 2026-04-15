@@ -2,6 +2,7 @@ import { createRound, getPartner, getRole, pairingsToRecords } from './matchmaki
 import { generateAIResponseWithTimeout, styleTransform } from './ai.js'
 import { getTimer } from './timer.js'
 import { buildSharedRankings } from './utils.js'
+import { sessionApiKeys } from './apiKeyStore.js'
 
 const activeRounds = new Map()
 
@@ -105,6 +106,7 @@ export function registerSocketHandlers(io, db) {
         voteData: {},
         mirroredTurnIds: new Map(),
         deliveryCancels: [],
+        apiKeys: sessionApiKeys.get(sessionId) || {},
       }
 
       for (const team of teams) {
@@ -217,14 +219,14 @@ export function registerSocketHandlers(io, db) {
 
           if (!styledAnswer && row?.original_answer) {
             // 사람이 답변했으나 styleTransform이 아직 완료되지 않은 경우 — 여기서 직접 변환
-            styledAnswer = await styleTransform(row.original_answer, roundState.style)
+            styledAnswer = await styleTransform(row.original_answer, roundState.style, roundState.apiKeys)
             db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, sourceTurnId)
             if (observerTurnId) {
               db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
             }
           } else if (!styledAnswer) {
             // 아예 답변이 없는 경우 (타임아웃)
-            styledAnswer = await styleTransform('음... 잘 모르겠어', roundState.style)
+            styledAnswer = await styleTransform('음... 잘 모르겠어', roundState.style, roundState.apiKeys)
             db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, sourceTurnId)
             if (observerTurnId) {
               db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
@@ -262,7 +264,8 @@ export function registerSocketHandlers(io, db) {
         message,
         roundState.style,
         roundState.aiModel,
-        Math.max(4000, (roundState.responseDelay - 2) * 1000)
+        Math.max(4000, (roundState.responseDelay - 2) * 1000),
+        roundState.apiKeys
       ).then((answer) => {
         if (deliveryClosed) return
         aiAnswerText = answer
@@ -282,7 +285,7 @@ export function registerSocketHandlers(io, db) {
 
       const deliverAiAnswer = async () => {
         deliveryClosed = true
-        const styledAnswer = aiAnswerText || await styleTransform('음... 잘 모르겠어', roundState.style)
+        const styledAnswer = aiAnswerText || await styleTransform('음... 잘 모르겠어', roundState.style, roundState.apiKeys)
         db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, sourceTurnId)
         if (observerTurnId) {
           db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
@@ -325,7 +328,7 @@ export function registerSocketHandlers(io, db) {
       db.prepare('UPDATE turns SET original_answer = ? WHERE id = ?')
         .run(message, sourceTurn.id)
 
-      const styledAnswer = await styleTransform(message, roundState.style)
+      const styledAnswer = await styleTransform(message, roundState.style, roundState.apiKeys)
       db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?')
         .run(styledAnswer, sourceTurn.id)
 

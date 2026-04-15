@@ -27,13 +27,15 @@ const STYLE_PROMPTS = {
   },
 }
 
-// ── Anthropic 클라이언트 초기화 (지연) ──────────────────────────────────
-let anthropicClient = null
-function getAnthropic() {
-  if (!anthropicClient) {
-    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// ── Anthropic 클라이언트 초기화 (API 키별 캐싱) ──────────────────────────
+const anthropicClients = new Map()
+function getAnthropic(apiKey) {
+  const key = apiKey || process.env.ANTHROPIC_API_KEY
+  if (!key) throw new Error('ANTHROPIC_API_KEY 없음')
+  if (!anthropicClients.has(key)) {
+    anthropicClients.set(key, new Anthropic({ apiKey: key }))
   }
-  return anthropicClient
+  return anthropicClients.get(key)
 }
 
 // ── 말투 변환 (항상 Claude Haiku) ────────────────────────────────────────
@@ -42,7 +44,7 @@ function getAnthropic() {
  * @param {string} style - 말투 이름 (자연스러운대화, 임함체, 사극체, AI체)
  * @returns {Promise<string>} 변환된 텍스트
  */
-export async function styleTransform(text, style) {
+export async function styleTransform(text, style, apiKeys = {}) {
   const styleInfo = STYLE_PROMPTS[style]
   if (!styleInfo) return text
 
@@ -51,7 +53,7 @@ export async function styleTransform(text, style) {
   const maxTokens = Math.min(120, Math.max(30, Math.ceil(inputLen * 2.5)))
 
   try {
-    const client = getAnthropic()
+    const client = getAnthropic(apiKeys.anthropic)
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: maxTokens,
@@ -99,24 +101,24 @@ ${styleInfo.instruction}
  * @param {string} model - AI 모델 (claude / gpt / gemini / solar)
  * @returns {Promise<string>} 말투가 적용된 AI 답변
  */
-export async function generateAIResponse(question, style, model = 'claude') {
+export async function generateAIResponse(question, style, model = 'claude', apiKeys = {}) {
   const systemPrompt = buildSystemPrompt(style)
 
   let rawAnswer
   try {
     switch (model) {
       case 'gpt':
-        rawAnswer = await generateWithGPT(question, systemPrompt)
+        rawAnswer = await generateWithGPT(question, systemPrompt, apiKeys.openai)
         break
       case 'gemini':
-        rawAnswer = await generateWithGemini(question, systemPrompt)
+        rawAnswer = await generateWithGemini(question, systemPrompt, apiKeys.google)
         break
       case 'solar':
-        rawAnswer = await generateWithSolar(question, systemPrompt)
+        rawAnswer = await generateWithSolar(question, systemPrompt, apiKeys.upstage)
         break
       case 'claude':
       default:
-        rawAnswer = await generateWithClaude(question, systemPrompt)
+        rawAnswer = await generateWithClaude(question, systemPrompt, apiKeys.anthropic)
         break
     }
   } catch (err) {
@@ -126,7 +128,7 @@ export async function generateAIResponse(question, style, model = 'claude') {
 
   // AI 응답 실패 시 기본 문구 (말투 적용)
   if (!rawAnswer) {
-    return styleTransform('음... 잘 모르겠어', style)
+    return styleTransform('음... 잘 모르겠어', style, apiKeys)
   }
 
   return rawAnswer
@@ -149,8 +151,8 @@ ${noEmoji ? '5. 이모지(😊🎉 등)를 절대 사용하지 마. 텍스트만
 }
 
 // ── Claude (Anthropic SDK) ────────────────────────────────────────────────
-async function generateWithClaude(question, systemPrompt) {
-  const client = getAnthropic()
+async function generateWithClaude(question, systemPrompt, apiKey) {
+  const client = getAnthropic(apiKey)
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 80,
@@ -161,8 +163,8 @@ async function generateWithClaude(question, systemPrompt) {
 }
 
 // ── GPT (OpenAI, fetch 직접 호출) ────────────────────────────────────────
-async function generateWithGPT(question, systemPrompt) {
-  const apiKey = process.env.OPENAI_API_KEY
+async function generateWithGPT(question, systemPrompt, providedKey) {
+  const apiKey = providedKey || process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY 없음')
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -191,8 +193,8 @@ async function generateWithGPT(question, systemPrompt) {
 }
 
 // ── Gemini (Google, fetch 직접 호출) ─────────────────────────────────────
-async function generateWithGemini(question, systemPrompt) {
-  const apiKey = process.env.GOOGLE_API_KEY
+async function generateWithGemini(question, systemPrompt, providedKey) {
+  const apiKey = providedKey || process.env.GOOGLE_API_KEY
   if (!apiKey) throw new Error('GOOGLE_API_KEY 없음')
 
   const response = await fetch(
@@ -218,8 +220,8 @@ async function generateWithGemini(question, systemPrompt) {
 }
 
 // ── Solar Pro 3 (Upstage, fetch 직접 호출) ───────────────────────────────
-async function generateWithSolar(question, systemPrompt) {
-  const apiKey = process.env.UPSTAGE_API_KEY
+async function generateWithSolar(question, systemPrompt, providedKey) {
+  const apiKey = providedKey || process.env.UPSTAGE_API_KEY
   if (!apiKey) throw new Error('UPSTAGE_API_KEY 없음')
 
   const response = await fetch('https://api.upstage.ai/v1/chat/completions', {
@@ -255,16 +257,16 @@ async function generateWithSolar(question, systemPrompt) {
  * @param {string} model
  * @param {number} timeoutMs - 타임아웃 (밀리초)
  */
-export async function generateAIResponseWithTimeout(question, style, model, timeoutMs = 25000) {
+export async function generateAIResponseWithTimeout(question, style, model, timeoutMs = 25000, apiKeys = {}) {
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('AI 응답 타임아웃')), timeoutMs)
   )
   try {
-    return await Promise.race([generateAIResponse(question, style, model), timeoutPromise])
+    return await Promise.race([generateAIResponse(question, style, model, apiKeys), timeoutPromise])
   } catch (err) {
     console.warn(`[AI] 타임아웃/오류 (${model}):`, err.message)
     // 기본 문구 반환
-    return styleTransform('음... 잘 모르겠어', style)
+    return styleTransform('음... 잘 모르겠어', style, apiKeys)
   }
 }
 

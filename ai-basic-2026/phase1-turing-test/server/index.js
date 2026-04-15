@@ -10,6 +10,7 @@ import fs from 'fs'
 import { nanoid } from './utils.js'
 import db from './db.js'
 import { registerSocketHandlers } from './socketHandlers.js'
+import { sessionApiKeys } from './apiKeyStore.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -65,16 +66,41 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
-// ── 교사 PIN 인증 ─────────────────────────────────────────────────────────
+// ── 교사 인증 (API 키 입력) ───────────────────────────────────────────────
 const TEACHER_PIN = process.env.TEACHER_PIN || '000000'
 
 app.post(`${BASE_PATH}/api/auth/teacher`, (req, res) => {
-  const { pin } = req.body
+  const { pin, apiKeys } = req.body
+  // PIN 인증 (기존 호환)
   if (pin === TEACHER_PIN) {
+    res.json({ ok: true })
+  } else if (apiKeys && apiKeys.anthropic) {
+    // API 키 방식 인증 — Anthropic 키가 있으면 인증 통과
     res.json({ ok: true })
   } else {
     res.status(401).json({ error: '인증 코드가 올바르지 않습니다' })
   }
+})
+
+// 세션에 API 키 연결
+app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, (req, res) => {
+  const { apiKeys } = req.body
+  if (!apiKeys || !apiKeys.anthropic) {
+    return res.status(400).json({ error: 'Anthropic API 키는 필수입니다' })
+  }
+  sessionApiKeys.set(req.params.sessionId, apiKeys)
+  res.json({ ok: true })
+})
+
+// API 키 상태 확인 (키 값은 노출하지 않음)
+app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, (req, res) => {
+  const keys = sessionApiKeys.get(req.params.sessionId) || {}
+  res.json({
+    anthropic: Boolean(keys.anthropic),
+    openai: Boolean(keys.openai),
+    google: Boolean(keys.google),
+    upstage: Boolean(keys.upstage),
+  })
 })
 
 // ── 세션 API ──────────────────────────────────────────────────────────────
@@ -257,6 +283,7 @@ app.get(`${BASE_PATH}/api/system/ai-status`, (req, res) => {
     google: Boolean(process.env.GOOGLE_API_KEY),
     upstage: Boolean(process.env.UPSTAGE_API_KEY),
     appBasePath: BASE_PATH,
+    teacherKeyMode: true,
   })
 })
 

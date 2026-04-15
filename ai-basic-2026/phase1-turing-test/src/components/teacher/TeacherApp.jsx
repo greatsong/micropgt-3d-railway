@@ -5,6 +5,7 @@ import { withBase } from '../../config.js'
 
 const AUTH_KEY = 'turing_test_teacher_auth'
 const SESSION_KEY = 'turing_test_teacher_session'
+const API_KEYS_KEY = 'turing_test_api_keys'
 
 const styleOptions = ['자연스러운대화', '임함체', '사극체', 'AI체']
 const aiModelOptions = [
@@ -30,6 +31,22 @@ export default function TeacherApp({ navigate }) {
     return timestamp && Date.now() - Number(timestamp) < 2 * 60 * 60 * 1000
   })
   const [pin, setPin] = useState('')
+  const [anthropicKey, setAnthropicKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}').anthropic || '' } catch { return '' }
+  })
+  const [openaiKey, setOpenaiKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}').openai || '' } catch { return '' }
+  })
+  const [googleKey, setGoogleKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}').google || '' } catch { return '' }
+  })
+  const [upstageKey, setUpstageKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}').upstage || '' } catch { return '' }
+  })
+  const [showOptionalKeys, setShowOptionalKeys] = useState(false)
+  const [savedApiKeys, setSavedApiKeys] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}') } catch { return {} }
+  })
   const [teacherCode, setTeacherCode] = useState('AI-BASIC-2026')
   const [session, setSession] = useState(() => {
     const stored = sessionStorage.getItem(SESSION_KEY)
@@ -224,7 +241,10 @@ export default function TeacherApp({ navigate }) {
     if (!session?.id) return
     void refreshSession(session.id)
     void refreshRounds(session.id)
-    void refreshAiStatus()
+    // 기존 세션 복원 시에도 API 키 연결
+    if (savedApiKeys.anthropic) {
+      apiPost(`/session/${session.id}/api-keys`, { apiKeys: savedApiKeys }).catch(() => {})
+    }
   }, [session?.id])
 
   useEffect(() => {
@@ -267,9 +287,21 @@ export default function TeacherApp({ navigate }) {
   }
 
   async function handleAuth() {
+    if (!anthropicKey.trim()) {
+      setError('Anthropic API 키는 필수입니다')
+      return
+    }
     try {
-      await apiPost('/auth/teacher', { pin })
+      const apiKeys = {
+        anthropic: anthropicKey.trim(),
+        ...(openaiKey.trim() && { openai: openaiKey.trim() }),
+        ...(googleKey.trim() && { google: googleKey.trim() }),
+        ...(upstageKey.trim() && { upstage: upstageKey.trim() }),
+      }
+      await apiPost('/auth/teacher', { apiKeys })
       sessionStorage.setItem(AUTH_KEY, Date.now().toString())
+      localStorage.setItem(API_KEYS_KEY, JSON.stringify(apiKeys))
+      setSavedApiKeys(apiKeys)
       setAuthed(true)
       setError('')
     } catch (authError) {
@@ -282,6 +314,14 @@ export default function TeacherApp({ navigate }) {
       const data = await apiPost('/session', { teacherCode })
       setSession(data)
       setError('')
+      // 세션에 API 키 연결
+      if (savedApiKeys.anthropic) {
+        try {
+          await apiPost(`/session/${data.id}/api-keys`, { apiKeys: savedApiKeys })
+        } catch (err) {
+          console.error('API 키 등록 실패:', err)
+        }
+      }
     } catch (sessionError) {
       setError(sessionError.message)
     }
@@ -336,20 +376,57 @@ export default function TeacherApp({ navigate }) {
   if (!authed) {
     return (
       <div className="page-shell center-shell">
-        <div className="panel auth-panel">
+        <div className="panel auth-panel" style={{ maxWidth: 440 }}>
           <p className="eyebrow">🔐 AUTH</p>
           <h1>이미테이션 게임</h1>
-          <p className="muted">교사용 PIN을 입력해 게임을 시작하세요.</p>
+          <p className="muted">AI API 키를 입력하여 수업을 시작하세요.</p>
+
+          <label className="field-label">🔑 Anthropic API 키 <span style={{ color: '#ef4444' }}>*</span></label>
           <input
             className="field"
             type="password"
-            value={pin}
-            onChange={(event) => setPin(event.target.value)}
+            value={anthropicKey}
+            onChange={(event) => setAnthropicKey(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && handleAuth()}
-            placeholder="PIN 입력"
+            placeholder="sk-ant-..."
+            autoFocus
+            style={{ fontFamily: "'Courier New', monospace", fontSize: '0.85rem' }}
           />
+          <p className="muted" style={{ fontSize: '0.72rem', marginTop: 2, marginBottom: 8 }}>말투 변환 + Claude 모델 (필수)</p>
+
+          <button
+            type="button"
+            onClick={() => setShowOptionalKeys(!showOptionalKeys)}
+            style={{
+              background: 'none', border: 'none', color: '#d4a574', cursor: 'pointer',
+              fontSize: '0.8rem', padding: '6px 0', textAlign: 'left', width: '100%',
+            }}
+          >
+            {showOptionalKeys ? '▼' : '▶'} 다른 AI 모델 키 (선택사항)
+          </button>
+
+          {showOptionalKeys && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(212,165,116,0.04)', borderRadius: 8, border: '1px solid rgba(212,165,116,0.12)', marginBottom: 8 }}>
+              <div>
+                <label className="field-label" style={{ fontSize: '0.75rem' }}>OpenAI API 키 (GPT)</label>
+                <input className="field" type="password" value={openaiKey} onChange={(e) => setOpenaiKey(e.target.value)} placeholder="sk-..." style={{ fontFamily: "'Courier New', monospace", fontSize: '0.85rem' }} />
+              </div>
+              <div>
+                <label className="field-label" style={{ fontSize: '0.75rem' }}>Google API 키 (Gemini)</label>
+                <input className="field" type="password" value={googleKey} onChange={(e) => setGoogleKey(e.target.value)} placeholder="AIza..." style={{ fontFamily: "'Courier New', monospace", fontSize: '0.85rem' }} />
+              </div>
+              <div>
+                <label className="field-label" style={{ fontSize: '0.75rem' }}>Upstage API 키 (Solar)</label>
+                <input className="field" type="password" value={upstageKey} onChange={(e) => setUpstageKey(e.target.value)} placeholder="up-..." style={{ fontFamily: "'Courier New', monospace", fontSize: '0.85rem' }} />
+              </div>
+            </div>
+          )}
+
           {error && <p className="error-text">{error}</p>}
-          <button className="primary-button" onClick={handleAuth}>인증</button>
+          <button className="primary-button" onClick={handleAuth} disabled={!anthropicKey.trim()}>입장</button>
+          <p className="muted" style={{ fontSize: '0.7rem', marginTop: 8, lineHeight: 1.4 }}>
+            API 키는 브라우저에 저장되며, 서버 메모리에서만 사용됩니다. 서버에 영구 저장되지 않습니다.
+          </p>
         </div>
       </div>
     )
@@ -445,7 +522,13 @@ export default function TeacherApp({ navigate }) {
 
             <label className="field-label">AI 모델</label>
             <select className="field" value={settings.aiModel} onChange={(event) => setSettings((prev) => ({ ...prev, aiModel: event.target.value }))}>
-              {aiModelOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              {aiModelOptions.filter((option) => {
+                if (option.value === 'claude') return savedApiKeys.anthropic
+                if (option.value === 'gpt') return savedApiKeys.openai
+                if (option.value === 'gemini') return savedApiKeys.google
+                if (option.value === 'solar') return savedApiKeys.upstage
+                return false
+              }).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
 
             <label className="field-label">턴 수</label>
@@ -489,12 +572,12 @@ export default function TeacherApp({ navigate }) {
           <section className="panel">
             <p className="eyebrow">AI STATUS</p>
             <div className="status-pill-row">
-              <span className={`status-pill ${aiStatus?.anthropic ? 'ok' : 'missing'}`}>Claude {aiStatus?.anthropic ? '준비' : '없음'}</span>
-              <span className={`status-pill ${aiStatus?.openai ? 'ok' : 'missing'}`}>GPT {aiStatus?.openai ? '준비' : '없음'}</span>
-              <span className={`status-pill ${aiStatus?.google ? 'ok' : 'missing'}`}>Gemini {aiStatus?.google ? '준비' : '없음'}</span>
-              <span className={`status-pill ${aiStatus?.upstage ? 'ok' : 'missing'}`}>Solar {aiStatus?.upstage ? '준비' : '없음'}</span>
+              <span className={`status-pill ${savedApiKeys.anthropic ? 'ok' : 'missing'}`}>Claude {savedApiKeys.anthropic ? '준비' : '없음'}</span>
+              <span className={`status-pill ${savedApiKeys.openai ? 'ok' : 'missing'}`}>GPT {savedApiKeys.openai ? '준비' : '없음'}</span>
+              <span className={`status-pill ${savedApiKeys.google ? 'ok' : 'missing'}`}>Gemini {savedApiKeys.google ? '준비' : '없음'}</span>
+              <span className={`status-pill ${savedApiKeys.upstage ? 'ok' : 'missing'}`}>Solar {savedApiKeys.upstage ? '준비' : '없음'}</span>
             </div>
-            <p className="muted">준비 표시는 키 존재 여부 기준입니다.</p>
+            <p className="muted">교사가 입력한 API 키 기준입니다.</p>
           </section>
 
           <section className="panel">

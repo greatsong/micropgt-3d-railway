@@ -23,9 +23,17 @@ const POINT_OPTIONS = [1, 2, 3]
 
 export default function RoundController({
   phase, round, timer, teamProgress, voteProgress,
-  roundNum, completedRounds,
+  roundNum, completedRounds, apiKeys,
   onRoundStart, onForceEndChat, onForceEndVote, onReveal, onTournamentEnd,
 }) {
+  // 교사가 입력한 키 기반으로 사용 가능한 모델 필터링
+  const availableModels = AI_MODELS.filter((m) => {
+    if (m.id === 'claude') return apiKeys?.anthropic
+    if (m.id === 'gpt') return apiKeys?.openai
+    if (m.id === 'gemini') return apiKeys?.google
+    if (m.id === 'solar') return apiKeys?.upstage
+    return false
+  })
   const [style, setStyle] = useState('급식체')
   const [turns, setTurns] = useState(8)
   const [chatTime, setChatTime] = useState(300)
@@ -67,7 +75,7 @@ export default function RoundController({
         <div style={{ marginBottom: '16px' }}>
           <div className="sidebar-item-label">🤖 AI 모델</div>
           <div className="option-group">
-            {AI_MODELS.map((m) => (
+            {availableModels.length > 0 ? availableModels.map((m) => (
               <button
                 key={m.id}
                 className={`option-btn${aiModel === m.id ? ' selected' : ''}`}
@@ -75,7 +83,9 @@ export default function RoundController({
               >
                 {m.label}
               </button>
-            ))}
+            )) : (
+              <span style={{ fontSize: '0.8125rem', color: '#EF4444' }}>API 키 없음</span>
+            )}
           </div>
         </div>
 

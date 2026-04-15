@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import TeacherGate, { checkTeacherAuth } from '../components/teacher/TeacherGate.jsx'
+import TeacherGate, { checkTeacherAuth, getSavedApiKeys } from '../components/teacher/TeacherGate.jsx'
 import ClassSetup from '../components/teacher/ClassSetup.jsx'
 import RoundController from '../components/teacher/RoundController.jsx'
 import TeamGrid from '../components/teacher/TeamGrid.jsx'
@@ -10,6 +10,7 @@ import { connectSocket, disconnectSocket, formatTime } from '../utils/socket.js'
 
 export default function TeacherPage() {
   const [authed, setAuthed] = useState(checkTeacherAuth)
+  const [apiKeys, setApiKeys] = useState(getSavedApiKeys)
   const [session, setSession] = useState(null)
   const [phase, setPhase] = useState('waiting') // waiting | chatting | voting | voting-closed | revealed | ended
   const [teams, setTeams] = useState([])
@@ -206,12 +207,27 @@ export default function TeacherPage() {
 
   // ── 인증 안 된 경우 ─────────────────────────────────
   if (!authed) {
-    return <TeacherGate onAuth={() => setAuthed(true)} />
+    return <TeacherGate onAuth={(keys) => { setApiKeys(keys || {}); setAuthed(true) }} />
   }
 
   // ── 세션 미생성 ─────────────────────────────────────
   if (!session) {
-    return <ClassSetup onSessionCreated={(s) => { setSession(s); connectSocket() }} />
+    return <ClassSetup onSessionCreated={async (s) => {
+      setSession(s)
+      connectSocket()
+      // 세션에 API 키 연결
+      if (apiKeys && apiKeys.anthropic) {
+        try {
+          await fetch(`/turing-test/api/session/${s.id}/api-keys`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiKeys }),
+          })
+        } catch (err) {
+          console.error('API 키 등록 실패:', err)
+        }
+      }
+    }} />
   }
 
   // ── 토너먼트 종료 ─────────────────────────────────
@@ -247,6 +263,7 @@ export default function TeacherPage() {
             voteProgress={voteProgress}
             roundNum={roundNum}
             completedRounds={completedRounds}
+            apiKeys={apiKeys}
             onRoundStart={handleRoundStart}
             onForceEndChat={handleForceEndChat}
             onForceEndVote={handleForceEndVote}
