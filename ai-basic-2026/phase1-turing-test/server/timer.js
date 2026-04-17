@@ -17,9 +17,28 @@ export class RoundTimer {
     this.sessionId = sessionId
     this._chatTimer = null
     this._voteTimer = null
+    this._briefingTimer = null
     this._tickInterval = null
     this._remaining = 0
-    this._phase = null // 'chat' | 'vote'
+    this._phase = null // 'briefing' | 'chat' | 'vote'
+  }
+
+  // ── 브리핑(안내문 읽기) 타이머 ─────────────────────────────────────────
+  /**
+   * 안내문 읽기 시간 (대화 시간 소모 없이)
+   * @param {number} seconds
+   * @param {Function} onEnd - 끝나면 자동으로 chat 타이머 시작에 쓰이는 콜백
+   */
+  startBriefing(seconds, onEnd) {
+    this._clear()
+    this._phase = 'briefing'
+    this._remaining = seconds
+    this._startTick()
+
+    this._briefingTimer = setTimeout(() => {
+      this._clear()
+      onEnd()
+    }, seconds * 1000)
   }
 
   // ── 대화 타이머 ──────────────────────────────────────────────────────────
@@ -97,6 +116,7 @@ export class RoundTimer {
   _clear() {
     if (this._chatTimer) { clearTimeout(this._chatTimer); this._chatTimer = null }
     if (this._voteTimer) { clearTimeout(this._voteTimer); this._voteTimer = null }
+    if (this._briefingTimer) { clearTimeout(this._briefingTimer); this._briefingTimer = null }
     if (this._tickInterval) { clearInterval(this._tickInterval); this._tickInterval = null }
     this._phase = null
     this._remaining = 0

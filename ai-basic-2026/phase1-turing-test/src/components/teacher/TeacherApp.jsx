@@ -23,6 +23,7 @@ const defaultSettings = {
   responseDelay: 15,
   voteTime: 120,
   pointValue: 1,
+  briefingTime: 20, // 안내문 읽기 시간 (대화 시간과 별도)
 }
 
 export default function TeacherApp({ navigate }) {
@@ -600,6 +601,16 @@ export default function TeacherApp({ navigate }) {
             <label className="field-label">턴 수</label>
             <select className="field" value={settings.turns} onChange={(event) => setSettings((prev) => ({ ...prev, turns: Number(event.target.value) }))}>
               {[6, 8, 10].map((value) => <option key={value} value={value}>{value}턴</option>)}
+            </select>
+
+            <label className="field-label">안내문 읽기 시간 <span style={{ fontSize: '0.7rem', color: '#64748b' }}>(대화 시간과 별도)</span></label>
+            <select className="field" value={settings.briefingTime} onChange={(event) => setSettings((prev) => ({ ...prev, briefingTime: Number(event.target.value) }))}>
+              <option value={0}>없음 (바로 시작)</option>
+              <option value={10}>10초</option>
+              <option value={15}>15초</option>
+              <option value={20}>20초</option>
+              <option value={30}>30초</option>
+              <option value={45}>45초</option>
             </select>
 
             <label className="field-label">대화 시간</label>

@@ -26,7 +26,7 @@ export function registerSocketHandlers(io, db) {
       }
     })
 
-    socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel }) => {
+    socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel, briefingTime }) => {
       // 종료된 세션에서는 새 라운드를 시작할 수 없음
       const sessionRow = db.prepare('SELECT status FROM sessions WHERE id = ?').get(sessionId)
       if (!sessionRow) {
@@ -97,6 +97,9 @@ export function registerSocketHandlers(io, db) {
 
       db.prepare("UPDATE sessions SET status = 'active' WHERE id = ?").run(sessionId)
 
+      // 안내문 읽기 시간 (0이면 즉시 chat 시작, 양수면 briefing 단계 후 chat)
+      const briefingSeconds = Math.max(0, Number(briefingTime) || 0)
+
       const roundState = {
         roundId,
         roundNum,
@@ -108,6 +111,7 @@ export function registerSocketHandlers(io, db) {
         responseDelay,
         voteTime,
         pointValue: pointValue ?? 1,
+        briefingTime: briefingSeconds,
         pairs,
         soloObserver,
         observerTargetTeamId,
@@ -128,7 +132,20 @@ export function registerSocketHandlers(io, db) {
       activeRounds.set(sessionId, roundState)
 
       const timer = getTimer(io, sessionId)
-      timer.startChat(chatTime, () => endChatPhase(io, db, sessionId))
+
+      // 브리핑 → (자동) → 채팅 순서로 진행
+      // briefingSeconds가 0이면 브리핑 건너뛰고 바로 채팅 시작
+      roundState.chatStarted = briefingSeconds <= 0
+      const startChatPhase = () => {
+        roundState.chatStarted = true
+        io.to(`session:${sessionId}`).emit('chat:started', { roundId })
+        timer.startChat(chatTime, () => endChatPhase(io, db, sessionId))
+      }
+      if (briefingSeconds > 0) {
+        timer.startBriefing(briefingSeconds, startChatPhase)
+      } else {
+        startChatPhase()
+      }
 
       for (const team of teams) {
         io.to(`session:${sessionId}:team:${team.id}`).emit('round:started', buildRoundStartedPayload(roundState, team.id))
@@ -143,6 +160,7 @@ export function registerSocketHandlers(io, db) {
         chatTime,
         responseDelay,
         voteTime,
+        briefingTime: briefingSeconds,
         pointValue: roundState.pointValue,
         teams: teams.map((team) => ({
           id: team.id,
@@ -158,6 +176,8 @@ export function registerSocketHandlers(io, db) {
       try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
+      // 브리핑 단계에서는 질문 전송 차단
+      if (!roundState.chatStarted) return
       if (roundState.soloObserver?.id === teamId) return
       // 응답 팀은 질문 불가
       if (getRole(roundState.pairs, teamId) === 'respondent') return
@@ -320,6 +340,8 @@ export function registerSocketHandlers(io, db) {
       try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
+      // 브리핑 단계에서는 답변 전송 차단
+      if (!roundState.chatStarted) return
 
       const sourceTeam = getPartner(roundState.pairs, teamId)
       if (!sourceTeam) return
@@ -720,6 +742,7 @@ function buildRoundStartedPayload(roundState, teamId) {
     chatTime: roundState.chatTime,
     responseDelay: roundState.responseDelay,
     voteTime: roundState.voteTime,
+    briefingTime: roundState.briefingTime || 0,
     pointValue: roundState.pointValue,
     role,
     partnerTeamId: getPartner(roundState.pairs, teamId)?.id ?? null,

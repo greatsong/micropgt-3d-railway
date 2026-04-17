@@ -81,7 +81,8 @@ export default function TeamPage({ navigate }) {
       setRoundInfo(payload)
       setPhase('chat')
       setShowBriefing(true)
-      setRemaining(payload.chatTime)
+      // 브리핑 시간이 있으면 해당 시간 표시, 없으면 바로 chat 시간
+      setRemaining(payload.briefingTime > 0 ? payload.briefingTime : payload.chatTime)
       setJudgeTurns([])
       setQuestionDraft('')
       setAwaitingAnswer(false)
@@ -105,6 +106,11 @@ export default function TeamPage({ navigate }) {
     })
 
     socket.on('timer:tick', ({ remaining: seconds }) => setRemaining(seconds))
+
+    // 브리핑 단계가 끝나고 대화 단계 시작 — 브리핑 자동 닫힘
+    socket.on('chat:started', () => {
+      setShowBriefing(false)
+    })
 
     socket.on('turn:question-received', ({ turnNum, question, deadline }) => {
       setIncomingQuestion({ turnNum, question, deadline })
@@ -315,6 +321,8 @@ export default function TeamPage({ navigate }) {
             style={roundInfo?.style || ''}
             roundNum={roundInfo?.roundNum || 1}
             turns={roundInfo?.totalTurns || roundInfo?.turns || 0}
+            briefingTime={roundInfo?.briefingTime || 0}
+            timerRemaining={remaining}
             onDismiss={() => setShowBriefing(false)}
           />
         )}

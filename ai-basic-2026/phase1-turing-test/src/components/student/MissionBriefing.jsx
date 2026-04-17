@@ -106,8 +106,10 @@ const ANIMATIONS = `
 }
 `
 
-export default function MissionBriefing({ role, style, roundNum, turns, onDismiss }) {
+export default function MissionBriefing({ role, style, roundNum, turns, onDismiss, briefingTime = 0, timerRemaining = null }) {
   const data = ROLE_DATA[role] || ROLE_DATA.judge
+  // briefingTime > 0 이고 timerRemaining이 있으면 카운트다운 표시
+  const showCountdown = briefingTime > 0 && typeof timerRemaining === 'number'
 
   return (
     <div onClick={onDismiss} style={{
@@ -299,8 +301,31 @@ export default function MissionBriefing({ role, style, roundNum, turns, onDismis
           )}
         </div>
 
-        {/* ── 시작 버튼 ── */}
+        {/* ── 시작 버튼 / 카운트다운 ── */}
         <div style={{ padding: '0 24px 20px' }}>
+          {showCountdown && (
+            <div style={{
+              marginBottom: 10, padding: '8px 12px', borderRadius: 8,
+              background: 'rgba(74,222,128,0.06)',
+              border: '1px dashed rgba(74,222,128,0.2)',
+              textAlign: 'center',
+              fontFamily: "'Courier New', monospace",
+            }}>
+              <div style={{ fontSize: '0.6rem', color: C.muted, letterSpacing: '0.1em', marginBottom: 3 }}>
+                BRIEFING TIME — 대화 시간 소진 안 함
+              </div>
+              <div style={{
+                fontSize: '1.3rem', fontWeight: 900,
+                color: timerRemaining <= 3 ? C.danger : C.green,
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {timerRemaining}s
+              </div>
+              <div style={{ fontSize: '0.62rem', color: C.muted, marginTop: 2 }}>
+                {timerRemaining > 0 ? '잠시 후 자동으로 대화가 시작됩니다' : '대화 시작!'}
+              </div>
+            </div>
+          )}
           <button onClick={onDismiss} style={{
             width: '100%', padding: '14px 0',
             background: `linear-gradient(135deg, ${data.color}, ${data.color}dd)`,
@@ -310,7 +335,7 @@ export default function MissionBriefing({ role, style, roundNum, turns, onDismis
             letterSpacing: '0.05em',
             animation: 'pulseBtn 2s ease-in-out infinite',
           }}>
-            임무 수행 시작
+            {showCountdown ? '닫기 (대기 중)' : '임무 수행 시작'}
           </button>
         </div>
       </div>
