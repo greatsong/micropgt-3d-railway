@@ -33,7 +33,7 @@ export function registerSocketHandlers(io, db) {
         socket.emit('error', { message: '세션을 찾을 수 없습니다.' })
         return
       }
-      if (sessionRow.status === 'ended') {
+      if (sessionRow.status === 'ended' || sessionRow.status === 'closed') {
         socket.emit('error', { message: '이 수업은 이미 종료되었습니다. 새 세션을 만들어 주세요.' })
         return
       }
@@ -427,8 +427,9 @@ export function registerSocketHandlers(io, db) {
           }
         }
 
-        // 3. 세션 상태 업데이트
-        db.prepare("UPDATE sessions SET status = 'ended' WHERE id = ?").run(sessionId)
+        // 3. 세션 상태 업데이트 — 'closed'는 "강제 중단"이라 tournament:end의 'ended'와 구분됨
+        //    'ended'는 정상 종료 (점수 집계 완료) / 'closed'는 중간 abort (점수 없음)
+        db.prepare("UPDATE sessions SET status = 'closed' WHERE id = ?").run(sessionId)
         activeRounds.delete(sessionId)
 
         // 4. 전체 세션(교사+학생)에 종료 이벤트 브로드캐스트

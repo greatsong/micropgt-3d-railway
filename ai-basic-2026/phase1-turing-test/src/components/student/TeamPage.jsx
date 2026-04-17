@@ -52,10 +52,11 @@ export default function TeamPage({ navigate }) {
     localStorage.setItem(ACCESS_KEY, JSON.stringify({ sessionId, teamId }))
     void apiGet(`/team/${teamId}`).then(setTeam).catch(() => navigate('/'))
 
-    // 세션이 이미 종료된 상태인지 확인 (새로고침 시 복구 방지)
+    // 세션이 강제 중단된 경우에만 closed 화면 (새로고침 시 복구 방지)
+    // 'ended'는 토너먼트 정상 종료 — 학생은 tournament:final 이벤트로 ScoreBoard 받음
     void apiGet(`/session/${sessionId}`)
       .then((data) => {
-        if (data?.status === 'ended') {
+        if (data?.status === 'closed') {
           setPhase('closed')
           localStorage.removeItem(ACCESS_KEY)
         }

@@ -248,9 +248,10 @@ export default function TeacherApp({ navigate }) {
     return () => socket.disconnect()
   }, [authed, session?.id])
 
-  // 세션 상태가 'ended'면 sessionClosed 동기화 (새로고침 복구 시)
+  // 세션 상태가 'closed'면 sessionClosed 동기화 (새로고침 복구 시)
+  // 'ended'는 토너먼트 정상 종료이므로 점수가 보여야 함 — sessionClosed 트리거하지 않음
   useEffect(() => {
-    if (session?.status === 'ended') {
+    if (session?.status === 'closed') {
       setSessionClosed(true)
     }
   }, [session?.status])
@@ -267,8 +268,8 @@ export default function TeacherApp({ navigate }) {
 
   useEffect(() => {
     if (!session?.id) return
-    // 종료된 세션은 주기 갱신 중단 (무한 polling 방지)
-    if (sessionClosed || session?.status === 'ended') return
+    // 종료/중단된 세션은 주기 갱신 중단 (무한 polling 방지)
+    if (sessionClosed || session?.status === 'ended' || session?.status === 'closed') return
     const interval = setInterval(() => {
       void refreshSession(session.id)
       void refreshRounds(session.id)
