@@ -67,6 +67,8 @@ export default function TeacherApp({ navigate }) {
   const [notice, setNotice] = useState('')
   const [selectedLiveTurns, setSelectedLiveTurns] = useState(null)
   const [selectedTeamName, setSelectedTeamName] = useState('')
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [sessionClosed, setSessionClosed] = useState(false)
   const socketRef = useRef(null)
   const currentRoundIdRef = useRef(null)
 
@@ -234,8 +236,24 @@ export default function TeacherApp({ navigate }) {
       void refreshRounds(session.id)
     })
 
+    socket.on('session:closed', () => {
+      setSessionClosed(true)
+      setCurrentRoundId(null)
+      setRoundDetail(null)
+      setTimerInfo(null)
+      setNotice('')
+      void refreshSession(session.id)
+    })
+
     return () => socket.disconnect()
   }, [authed, session?.id])
+
+  // 세션 상태가 'ended'면 sessionClosed 동기화 (새로고침 복구 시)
+  useEffect(() => {
+    if (session?.status === 'ended') {
+      setSessionClosed(true)
+    }
+  }, [session?.status])
 
   useEffect(() => {
     if (!session?.id) return
@@ -249,6 +267,8 @@ export default function TeacherApp({ navigate }) {
 
   useEffect(() => {
     if (!session?.id) return
+    // 종료된 세션은 주기 갱신 중단 (무한 polling 방지)
+    if (sessionClosed || session?.status === 'ended') return
     const interval = setInterval(() => {
       void refreshSession(session.id)
       void refreshRounds(session.id)
@@ -257,7 +277,7 @@ export default function TeacherApp({ navigate }) {
       }
     }, 3000)
     return () => clearInterval(interval)
-  }, [session?.id, currentRoundId, currentResults, finalResults])
+  }, [session?.id, currentRoundId, currentResults, finalResults, sessionClosed, session?.status])
 
   async function refreshSession(sessionId) {
     const data = await apiGet(`/session/${sessionId}`)
@@ -353,6 +373,24 @@ export default function TeacherApp({ navigate }) {
     socketRef.current?.emit('tournament:end', { sessionId: session.id })
   }
 
+  function closeSession() {
+    if (!session?.id) return
+    socketRef.current?.emit('session:close', { sessionId: session.id })
+    setShowCloseConfirm(false)
+  }
+
+  function startNewSession() {
+    // 현재 종료된 세션 정리 후 새 세션 생성 화면으로
+    sessionStorage.removeItem(SESSION_KEY)
+    setSession(null)
+    setSessionClosed(false)
+    setCurrentResults(null)
+    setFinalResults(null)
+    setRounds([])
+    setRoundDetail(null)
+    setCurrentRoundId(null)
+  }
+
   function selectTeam(teamId) {
     setSelectedTeamId(teamId)
     setSelectedTurn(null)
@@ -427,6 +465,33 @@ export default function TeacherApp({ navigate }) {
           <p className="muted" style={{ fontSize: '0.7rem', marginTop: 8, lineHeight: 1.4 }}>
             API 키는 브라우저에 저장되며, 서버 메모리에서만 사용됩니다. 서버에 영구 저장되지 않습니다.
           </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 세션 종료 화면 ──
+  if (sessionClosed && session?.id) {
+    return (
+      <div className="page-shell center-shell">
+        <div className="panel auth-panel" style={{ maxWidth: 480, textAlign: 'center' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 12 }}>🔒</div>
+          <p className="eyebrow" style={{ color: '#f59e0b' }}>SESSION CLOSED</p>
+          <h1 style={{ marginBottom: 8 }}>수업이 종료되었습니다</h1>
+          <p className="muted" style={{ marginBottom: 20 }}>
+            세션 <strong>{session.teacher_code}</strong>가 종료되었습니다.<br />
+            학생들의 화면도 함께 종료 처리됩니다.
+          </p>
+          <div style={{
+            padding: '12px 16px', borderRadius: 8,
+            background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+            marginBottom: 20, fontSize: '0.8rem', color: '#fbbf24', lineHeight: 1.5, textAlign: 'left',
+          }}>
+            💡 같은 수업 코드로 새 세션을 만들면 새로운 참가 링크가 발급됩니다.<br />
+            학생들은 다시 팀 등록을 해야 합니다.
+          </div>
+          <button className="primary-button" onClick={startNewSession}>새 수업 시작</button>
+          <button className="ghost-button" style={{ marginTop: 8 }} onClick={() => navigate('/')}>메인으로</button>
         </div>
       </div>
     )
@@ -566,6 +631,18 @@ export default function TeacherApp({ navigate }) {
               <button className="ghost-button" onClick={forceEndVote}>투표 강제 마감</button>
               <button className="ghost-button" onClick={revealResults}>결과 공개</button>
               <button className="ghost-button danger" onClick={endTournament}>토너먼트 종료</button>
+              <button
+                className="ghost-button"
+                onClick={() => setShowCloseConfirm(true)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  borderColor: 'rgba(239, 68, 68, 0.3)',
+                  color: '#fca5a5',
+                  marginTop: 6,
+                }}
+              >
+                🔒 수업 완전 종료
+              </button>
             </div>
           </section>
 
@@ -1056,6 +1133,67 @@ export default function TeacherApp({ navigate }) {
           )}
         </main>
       </div>
+
+      {/* ═══ 수업 완전 종료 확인 모달 ═══ */}
+      {showCloseConfirm && (
+        <div
+          onClick={() => setShowCloseConfirm(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 440, width: '100%',
+              padding: '28px 24px', borderRadius: 14,
+              background: '#1e293b', border: '1px solid rgba(239,68,68,0.25)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: 8 }}>⚠️</div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fca5a5', marginBottom: 12 }}>
+              수업을 완전히 종료할까요?
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', lineHeight: 1.55, marginBottom: 6, textAlign: 'left' }}>
+              종료하면 다음 동작이 일어납니다:
+            </p>
+            <ul style={{
+              fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6,
+              textAlign: 'left', margin: '0 0 20px', paddingLeft: 20,
+            }}>
+              <li>진행 중인 라운드/타이머가 즉시 중단됨</li>
+              <li>학생 화면에도 "수업 종료됨"이 표시됨</li>
+              <li>새로고침해도 자동으로 재개되지 않음</li>
+              <li>새 세션은 "새 수업 시작" 버튼으로 시작</li>
+            </ul>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="ghost-button"
+                style={{ flex: 1 }}
+                onClick={() => setShowCloseConfirm(false)}
+              >
+                취소
+              </button>
+              <button
+                className="primary-button"
+                style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #dc2626, #991b1b)',
+                  borderColor: '#7f1d1d',
+                }}
+                onClick={closeSession}
+              >
+                종료하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

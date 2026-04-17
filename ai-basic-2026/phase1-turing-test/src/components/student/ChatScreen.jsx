@@ -107,11 +107,20 @@ export default function ChatScreen({
   }, [previewAnswer?.turnNum])
 
   useEffect(() => {
-    if (!awaitingAnswer || !questionSentAt || !roundInfo?.responseDelay) {
+    // 역할별 deadline 계산
+    // - 심판(judge)/관찰자: questionSentAt 기준으로 계산 (상대 답변 대기 중)
+    // - 응답자(respondent): 서버가 내려준 incomingQuestion/previewAnswer의 deadline 사용
+    let deadline = null
+    if (role === 'respondent') {
+      deadline = incomingQuestion?.deadline || previewAnswer?.deadline || null
+    } else if (awaitingAnswer && questionSentAt && roundInfo?.responseDelay) {
+      deadline = questionSentAt + roundInfo.responseDelay * 1000
+    }
+
+    if (!deadline) {
       setAnswerCountdown(null)
       return
     }
-    const deadline = questionSentAt + roundInfo.responseDelay * 1000
     const tick = () => {
       const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
       setAnswerCountdown(left)
@@ -119,7 +128,7 @@ export default function ChatScreen({
     tick()
     const id = setInterval(tick, 500)
     return () => clearInterval(id)
-  }, [awaitingAnswer, questionSentAt, roundInfo?.responseDelay])
+  }, [awaitingAnswer, questionSentAt, roundInfo?.responseDelay, role, incomingQuestion?.deadline, previewAnswer?.deadline])
 
   function handleSendQuestion(e) {
     e?.preventDefault()
@@ -414,10 +423,25 @@ export default function ChatScreen({
   // ═══════════════════════════════════════════════
   // ── 송신자 (응답자) UI ──
   // ═══════════════════════════════════════════════
+  const respondentDeadline = incomingQuestion?.deadline || previewAnswer?.deadline || null
+  const showRespondentTimer = respondentDeadline != null && answerCountdown != null
+  const totalDelay = roundInfo?.responseDelay || 15
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: '100vh', background: C.bg }}>
       <style>{ANIMATIONS}</style>
       {header}
+
+      {/* 응답자용 카운트다운 바 (상단) */}
+      {showRespondentTimer && (
+        <div style={{ height: 2, background: C.greenDim }}>
+          <div style={{
+            height: '100%',
+            background: answerCountdown <= 3 ? C.danger : C.emeraldLight,
+            width: `${Math.min(100, (answerCountdown / totalDelay) * 100)}%`,
+            transition: 'width 0.3s linear, background 0.3s',
+          }} />
+        </div>
+      )}
 
       {/* 채팅 영역 */}
       <div style={{
@@ -495,6 +519,22 @@ export default function ChatScreen({
                 animation: 'borderPulse 2s ease-in-out infinite',
               }}>{incomingQuestion.question}</div>
             </div>
+
+            {/* 응답 마감 카운트다운 */}
+            {answerCountdown != null && !answerSent && (
+              <div style={{
+                textAlign: 'center', padding: '6px', margin: '4px 0',
+                fontSize: '0.7rem',
+                color: answerCountdown <= 3 ? C.danger : C.mutedLight,
+                fontFamily: "'Courier New', monospace",
+                animation: answerCountdown <= 3 ? 'pulse 1s ease-in-out infinite' : 'none',
+              }}>
+                ⏱ RESPONSE DEADLINE · <span style={{
+                  fontWeight: 700,
+                  color: answerCountdown <= 3 ? C.danger : C.green,
+                }}>{answerCountdown}s</span>
+              </div>
+            )}
             {answerSent && sentAnswerText && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
                 <div style={{
@@ -542,9 +582,22 @@ export default function ChatScreen({
                 border: `1px solid ${C.purpleBorder}`,
               }}>
                 <div style={{
-                  fontSize: '0.58rem', color: '#a78bfa', marginBottom: 3, fontWeight: 700,
-                  fontFamily: "'Courier New', monospace",
-                }}>🤖 AUTO-RESPONSE</div>
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  marginBottom: 3,
+                }}>
+                  <span style={{
+                    fontSize: '0.58rem', color: '#a78bfa', fontWeight: 700,
+                    fontFamily: "'Courier New', monospace",
+                  }}>🤖 AUTO-RESPONSE</span>
+                  {answerCountdown != null && (
+                    <span style={{
+                      fontSize: '0.58rem',
+                      color: answerCountdown <= 3 ? C.danger : '#a78bfa',
+                      fontWeight: 700,
+                      fontFamily: "'Courier New', monospace",
+                    }}>⏱ {answerCountdown}s</span>
+                  )}
+                </div>
                 {previewAnswer.aiAnswer}
               </div>
             </div>
@@ -580,9 +633,24 @@ export default function ChatScreen({
         </div>
       ) : incomingQuestion && !answerSent ? (
         <form onSubmit={handleSendAnswer} style={{
-          display: 'flex', gap: 8, padding: '10px 16px 14px',
+          display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 16px 14px',
           background: C.surface, borderTop: `1px solid ${C.greenBorder}`,
         }}>
+          {answerCountdown != null && (
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              fontSize: '0.62rem', fontFamily: "'Courier New', monospace",
+              color: answerCountdown <= 3 ? C.danger : C.mutedLight,
+            }}>
+              <span>⏱ 답변 제한 시간</span>
+              <span style={{
+                fontWeight: 700,
+                color: answerCountdown <= 3 ? C.danger : C.green,
+                animation: answerCountdown <= 3 ? 'pulse 1s ease-in-out infinite' : 'none',
+              }}>{answerCountdown}s</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, position: 'relative' }}>
             <input type="text" value={answerDraft}
               onChange={(e) => { if (e.target.value.length <= 60) setAnswerDraft(e.target.value) }}
@@ -611,6 +679,7 @@ export default function ChatScreen({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s',
             }}>↑</button>
+          </div>
         </form>
       ) : answerSent ? (
         <div style={{

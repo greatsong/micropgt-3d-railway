@@ -51,6 +51,16 @@ export default function TeamPage({ navigate }) {
     if (!sessionId || !teamId) { navigate('/'); return }
     localStorage.setItem(ACCESS_KEY, JSON.stringify({ sessionId, teamId }))
     void apiGet(`/team/${teamId}`).then(setTeam).catch(() => navigate('/'))
+
+    // 세션이 이미 종료된 상태인지 확인 (새로고침 시 복구 방지)
+    void apiGet(`/session/${sessionId}`)
+      .then((data) => {
+        if (data?.status === 'ended') {
+          setPhase('closed')
+          localStorage.removeItem(ACCESS_KEY)
+        }
+      })
+      .catch(() => {})
   }, [sessionId, teamId])
 
   // ── 소켓 연결 + 이벤트 ──
@@ -95,13 +105,13 @@ export default function TeamPage({ navigate }) {
 
     socket.on('timer:tick', ({ remaining: seconds }) => setRemaining(seconds))
 
-    socket.on('turn:question-received', ({ turnNum, question }) => {
-      setIncomingQuestion({ turnNum, question })
+    socket.on('turn:question-received', ({ turnNum, question, deadline }) => {
+      setIncomingQuestion({ turnNum, question, deadline })
       setPreviewAnswer(null)
     })
 
-    socket.on('turn:ai-answer-preview', ({ turnNum, question, aiAnswer }) => {
-      setPreviewAnswer({ turnNum, question, aiAnswer })
+    socket.on('turn:ai-answer-preview', ({ turnNum, question, aiAnswer, deadline }) => {
+      setPreviewAnswer({ turnNum, question, aiAnswer, deadline })
       setIncomingQuestion(null)
     })
 
@@ -163,6 +173,16 @@ export default function TeamPage({ navigate }) {
       setPhase('final')
     })
 
+    // 교사가 수업을 완전 종료했을 때
+    socket.on('session:closed', () => {
+      setPhase('closed')
+      setAwaitingAnswer(false)
+      setIncomingQuestion(null)
+      setPreviewAnswer(null)
+      // localStorage 정리 — 새로고침해도 이 세션으로 못 돌아옴
+      localStorage.removeItem(ACCESS_KEY)
+    })
+
     return () => socket.disconnect()
   }, [sessionId, teamId])
 
@@ -190,6 +210,38 @@ export default function TeamPage({ navigate }) {
   function submitVotes(voteArray) {
     socketRef.current?.emit('vote:submit', { sessionId, teamId: Number(teamId), votes: voteArray })
     setVoteSubmitted(true)
+  }
+
+  // ── 세션 종료 화면 ──
+  if (phase === 'closed') {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', padding: 24, background: 'var(--bg, #0f172a)',
+      }}>
+        <div style={{ fontSize: '4rem', marginBottom: 12 }}>🔒</div>
+        <h1 style={{
+          fontSize: '1.5rem', fontWeight: 800, color: 'var(--text, #e2e8f0)',
+          marginBottom: 8, textAlign: 'center',
+        }}>수업이 종료되었습니다</h1>
+        <p style={{
+          fontSize: '0.9rem', color: 'var(--muted, #94a3b8)',
+          textAlign: 'center', maxWidth: 320, lineHeight: 1.6, marginBottom: 20,
+        }}>
+          선생님이 수업을 종료했어요.<br />
+          오늘도 수고했습니다!
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            padding: '10px 20px', borderRadius: 8,
+            background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.3)',
+            color: '#d4a574', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >처음 화면으로</button>
+      </div>
+    )
   }
 
   // ── 로딩 ──

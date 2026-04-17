@@ -38,6 +38,24 @@ function getAnthropic(apiKey) {
   return anthropicClients.get(key)
 }
 
+// ── 회피형 Fallback 문구 (AI 실패 시 사람처럼 보이게 랜덤 로테이션) ────
+// 같은 문구가 반복되면 학생이 "이게 AI다" 눈치채서 튜링 테스트 의미가 사라짐
+const FALLBACK_PHRASES = [
+  '음... 잘 모르겠어',
+  '글쎄...',
+  '잠깐만 기다려봐',
+  '어... 그게 뭐였지',
+  '아 생각이 안 나',
+  '흠 좀 애매한데',
+  '그거 좀 어렵다',
+  '어떻게 말해야 하지',
+  '아 뭐더라',
+  '음 그러게',
+]
+export function pickFallbackPhrase() {
+  return FALLBACK_PHRASES[Math.floor(Math.random() * FALLBACK_PHRASES.length)]
+}
+
 // ── 말투 변환 (항상 Claude Haiku) ────────────────────────────────────────
 /**
  * @param {string} text - 원본 텍스트
@@ -89,7 +107,7 @@ ${styleInfo.instruction}
     }
     return result
   } catch (err) {
-    console.error('[AI] 말투 변환 실패:', err.message)
+    console.error('[AI] 말투 변환 실패:', err.message, '(key 존재:', Boolean(apiKeys.anthropic || process.env.ANTHROPIC_API_KEY), ')')
     return text
   }
 }
@@ -122,13 +140,22 @@ export async function generateAIResponse(question, style, model = 'claude', apiK
         break
     }
   } catch (err) {
-    console.error(`[AI] ${model} 응답 생성 실패:`, err.message)
+    const hasKey = Boolean(
+      (model === 'claude' && (apiKeys.anthropic || process.env.ANTHROPIC_API_KEY)) ||
+      (model === 'gpt' && (apiKeys.openai || process.env.OPENAI_API_KEY)) ||
+      (model === 'gemini' && (apiKeys.google || process.env.GOOGLE_API_KEY)) ||
+      (model === 'solar' && (apiKeys.upstage || process.env.UPSTAGE_API_KEY))
+    )
+    console.error(`[AI] ${model} 응답 생성 실패:`, err.message, '(API 키 존재:', hasKey, ')')
+    if (!hasKey) {
+      console.error(`[AI] ⚠️  ${model} API 키가 세션에 등록되지 않았습니다. 교사 화면에서 API 키를 다시 등록하세요.`)
+    }
     rawAnswer = null
   }
 
-  // AI 응답 실패 시 기본 문구 (말투 적용)
+  // AI 응답 실패 시 랜덤 fallback (같은 문구 반복 방지 → 튜링 테스트 의미 보존)
   if (!rawAnswer) {
-    return styleTransform('음... 잘 모르겠어', style, apiKeys)
+    return styleTransform(pickFallbackPhrase(), style, apiKeys)
   }
 
   return rawAnswer
@@ -265,8 +292,8 @@ export async function generateAIResponseWithTimeout(question, style, model, time
     return await Promise.race([generateAIResponse(question, style, model, apiKeys), timeoutPromise])
   } catch (err) {
     console.warn(`[AI] 타임아웃/오류 (${model}):`, err.message)
-    // 기본 문구 반환
-    return styleTransform('음... 잘 모르겠어', style, apiKeys)
+    // 랜덤 fallback 반환
+    return styleTransform(pickFallbackPhrase(), style, apiKeys)
   }
 }
 

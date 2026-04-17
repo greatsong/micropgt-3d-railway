@@ -1,5 +1,5 @@
 import { createRound, getPartner, getRole, pairingsToRecords } from './matchmaking.js'
-import { generateAIResponseWithTimeout, styleTransform } from './ai.js'
+import { generateAIResponseWithTimeout, styleTransform, pickFallbackPhrase } from './ai.js'
 import { getTimer } from './timer.js'
 import { buildSharedRankings } from './utils.js'
 import { sessionApiKeys } from './apiKeyStore.js'
@@ -27,6 +27,17 @@ export function registerSocketHandlers(io, db) {
     })
 
     socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel }) => {
+      // 종료된 세션에서는 새 라운드를 시작할 수 없음
+      const sessionRow = db.prepare('SELECT status FROM sessions WHERE id = ?').get(sessionId)
+      if (!sessionRow) {
+        socket.emit('error', { message: '세션을 찾을 수 없습니다.' })
+        return
+      }
+      if (sessionRow.status === 'ended') {
+        socket.emit('error', { message: '이 수업은 이미 종료되었습니다. 새 세션을 만들어 주세요.' })
+        return
+      }
+
       const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(sessionId)
       if (teams.length < 2) {
         socket.emit('error', { message: '팀이 2개 이상 있어야 라운드를 시작할 수 있습니다.' })
@@ -225,8 +236,8 @@ export function registerSocketHandlers(io, db) {
               db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
             }
           } else if (!styledAnswer) {
-            // 아예 답변이 없는 경우 (타임아웃)
-            styledAnswer = await styleTransform('음... 잘 모르겠어', roundState.style, roundState.apiKeys)
+            // 아예 답변이 없는 경우 (타임아웃) - 랜덤 회피 문구
+            styledAnswer = await styleTransform(pickFallbackPhrase(), roundState.style, roundState.apiKeys)
             db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, sourceTurnId)
             if (observerTurnId) {
               db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
@@ -285,7 +296,7 @@ export function registerSocketHandlers(io, db) {
 
       const deliverAiAnswer = async () => {
         deliveryClosed = true
-        const styledAnswer = aiAnswerText || await styleTransform('음... 잘 모르겠어', roundState.style, roundState.apiKeys)
+        const styledAnswer = aiAnswerText || await styleTransform(pickFallbackPhrase(), roundState.style, roundState.apiKeys)
         db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, sourceTurnId)
         if (observerTurnId) {
           db.prepare('UPDATE turns SET styled_answer = ? WHERE id = ?').run(styledAnswer, observerTurnId)
@@ -394,6 +405,42 @@ export function registerSocketHandlers(io, db) {
         ORDER BY turn_number
       `).all(roundId, teamId)
       socket.emit('teacher:live-turns', { teamId, turns })
+    })
+
+    // 세션 완전 종료 — 라운드 진행 중이든, 대기 중이든, 결과 화면이든 언제든 호출 가능
+    // tournament:end는 "토너먼트 최종 집계 후 종료"이지만, session:close는 "수업을 그냥 끝냄"
+    socket.on('session:close', ({ sessionId }) => {
+      try {
+        // 1. 타이머 강제 종료
+        getTimer(io, sessionId).forceEnd()
+
+        // 2. 진행 중 라운드가 있다면 delivery 예약 취소 + 정리
+        const roundState = activeRounds.get(sessionId)
+        if (roundState) {
+          for (const cancelDelivery of roundState.deliveryCancels) {
+            try { cancelDelivery() } catch {}
+          }
+          roundState.deliveryCancels = []
+          // 진행 중이던 라운드 status도 정리 (결과 미집계 상태)
+          if (roundState.roundId) {
+            db.prepare("UPDATE rounds SET status = 'closed' WHERE id = ? AND status != 'done'").run(roundState.roundId)
+          }
+        }
+
+        // 3. 세션 상태 업데이트
+        db.prepare("UPDATE sessions SET status = 'ended' WHERE id = ?").run(sessionId)
+        activeRounds.delete(sessionId)
+
+        // 4. 전체 세션(교사+학생)에 종료 이벤트 브로드캐스트
+        io.to(`session:${sessionId}`).emit('session:closed', {
+          sessionId,
+          closedAt: Date.now(),
+        })
+
+        console.log(`[session:close] 세션 ${sessionId} 종료됨`)
+      } catch (err) {
+        console.error('[session:close] 오류:', err.message)
+      }
     })
 
     socket.on('tournament:end', ({ sessionId }) => {
