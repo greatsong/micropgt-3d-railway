@@ -125,10 +125,11 @@ export default function MissionBriefing({ role, style, roundNum, turns, onDismis
       {/* 기밀 서류 카드 */}
       <div onClick={(e) => e.stopPropagation()} style={{
         width: '100%', maxWidth: 380, position: 'relative',
+        maxHeight: 'calc(100dvh - 32px)',
+        overflowY: 'auto',
         background: C.bg,
         border: `2px solid ${data.borderColor}`,
         borderRadius: 16,
-        overflow: 'hidden',
         animation: 'briefingSlideUp 0.5s ease, borderGlow 3s ease-in-out infinite',
       }}>
 

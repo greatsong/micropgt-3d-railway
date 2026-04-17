@@ -97,8 +97,11 @@ export function registerSocketHandlers(io, db) {
 
       db.prepare("UPDATE sessions SET status = 'active' WHERE id = ?").run(sessionId)
 
-      // 안내문 읽기 시간 (0이면 즉시 chat 시작, 양수면 briefing 단계 후 chat)
-      const briefingSeconds = Math.max(0, Number(briefingTime) || 0)
+      // 안내문 읽기 시간
+      // - R1, R2는 교사 설정값 그대로 (역할을 한 번씩 새로 맡으므로 안내 필요)
+      // - R3 이후는 0으로 자동 축소 (이미 양쪽 역할 경험 → 즉시 대화 시작)
+      const requestedBriefing = Math.max(0, Number(briefingTime) || 0)
+      const briefingSeconds = roundNum <= 2 ? requestedBriefing : 0
 
       const roundState = {
         roundId,
