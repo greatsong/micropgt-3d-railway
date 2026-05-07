@@ -76,6 +76,7 @@ export default function ChatScreen({
   incomingQuestion,
   previewAnswer,
   judgeNotice,
+  chatStarted = true,
   onSendQuestion,
   onSubmitAnswer,
 }) {
@@ -132,7 +133,7 @@ export default function ChatScreen({
 
   function handleSendQuestion(e) {
     e?.preventDefault()
-    if (!message.trim() || awaitingAnswer) return
+    if (!message.trim() || awaitingAnswer || !chatStarted) return
     onSendQuestion(message.trim())
     setMessage('')
   }
@@ -387,8 +388,8 @@ export default function ChatScreen({
             <div style={{ flex: 1, position: 'relative' }}>
               <input type="text" value={message}
                 onChange={(e) => { if (e.target.value.length <= 60) setMessage(e.target.value) }}
-                placeholder={currentTurn > totalTurns ? '모든 교신 완료' : awaitingAnswer ? '수신 대기 중...' : '메시지를 입력하세요...'}
-                disabled={awaitingAnswer || currentTurn > totalTurns}
+                placeholder={currentTurn > totalTurns ? '모든 교신 완료' : !chatStarted ? '안내문 읽는 시간이에요...' : awaitingAnswer ? '수신 대기 중...' : '메시지를 입력하세요...'}
+                disabled={awaitingAnswer || currentTurn > totalTurns || !chatStarted}
                 style={{
                   width: '100%', padding: '10px 40px 10px 14px',
                   background: C.input, border: `1px solid ${C.amberBorder}`,
@@ -404,13 +405,13 @@ export default function ChatScreen({
               )}
             </div>
             <button type="submit"
-              disabled={!message.trim() || awaitingAnswer || currentTurn > totalTurns}
+              disabled={!message.trim() || awaitingAnswer || currentTurn > totalTurns || !chatStarted}
               style={{
                 width: 44, height: 44, borderRadius: 8, border: 'none',
-                background: message.trim() && !awaitingAnswer ? `linear-gradient(135deg, ${C.gold}, ${C.goldDeep})` : C.input,
-                color: message.trim() && !awaitingAnswer ? '#fff' : C.muted,
+                background: message.trim() && !awaitingAnswer && chatStarted ? `linear-gradient(135deg, ${C.gold}, ${C.goldDeep})` : C.input,
+                color: message.trim() && !awaitingAnswer && chatStarted ? '#fff' : C.muted,
                 fontWeight: 700, cursor: 'pointer', fontSize: '1rem',
-                boxShadow: message.trim() && !awaitingAnswer ? '0 2px 12px rgba(184,134,11,0.3)' : 'none',
+                boxShadow: message.trim() && !awaitingAnswer && chatStarted ? '0 2px 12px rgba(184,134,11,0.3)' : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s',
               }}>↑</button>

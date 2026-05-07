@@ -40,6 +40,12 @@ export default function TeamPage({ navigate }) {
 
   // 미션 브리핑
   const [showBriefing, setShowBriefing] = useState(false)
+  // 대화 단계 시작 여부 — 브리핑 중에는 false, 'chat:started' 수신 시 true
+  // 심판이 브리핑 중에 메시지를 보내도 서버가 폐기하므로 클라이언트도 차단
+  const [chatStarted, setChatStarted] = useState(false)
+
+  // 라운드 도중 합류한 팀 안내
+  const [lockedNotice, setLockedNotice] = useState(null)
 
   // 투표 + 결과 상태
   const [voteSubmitted, setVoteSubmitted] = useState(false)
@@ -77,11 +83,18 @@ export default function TeamPage({ navigate }) {
       socket.emit('team:join', { sessionId, teamId: Number(teamId) })
     })
 
+    socket.on('round:locked', (payload) => {
+      setLockedNotice(payload)
+      setPhase('waiting')
+    })
+
     socket.on('round:started', (payload) => {
+      setLockedNotice(null)
       setRoundInfo(payload)
       setPhase('chat')
-      setShowBriefing(true)
-      // 브리핑 시간이 있으면 해당 시간 표시, 없으면 바로 chat 시간
+      // briefingTime이 0이면 서버가 chat:started를 먼저 보냈을 수 있으므로 브리핑 띄우지 않음
+      setShowBriefing(payload.briefingTime > 0)
+      setChatStarted(payload.briefingTime <= 0)
       setRemaining(payload.briefingTime > 0 ? payload.briefingTime : payload.chatTime)
       setJudgeTurns([])
       setQuestionDraft('')
@@ -110,6 +123,15 @@ export default function TeamPage({ navigate }) {
     // 브리핑 단계가 끝나고 대화 단계 시작 — 브리핑 자동 닫힘
     socket.on('chat:started', () => {
       setShowBriefing(false)
+      setChatStarted(true)
+    })
+
+    // 브리핑 중 전송이 거부되면 낙관적으로 추가했던 메시지를 롤백
+    socket.on('judge:question-rejected', ({ turnNum }) => {
+      setJudgeTurns((prev) => prev.filter((t) => t.turnNum !== turnNum))
+      setAwaitingAnswer(false)
+      setQuestionSentAt(null)
+      delete pendingQuestionsRef.current[turnNum]
     })
 
     socket.on('turn:question-received', ({ turnNum, question, deadline }) => {
@@ -197,6 +219,7 @@ export default function TeamPage({ navigate }) {
   function sendQuestion(msg) {
     const nextTurn = judgeTurns.length + 1
     if (!msg || awaitingAnswer || roundInfo?.isSoloJudge) return
+    if (!chatStarted) return
     pendingQuestionsRef.current[nextTurn] = msg
     // 질문 즉시 화면에 표시 (답변은 null)
     setJudgeTurns((prev) => [...prev, { turnNum: nextTurn, question: msg, styledAnswer: null }])
@@ -280,10 +303,16 @@ export default function TeamPage({ navigate }) {
           </button>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32 }}>
-          <div style={{ fontSize: '3rem', animation: 'pulse 2s ease-in-out infinite' }}>🔍</div>
-          <h2 style={{ margin: 0, fontWeight: 800, fontSize: '1.4rem' }}>게임 대기 중</h2>
-          <p style={{ color: 'var(--muted)', textAlign: 'center', maxWidth: 320 }}>
-            교사가 라운드를 시작하면 자동으로 채팅이 시작됩니다
+          <div style={{ fontSize: '3rem', animation: 'pulse 2s ease-in-out infinite' }}>
+            {lockedNotice ? '⏸️' : '🔍'}
+          </div>
+          <h2 style={{ margin: 0, fontWeight: 800, fontSize: '1.4rem' }}>
+            {lockedNotice ? '다음 라운드 대기 중' : '게임 대기 중'}
+          </h2>
+          <p style={{ color: 'var(--muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.6 }}>
+            {lockedNotice
+              ? lockedNotice.message || '이번 라운드는 이미 시작되었어요. 다음 라운드부터 자동으로 참여됩니다!'
+              : '교사가 라운드를 시작하면 자동으로 채팅이 시작됩니다'}
           </p>
           <div style={{
             padding: '8px 16px', borderRadius: 8,
@@ -312,6 +341,7 @@ export default function TeamPage({ navigate }) {
           incomingQuestion={incomingQuestion}
           previewAnswer={previewAnswer}
           judgeNotice={judgeNotice}
+          chatStarted={chatStarted}
           onSendQuestion={sendQuestion}
           onSubmitAnswer={submitAnswer}
         />

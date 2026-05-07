@@ -105,14 +105,18 @@ app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, (req, res) => {
 
 // ── 세션 API ──────────────────────────────────────────────────────────────
 
-// 세션 생성
+// 세션 생성/조회 — mode='join' (학생) 시에는 새 세션을 만들지 않고 404 반환
 app.post(`${BASE_PATH}/api/session`, (req, res) => {
-  const { teacherCode } = req.body
-  if (!teacherCode) return res.status(400).json({ error: '수업 코드 필요' })
+  const rawCode = req.body?.teacherCode
+  const mode = req.body?.mode || 'create'
+  if (typeof rawCode !== 'string' || !rawCode.trim()) {
+    return res.status(400).json({ error: '수업 코드 필요' })
+  }
+  const teacherCode = rawCode.trim().toUpperCase()
 
   // 기존 활성 세션 확인
   const existing = db
-    .prepare("SELECT * FROM sessions WHERE teacher_code = ? AND (status = 'waiting' OR status = 'active')")
+    .prepare("SELECT * FROM sessions WHERE teacher_code = ? AND (status = 'waiting' OR status = 'active') ORDER BY rowid DESC LIMIT 1")
     .get(teacherCode)
 
   if (existing) {
@@ -120,6 +124,14 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     return res.json({ ...existing, teams: teams.map(parseTeam) })
   }
 
+  // 학생 입장: 활성 세션이 없으면 빈 세션을 만들지 않고 안내
+  if (mode === 'join') {
+    return res.status(404).json({
+      error: '입력한 수업 코드의 세션을 찾을 수 없어요. 선생님이 코드를 시작했는지, 코드가 정확한지 확인해 주세요.',
+    })
+  }
+
+  // 교사 생성: 새 세션 생성
   const id = nanoid()
   db.prepare('INSERT INTO sessions (id, teacher_code) VALUES (?, ?)').run(id, teacherCode)
   res.json({ id, teacher_code: teacherCode, status: 'waiting', teams: [] })

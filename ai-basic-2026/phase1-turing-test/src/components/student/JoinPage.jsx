@@ -26,8 +26,14 @@ export default function JoinPage({ navigate }) {
   }, [])
 
   async function loadSessionByCode(code) {
+    const cleaned = (code || '').trim().toUpperCase()
+    if (!cleaned) {
+      setSession(null)
+      setError('수업 코드를 입력하세요.')
+      return
+    }
     try {
-      const data = await apiPost('/session', { teacherCode: code.toUpperCase() })
+      const data = await apiPost('/session', { teacherCode: cleaned, mode: 'join' })
       setSession(data)
       setError('')
     } catch (err) {
@@ -106,15 +112,18 @@ export default function JoinPage({ navigate }) {
         <section className="panel" style={{ animation: 'slideUp 0.4s ease-out' }}>
           <p className="eyebrow">ENTER GAME</p>
           <h2>수업 코드 입력</h2>
-          <p className="muted">선생님이 알려준 코드를 넣으면 바로 입장!</p>
+          <p className="muted">① 코드 확인 → ② 우리 팀 만들기 / 합류 → 게임 시작!</p>
           <input
             className="field"
             value={sessionInput}
-            onChange={(event) => setSessionInput(event.target.value)}
-            placeholder="수업 코드 입력 (예: AI2026)"
+            onChange={(event) => setSessionInput(event.target.value.replace(/\s+/g, '').toUpperCase())}
+            placeholder="수업 코드 입력 (예: AI-BASIC-2026)"
             onKeyDown={(e) => e.key === 'Enter' && loadSessionByCode(sessionInput)}
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
           />
-          <button className="primary-button" onClick={() => loadSessionByCode(sessionInput)}>입장하기</button>
+          <button className="primary-button" onClick={() => loadSessionByCode(sessionInput)}>코드 확인</button>
           {session && (
             <div className="detail-box" style={{ marginTop: 10, animation: 'fadeIn 0.3s ease-out' }}>
               <p><strong>수업 코드</strong> {session.teacher_code}</p>

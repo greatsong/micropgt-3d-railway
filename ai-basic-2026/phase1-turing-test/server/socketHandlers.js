@@ -22,7 +22,19 @@ export function registerSocketHandlers(io, db) {
 
       const roundState = activeRounds.get(sessionId)
       if (roundState) {
-        socket.emit('round:started', buildRoundStartedPayload(roundState, teamId))
+        const numericTeamId = Number(teamId)
+        const isInPairs = roundState.pairs.some(([a, b]) => a.id === numericTeamId || b.id === numericTeamId)
+        const isObserver = roundState.soloObserver?.id === numericTeamId
+        if (isInPairs || isObserver) {
+          // 라운드에 등록된 팀 — 정상 합류 (재접속/늦은 합류 모두 커버)
+          socket.emit('round:started', buildRoundStartedPayload(roundState, numericTeamId))
+        } else {
+          // 라운드 시작 후 새로 만들어진 팀 — 다음 라운드 대기 안내
+          socket.emit('round:locked', {
+            roundNum: roundState.roundNum,
+            message: '이번 라운드는 이미 시작되었어요. 다음 라운드부터 자동으로 참여됩니다!',
+          })
+        }
       }
     })
 
@@ -103,6 +115,12 @@ export function registerSocketHandlers(io, db) {
       const requestedBriefing = Math.max(0, Number(briefingTime) || 0)
       const briefingSeconds = roundNum <= 2 ? requestedBriefing : 0
 
+      // 이번 라운드 실제 참가 팀 ID 집합 (페어 + 관찰자) — vote/result 단계에서 잠긴 팀 제외 기준
+      const participantTeamIds = new Set([
+        ...pairs.flatMap(([a, b]) => [a.id, b.id]),
+        ...(soloObserver ? [soloObserver.id] : []),
+      ])
+
       const roundState = {
         roundId,
         roundNum,
@@ -125,6 +143,7 @@ export function registerSocketHandlers(io, db) {
         mirroredTurnIds: new Map(),
         deliveryCancels: [],
         apiKeys: sessionApiKeys.get(sessionId) || {},
+        participantTeamIds,
       }
 
       for (const team of teams) {
@@ -180,7 +199,12 @@ export function registerSocketHandlers(io, db) {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       // 브리핑 단계에서는 질문 전송 차단
-      if (!roundState.chatStarted) return
+      // 클라이언트가 낙관적으로 추가한 메시지를 롤백할 수 있도록 거부 이벤트를 돌려줌
+      if (!roundState.chatStarted) {
+        const nextTurnNum = (roundState.teamCurrentTurn?.[teamId] ?? 0) + 1
+        socket.emit('judge:question-rejected', { turnNum: nextTurnNum, reason: 'briefing' })
+        return
+      }
       if (roundState.soloObserver?.id === teamId) return
       // 응답 팀은 질문 불가
       if (getRole(roundState.pairs, teamId) === 'respondent') return
@@ -610,6 +634,14 @@ function finalizeTurnDelivery(io, db, sessionId, roundState, payload) {
   checkAllTurnsComplete(io, db, sessionId, roundState)
 }
 
+// 라운드 참가팀 + 교사에게만 emit (잠긴 팀 제외)
+function emitToParticipants(io, sessionId, roundState, event, payload) {
+  for (const teamId of roundState.participantTeamIds) {
+    io.to(`session:${sessionId}:team:${teamId}`).emit(event, payload)
+  }
+  io.to(`session:${sessionId}:teacher`).emit(event, payload)
+}
+
 function endChatPhase(io, db, sessionId) {
   const roundState = activeRounds.get(sessionId)
   if (!roundState) return
@@ -621,16 +653,18 @@ function endChatPhase(io, db, sessionId) {
 
   db.prepare("UPDATE rounds SET status = 'voting' WHERE id = ?").run(roundState.roundId)
 
-  io.to(`session:${sessionId}`).emit('chat:ended', {
+  emitToParticipants(io, sessionId, roundState, 'chat:ended', {
     reason: 'time',
     totalTurns: roundState.totalTurns,
   })
 
   const round = db.prepare('SELECT * FROM rounds WHERE id = ?').get(roundState.roundId)
-  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(sessionId)
+  const participantTeams = db.prepare(
+    'SELECT * FROM teams WHERE session_id = ? ORDER BY id'
+  ).all(sessionId).filter((team) => roundState.participantTeamIds.has(team.id))
   const conversations = {}
 
-  for (const team of teams) {
+  for (const team of participantTeams) {
     const turns = db.prepare(
       'SELECT * FROM turns WHERE round_id = ? AND team_id = ? ORDER BY turn_number'
     ).all(roundState.roundId, team.id)
@@ -642,7 +676,7 @@ function endChatPhase(io, db, sessionId) {
     }))
   }
 
-  io.to(`session:${sessionId}`).emit('vote:phase-started', {
+  emitToParticipants(io, sessionId, roundState, 'vote:phase-started', {
     roundId: roundState.roundId,
     voteTime: round.vote_time,
     conversations,
@@ -656,12 +690,15 @@ function endVotePhase(io, db, sessionId) {
   if (!roundState) return
 
   db.prepare("UPDATE rounds SET status = 'revealed' WHERE id = ?").run(roundState.roundId)
-  io.to(`session:${sessionId}`).emit('vote:closed', {})
+  emitToParticipants(io, sessionId, roundState, 'vote:closed', {})
 }
 
 function revealResults(io, db, sessionId, roundState) {
   const round = db.prepare('SELECT * FROM rounds WHERE id = ?').get(roundState.roundId)
-  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(sessionId)
+  // 이번 라운드에 실제 참가한 팀만 집계 (잠긴 팀 제외)
+  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id')
+    .all(sessionId)
+    .filter((team) => roundState.participantTeamIds.has(team.id))
 
   const teamResults = teams.map((team) => {
     const turns = db.prepare(
@@ -706,7 +743,7 @@ function revealResults(io, db, sessionId, roundState) {
 
   db.prepare("UPDATE rounds SET status = 'done' WHERE id = ?").run(roundState.roundId)
 
-  io.to(`session:${sessionId}`).emit('round:results', {
+  emitToParticipants(io, sessionId, roundState, 'round:results', {
     roundId: roundState.roundId,
     roundNum: roundState.roundNum,
     style: roundState.style,
