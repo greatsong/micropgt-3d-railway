@@ -850,6 +850,86 @@ function buildRoundStartedPayload(roundState, teamId) {
   }
 }
 
+/**
+ * 세션 요약 — 라운드별 학급 통계, 팀 순위, 전체 통계(튜링 30% 기준 포함).
+ * tournament:end가 보내는 내용과 같은 구조. 수업 완전 종료 뒤 분석 화면과 REST(/dashboard/:id/summary)에서 쓴다.
+ */
+export function buildSessionSummary(db, sessionId) {
+  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId)
+  if (!session) return null
+  const rounds = db.prepare('SELECT * FROM rounds WHERE session_id = ? ORDER BY round_number').all(sessionId)
+  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(sessionId)
+
+  const roundStats = rounds.map((round) => {
+    const allRoundTurns = db.prepare('SELECT * FROM turns WHERE round_id = ?').all(round.id)
+    const stats = calcStats(allRoundTurns)
+    return {
+      roundId: round.id,
+      roundNum: round.round_number,
+      style: round.style_name,
+      aiModel: round.ai_model,
+      pointValue: round.point_value,
+      status: round.status,
+      totalCorrect: stats.totalCorrect,
+      totalTurns: stats.totalTurns,
+      accuracy: stats.accuracy,
+      aiAiRate: stats.aiAiRate,
+      humanHumanRate: stats.humanHumanRate,
+      aiFooledRate: stats.aiFooledRate,
+      turingPassed: stats.turingPassed,
+    }
+  })
+
+  const finalStandings = teams.map((team) => {
+    let totalCorrectAll = 0
+    let totalTurnsAll = 0
+    const roundResults = rounds.map((round) => {
+      const turns = db.prepare('SELECT * FROM turns WHERE round_id = ? AND team_id = ?').all(round.id, team.id)
+      const correct = turns.filter((turn) => turn.is_correct).length
+      const earned = correct * round.point_value
+      totalCorrectAll += correct
+      totalTurnsAll += turns.length
+      return { roundNum: round.round_number, style: round.style_name, aiModel: round.ai_model, pointValue: round.point_value, correct, total: turns.length, earned }
+    })
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      teamColor: team.color,
+      members: JSON.parse(team.members || '[]'),
+      roundResults,
+      totalScore: roundResults.reduce((sum, round) => sum + round.earned, 0),
+      totalCorrect: totalCorrectAll,
+      totalTurns: totalTurnsAll,
+      accuracy: totalTurnsAll > 0 ? Math.round((totalCorrectAll / totalTurnsAll) * 100) : 0,
+    }
+  }).sort((a, b) => {
+    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore
+    return a.teamName.localeCompare(b.teamName, 'ko')
+  })
+
+  const allTurns = db.prepare(`
+    SELECT t.* FROM turns t
+    JOIN rounds r ON r.id = t.round_id
+    WHERE r.session_id = ?
+  `).all(sessionId)
+
+  const mvpTeam = [...finalStandings]
+    .filter((t) => t.totalTurns > 0)
+    .sort((a, b) => (b.accuracy !== a.accuracy ? b.accuracy - a.accuracy : b.totalScore - a.totalScore))[0] || null
+
+  return {
+    sessionId,
+    teacherCode: session.teacher_code,
+    status: session.status,
+    roundCount: rounds.length,
+    teamCount: teams.length,
+    roundStats,
+    finalStandings: buildSharedRankings(finalStandings, 'totalScore'),
+    mvpTeamId: mvpTeam?.teamId ?? null,
+    overallStats: calcStats(allTurns),
+  }
+}
+
 function calcStats(turns) {
   const totalTurns = turns.length
   if (!totalTurns) {

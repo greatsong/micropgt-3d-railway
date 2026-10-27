@@ -108,6 +108,7 @@ export default function JoinPage({ navigate }) {
           <span className="badge badge-green">◉ 팀 대결</span>
           <button className="ghost-button" onClick={() => navigate('/student-guide')}>📖 게임 안내</button>
           <button className="ghost-button" onClick={() => navigate('/guide')}>사용 안내</button>
+          <a className="ghost-button" href={withBase('/tutorial/')} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>튜토리얼</a>
           <button className="ghost-button" onClick={() => navigate('/teacher')}>교사 화면</button>
         </div>
       </header>

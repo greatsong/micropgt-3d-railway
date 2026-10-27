@@ -85,9 +85,11 @@ export default function TeacherApp({ navigate }) {
   const [selectedTeamName, setSelectedTeamName] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [sessionClosed, setSessionClosed] = useState(false)
+  const [closedSummary, setClosedSummary] = useState(null) // 수업 완전 종료 뒤 분석 결과
   const socketRef = useRef(null)
   const currentRoundIdRef = useRef(null)
   const aiErrorRef = useRef(null)
+  const liveTeamIdRef = useRef(null) // 라이브 채팅으로 보고 있는 팀
 
   useEffect(() => {
     currentRoundIdRef.current = currentRoundId
@@ -236,8 +238,8 @@ export default function TeacherApp({ navigate }) {
       if (currentRoundIdRef.current) {
         void refreshRoundData(session.id, currentRoundIdRef.current)
       }
-      // 라이브 대화 보기 중이면 자동 갱신
-      if (payload?.teamId && currentRoundIdRef.current) {
+      // 라이브 대화 보기 중인 팀의 턴이면 자동 갱신 (다른 팀 턴에 화면이 바뀌거나 저절로 열리지 않게)
+      if (payload?.teamId && currentRoundIdRef.current && liveTeamIdRef.current === payload.teamId) {
         socket.emit('teacher:get-live-turns', { sessionId: session.id, teamId: payload.teamId, roundId: currentRoundIdRef.current, token })
       }
     })
@@ -307,6 +309,16 @@ export default function TeacherApp({ navigate }) {
       setSessionClosed(true)
     }
   }, [session?.status])
+
+  // 수업 완전 종료 뒤: 진행한 라운드의 분석 결과를 불러온다
+  useEffect(() => {
+    if (!sessionClosed || !session?.id) return
+    let cancelled = false
+    apiGet(`/dashboard/${session.id}/summary`)
+      .then((data) => { if (!cancelled) setClosedSummary(data) })
+      .catch(() => { if (!cancelled) setClosedSummary({ error: true }) })
+    return () => { cancelled = true }
+  }, [sessionClosed, session?.id])
 
   useEffect(() => {
     if (!session?.id) return
@@ -466,6 +478,7 @@ export default function TeacherApp({ navigate }) {
     sessionStorage.removeItem(SESSION_KEY)
     setSession(null)
     setSessionClosed(false)
+    setClosedSummary(null)
     setCurrentResults(null)
     setFinalResults(null)
     setRounds([])
@@ -487,6 +500,7 @@ export default function TeacherApp({ navigate }) {
   }
 
   function selectTeamForLive(teamId, teamName) {
+    liveTeamIdRef.current = teamId
     setSelectedTeamName(teamName)
     setSelectedLiveTurns(null)
     if (currentRoundId) {
@@ -591,28 +605,99 @@ export default function TeacherApp({ navigate }) {
     )
   }
 
-  // ── 세션 종료 화면 ──
+  // ── 세션 종료 화면 (진행한 라운드의 분석 결과 포함) ──
   if (sessionClosed && session?.id) {
+    const summary = closedSummary && !closedSummary.error ? closedSummary : null
+    const playedRounds = summary?.roundStats?.filter((r) => r.totalTurns > 0) || []
+    const medals = ['🥇', '🥈', '🥉']
     return (
       <div className="page-shell center-shell">
-        <div className="panel auth-panel" style={{ maxWidth: 480, textAlign: 'center' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: 12 }}>🔒</div>
+        <div className="panel auth-panel" style={{ maxWidth: 760, textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 8 }}>🔒</div>
           <p className="eyebrow" style={{ color: '#f59e0b' }}>SESSION CLOSED</p>
-          <h1 style={{ marginBottom: 8 }}>수업이 종료되었습니다</h1>
-          <p className="muted" style={{ marginBottom: 20 }}>
-            세션 <strong style={{ textTransform: 'lowercase' }}>{session.teacher_code}</strong>가 종료되었습니다.<br />
-            학생들의 화면도 함께 종료 처리됩니다.
+          <h1 style={{ marginBottom: 6 }}>수업이 종료되었습니다</h1>
+          <p className="muted" style={{ marginBottom: 16 }}>
+            세션 <strong style={{ textTransform: 'lowercase' }}>{session.teacher_code}</strong>가 종료되었습니다. 학생들의 화면도 함께 종료 처리됩니다.
           </p>
+
+          {closedSummary === null && <p className="muted">분석 결과를 불러오는 중...</p>}
+          {closedSummary?.error && <p className="muted">분석 결과를 불러오지 못했습니다. 입장 코드로 다시 들어오면 볼 수 있습니다.</p>}
+
+          {summary && playedRounds.length === 0 && (
+            <p className="muted" style={{ marginBottom: 16 }}>진행한 라운드가 없어 분석할 결과가 없습니다.</p>
+          )}
+
+          {summary && playedRounds.length > 0 && (
+            <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                {[
+                  { label: '참가 팀', value: summary.teamCount },
+                  { label: '진행 라운드', value: playedRounds.length },
+                  { label: '전체 정답률', value: `${summary.overallStats.accuracy}%` },
+                  { label: 'AI가 사람으로 판정된 비율', value: summary.overallStats.aiFooledRate === null ? '-' : `${summary.overallStats.aiFooledRate}%` },
+                ].map((s) => (
+                  <div key={s.label} style={{ textAlign: 'center', padding: '12px 8px', borderRadius: 10, background: 'var(--surface2, #1e293b)', border: '1px solid var(--border, rgba(255,255,255,0.06))' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d4a574' }}>{s.value}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <TuringCriterion stats={summary.overallStats} className="panel" title="전체 라운드" />
+
+              <div className="panel" style={{ padding: '14px 16px' }}>
+                <p className="eyebrow" style={{ marginBottom: 8 }}>라운드별 결과</p>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                  <thead>
+                    <tr style={{ color: '#94a3b8', textAlign: 'left' }}>
+                      <th style={{ padding: '4px 6px' }}>R</th><th style={{ padding: '4px 6px' }}>말투</th><th style={{ padding: '4px 6px' }}>AI</th>
+                      <th style={{ padding: '4px 6px' }}>정답률</th><th style={{ padding: '4px 6px' }}>AI 식별</th><th style={{ padding: '4px 6px' }}>사람 식별</th><th style={{ padding: '4px 6px' }}>AI→사람 판정</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {playedRounds.map((r) => (
+                      <tr key={r.roundNum} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <td style={{ padding: '6px' }}><strong>{r.roundNum}</strong></td>
+                        <td style={{ padding: '6px' }}>{r.style}</td>
+                        <td style={{ padding: '6px' }}>{displayModel(r.aiModel)}</td>
+                        <td style={{ padding: '6px' }}>{r.accuracy}% <span className="muted">({r.totalCorrect}/{r.totalTurns})</span></td>
+                        <td style={{ padding: '6px' }}>{r.aiAiRate}%</td>
+                        <td style={{ padding: '6px' }}>{r.humanHumanRate}%</td>
+                        <td style={{ padding: '6px', color: r.turingPassed ? '#4ade80' : '#d4a574' }}>{r.aiFooledRate === null ? '-' : `${r.aiFooledRate}%`}{r.turingPassed ? ' 통과' : ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="panel" style={{ padding: '14px 16px' }}>
+                <p className="eyebrow" style={{ marginBottom: 8 }}>팀 순위</p>
+                {summary.finalStandings.map((team, i) => (
+                  <div key={team.teamId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px', borderTop: i ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <span style={{ minWidth: 34, fontWeight: 800, color: team.rank <= 3 ? '#eab308' : '#64748b' }}>{team.rank <= 3 ? medals[team.rank - 1] : `${team.rank}위`}</span>
+                    <span className="team-dot" style={{ background: team.teamColor }} />
+                    <strong style={{ flex: 1 }}>{team.teamName}</strong>
+                    {summary.mvpTeamId === team.teamId && <span style={{ fontSize: '0.7rem', color: '#eab308', fontWeight: 700 }}>⭐ MVP</span>}
+                    <span className="muted" style={{ fontSize: '0.78rem' }}>{team.totalCorrect}/{team.totalTurns} 정답 · {team.accuracy}%</span>
+                    <span className="score-pill">{team.totalScore}점</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{
             padding: '12px 16px', borderRadius: 8,
             background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
-            marginBottom: 20, fontSize: '0.8rem', color: '#fbbf24', lineHeight: 1.5, textAlign: 'left',
+            marginBottom: 16, fontSize: '0.8rem', color: '#fbbf24', lineHeight: 1.5, textAlign: 'left',
           }}>
-            💡 같은 수업 코드로 새 세션을 만들면 새로운 참가 링크가 발급됩니다.<br />
-            학생들은 다시 팀 등록을 해야 합니다.
+            💡 같은 수업 코드로 새 세션을 만들면 새로운 참가 링크가 발급됩니다. 학생들은 다시 팀 등록을 해야 합니다.
           </div>
-          <button className="primary-button" onClick={startNewSession}>새 수업 시작</button>
-          <button className="ghost-button" style={{ marginTop: 8 }} onClick={() => navigate('/')}>메인으로</button>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {summary && playedRounds.length > 0 && <button className="ghost-button" onClick={downloadCsv}>📄 CSV 다운로드</button>}
+            <button className="primary-button" style={{ width: 'auto' }} onClick={startNewSession}>새 수업 시작</button>
+            <button className="ghost-button" onClick={() => navigate('/')}>메인으로</button>
+          </div>
         </div>
       </div>
     )
@@ -668,6 +753,7 @@ export default function TeacherApp({ navigate }) {
           <span className="badge badge-blue" style={{ fontFamily: "'Courier New', monospace" }}>🔐 LIVE OPS</span>
           <button className="ghost-button" onClick={() => navigator.clipboard?.writeText(joinUrl)}>참가 링크 복사</button>
           <button className="ghost-button" onClick={() => navigate('/guide')}>사용 안내</button>
+          <a className="ghost-button" href={withBase('/tutorial/')} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>튜토리얼</a>
           <button className="ghost-button" onClick={() => navigate('/')}>학생 화면</button>
         </div>
       </header>
@@ -1083,7 +1169,7 @@ export default function TeacherApp({ navigate }) {
                   <p className="eyebrow">🔴 LIVE CHAT</p>
                   <h2>{selectedTeamName}</h2>
                 </div>
-                <button className="ghost-button" onClick={() => { setSelectedLiveTurns(null); setSelectedTeamName('') }} style={{ fontSize: '0.75rem' }}>닫기</button>
+                <button className="ghost-button" onClick={() => { liveTeamIdRef.current = null; setSelectedLiveTurns(null); setSelectedTeamName('') }} style={{ fontSize: '0.75rem' }}>닫기</button>
               </div>
               <div style={{ display: 'grid', gap: 8 }}>
                 {selectedLiveTurns.length === 0 && (

@@ -22,6 +22,7 @@ export default function GuidePage({ navigate }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#818cf8', letterSpacing: '0.1em' }}>📖 GUIDE</span>
             <div style={{ display: 'flex', gap: 8 }}>
+              <a href="tutorial/" target="_blank" rel="noreferrer" style={{ ...linkBtnStyle, textDecoration: 'none', color: '#818cf8' }}>📷 화면 튜토리얼</a>
               <button onClick={() => navigate('/')} style={linkBtnStyle}>학생 화면</button>
               <button onClick={() => navigate('/teacher')} style={linkBtnStyle}>교사 화면</button>
             </div>

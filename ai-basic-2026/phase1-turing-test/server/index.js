@@ -9,7 +9,7 @@ import { dirname, join } from 'path'
 import fs from 'fs'
 import { nanoid } from './utils.js'
 import db from './db.js'
-import { registerSocketHandlers } from './socketHandlers.js'
+import { registerSocketHandlers, buildSessionSummary } from './socketHandlers.js'
 import { sessionApiKeys } from './apiKeyStore.js'
 import { issueTeacherToken, verifyTeacherToken, requireTeacher, getTeacherPin, checkPinAttempt } from './teacherAuth.js'
 
@@ -291,6 +291,13 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireTeacher, 
 })
 
 // CSV 다운로드
+// 세션 요약 (수업 완전 종료 뒤 분석 화면용) — 라운드별 통계·팀 순위·전체 통계
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/summary`, requireTeacher, (req, res) => {
+  const summary = buildSessionSummary(db, req.params.sessionId)
+  if (!summary) return res.status(404).json({ error: '세션 없음' })
+  res.json(summary)
+})
+
 // CSV 셀 이스케이프 — 쉼표·따옴표·줄바꿈 처리, 수식 시작 문자(=+-@)는 엑셀 수식 실행 방지
 function csvCell(value) {
   let text = String(value ?? '')
