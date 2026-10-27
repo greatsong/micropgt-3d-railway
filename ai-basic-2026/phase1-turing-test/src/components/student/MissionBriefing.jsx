@@ -25,7 +25,7 @@ const ROLE_DATA = {
   judge: {
     icon: '🔐',
     codename: 'INTERROGATOR',
-    title: '당신은 심문관입니다',
+    title: '당신은 질문자입니다',
     mission: '벽 너머 상대의 정체를 밝혀라',
     color: C.amber,
     borderColor: C.amberBorder,
@@ -42,7 +42,7 @@ const ROLE_DATA = {
   respondent: {
     icon: '📡',
     codename: 'PLAYER',
-    title: '당신은 플레이어입니다',
+    title: '당신은 답변자입니다',
     mission: '인간처럼 답하라. 들키면 끝이다',
     color: C.green,
     borderColor: C.greenBorder,

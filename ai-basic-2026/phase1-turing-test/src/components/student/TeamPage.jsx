@@ -29,7 +29,7 @@ export default function TeamPage({ navigate }) {
   const [roundInfo, setRoundInfo] = useState(null)
   const [remaining, setRemaining] = useState(null)
 
-  // 심판 (질문하는 쪽) 상태
+  // 질문자 (질문하는 쪽) 상태
   const [judgeTurns, setJudgeTurns] = useState([])
   const [questionDraft, setQuestionDraft] = useState('')
   const [awaitingAnswer, setAwaitingAnswer] = useState(false)
@@ -44,7 +44,7 @@ export default function TeamPage({ navigate }) {
   // 미션 브리핑
   const [showBriefing, setShowBriefing] = useState(false)
   // 대화 단계 시작 여부 — 브리핑 중에는 false, 'chat:started' 수신 시 true
-  // 심판이 브리핑 중에 메시지를 보내도 서버가 폐기하므로 클라이언트도 차단
+  // 질문자이 브리핑 중에 메시지를 보내도 서버가 폐기하므로 클라이언트도 차단
   const [chatStarted, setChatStarted] = useState(false)
 
   // 라운드 도중 합류한 팀 안내
@@ -151,12 +151,12 @@ export default function TeamPage({ navigate }) {
     })
 
     socket.on('respondent:answer-accepted', () => {
-      // incomingQuestion 유지 — 응답자가 보낸 답변이 채팅에 계속 보이도록
+      // incomingQuestion 유지 — 답변자가 보낸 답변이 채팅에 계속 보이도록
       // turn:respondent-view에서 정리됨
       setJudgeNotice('응답 접수! 딜레이 후 전달됩니다.')
     })
 
-    // 응답자로서 본 대화 (상대가 질문 → 내/AI 답변 결과)
+    // 답변자로서 본 대화 (상대가 질문 → 내/AI 답변 결과)
     socket.on('turn:respondent-view', ({ turnNum, question, styledAnswer }) => {
       setRespondTurns((prev) => [...prev, { turnNum, question, styledAnswer }])
       setPreviewAnswer(null)
@@ -376,9 +376,9 @@ export default function TeamPage({ navigate }) {
 
   // ── 투표 ──
   if (phase === 'vote') {
-    // 응답자 팀은 투표할 대화가 없다 — 빈 투표판 대신 대기 안내
+    // 답변자 팀은 투표할 대화가 없다 — 빈 투표판 대신 대기 안내
     if (judgeTurns.length === 0) {
-      return <WaitingScreen message="🗳️ 심판 팀이 투표 중입니다" sub="이번 라운드에서 우리 팀은 응답자였어요. 결과 공개를 기다려 주세요" />
+      return <WaitingScreen message="🗳️ 질문 팀이 투표 중입니다" sub="이번 라운드에서 우리 팀은 답변자였어요. 결과 공개를 기다려 주세요" />
     }
     return (
       <VotePanel

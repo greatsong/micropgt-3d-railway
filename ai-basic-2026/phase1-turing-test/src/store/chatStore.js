@@ -2,8 +2,8 @@ import { create } from 'zustand'
 
 const useChatStore = create((set) => ({
   conversations: [], // [{ turnNum, question, styledAnswer, waiting }]
-  pendingQuestion: null, // { turnNum, question, deadline } — 응답자 화면용
-  aiPreview: null, // { turnNum, aiAnswer, deadline } — 응답자 위장 모드
+  pendingQuestion: null, // { turnNum, question, deadline } — 답변자 화면용
+  aiPreview: null, // { turnNum, aiAnswer, deadline } — 답변자 위장 모드
   votes: {}, // { [turnNum]: 'human' | 'ai' }
   voteSubmitted: false,
   results: null, // round:results 페이로드

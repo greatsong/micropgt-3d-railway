@@ -121,17 +121,17 @@ export default function JoinPage({ navigate }) {
           <input
             className="field"
             value={sessionInput}
-            onChange={(event) => setSessionInput(event.target.value.replace(/\s+/g, '').toUpperCase())}
-            placeholder="수업 코드 입력 (예: AI-BASIC-2026)"
+            onChange={(event) => setSessionInput(event.target.value.replace(/\s+/g, ''))}
+            placeholder="수업 코드 입력 (예: ai-leader, 대소문자 무관)"
             onKeyDown={(e) => e.key === 'Enter' && loadSessionByCode(sessionInput)}
-            autoCapitalize="characters"
+            autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
           />
           <button className="primary-button" onClick={() => { startBgm(); loadSessionByCode(sessionInput) }}>코드 확인</button>
           {session && (
             <div className="detail-box" style={{ marginTop: 10, animation: 'fadeIn 0.3s ease-out' }}>
-              <p><strong>수업 코드</strong> {session.teacher_code}</p>
+              <p><strong>수업 코드</strong> {String(session.teacher_code || '').toLowerCase()}</p>
               <p><strong>현재 상태</strong> {session.status}</p>
               <p><strong>참가 팀</strong> {session.teams.length}팀</p>
             </div>

@@ -161,11 +161,11 @@ function OverviewTab() {
     <>
       <div style={cardStyle}>
         <p style={labelStyle}>CONCEPT</p>
-        <h2 style={headingStyle}>벽 너머 심문 — 튜링 테스트 팀 대결</h2>
+        <h2 style={headingStyle}>벽 너머 질문 — 튜링 테스트 팀 대결</h2>
         <p style={paraStyle}>
           1950년 앨런 튜링이 제안한 "이미테이션 게임"을 교실에서 체험합니다.
-          심문관은 벽 너머의 상대에게 질문을 보내 사람인지 AI인지 판별하고,
-          플레이어는 자연스럽게 답변해서 들키지 않아야 합니다.
+          질문자은 벽 너머의 상대에게 질문을 보내 사람인지 AI인지 판별하고,
+          답변자는 자연스럽게 답변해서 들키지 않아야 합니다.
         </p>
         <p style={paraStyle}>
           모든 답변은 <strong style={{ color: '#818cf8' }}>같은 말투</strong>로 변환되어 전달되므로,
@@ -200,8 +200,8 @@ function OverviewTab() {
         <h2 style={headingStyle}>전체 흐름</h2>
         <FlowStep num="1" icon="📋" title="팀 등록" desc="교사가 세션을 만들고, 학생들이 팀을 등록합니다." />
         <FlowStep num="2" icon="⚙️" title="라운드 설정" desc="교사가 말투, AI 모델, 턴 수, 시간 등을 설정합니다." />
-        <FlowStep num="3" icon="🎲" title="매칭 & 역할 배정" desc="자동으로 팀 페어링 + 심문관/플레이어 역할이 배정됩니다." />
-        <FlowStep num="4" icon="💬" title="심문 채팅" desc="심문관이 질문 → 플레이어(사람 또는 AI)가 답변. 같은 말투로 변환됩니다." />
+        <FlowStep num="3" icon="🎲" title="매칭 & 역할 배정" desc="자동으로 팀 페어링 + 질문자/답변자 역할이 배정됩니다." />
+        <FlowStep num="4" icon="💬" title="질문 채팅" desc="질문자이 질문 → 답변자(사람 또는 AI)가 답변. 같은 말투로 변환됩니다." />
         <FlowStep num="5" icon="🗳️" title="투표" desc="각 턴의 상대가 사람이었는지 AI였는지 투표합니다." />
         <FlowStep num="6" icon="🎯" title="결과 공개" desc="정답 공개 + 점수 계산. 다음 라운드 또는 최종 순위 발표!" />
       </div>
@@ -237,6 +237,19 @@ function OverviewTab() {
         />
         <p style={paraStyle}>교사가 라운드마다 다른 AI를 선택하면, 학생들이 AI별 차이를 체감할 수 있습니다.</p>
       </div>
+
+      <div style={cardStyle}>
+        <p style={labelStyle}>TURING'S CRITERION</p>
+        <h2 style={headingStyle}>튜링의 30% 기준</h2>
+        <p style={paraStyle}>
+          앨런 튜링은 1950년 논문 "Computing Machinery and Intelligence"에서, 평범한 질문자이 5분 대화 뒤
+          30% 이상 기계를 사람으로 잘못 판정하면 기계가 모방 게임을 통과한다고 볼 만하다고 썼습니다.
+        </p>
+        <p style={paraStyle}>
+          결과 화면에는 이번 라운드에서 <strong style={{ color: '#818cf8' }}>AI가 사람으로 판정된 비율</strong>이 30% 기준선과 함께 표시됩니다.
+          기준을 넘으면 "기계가 모방 게임을 통과했습니다", 못 넘으면 "질문자이 기계를 가려냈습니다"로 나옵니다. 토론의 출발점으로 쓰세요.
+        </p>
+      </div>
     </>
   )
 }
@@ -250,10 +263,10 @@ function TeacherTab() {
       <div style={cardStyle}>
         <p style={labelStyle}>SETUP</p>
         <h2 style={headingStyle}>초기 설정</h2>
-        <FlowStep num="1" icon="🔐" title="입장 코드 입력" desc="/teacher 경로에서 안내받은 입장 코드를 넣습니다. 본인 API 키로 입장할 수도 있습니다." />
-        <FlowStep num="2" icon="📝" title="수업 코드 입력" desc="예: AI-BASIC-2026. 같은 코드로 재접속하면 기존 세션을 이어서 사용합니다." />
-        <FlowStep num="3" icon="📋" title="참가 링크 공유" desc="대시보드의 '참가 링크 복사' 버튼으로 학생에게 공유합니다." />
-        <FlowStep num="4" icon="⏳" title="팀 등록 대기" desc="학생들이 팀을 만들면 대시보드에 실시간으로 표시됩니다." />
+        <FlowStep num="1" icon="🔐" title="입장 코드 입력" desc="교사 화면(/teacher)에서 안내받은 입장 코드를 넣으면 끝입니다. AI 호출은 서버 공용 키를 쓰므로 따로 준비할 것이 없습니다. 실제 수업에서 본인 API 키로 입장하려면 아래의 '내 API 키로 입장하기'를 누릅니다." />
+        <FlowStep num="2" icon="📝" title="수업 코드 정하기" desc="ai-leader처럼 부르기 쉬운 코드가 자동으로 제안됩니다. 마음에 드는 말로 바꿔도 되고, 대소문자는 구분하지 않습니다. 다른 선생님이 진행 중인 코드는 쓸 수 없고, 같은 코드로 다시 열면 내 세션을 이어서 사용합니다." />
+        <FlowStep num="3" icon="📋" title="참가 링크 공유" desc="'참가 링크 복사' 버튼의 링크에는 수업 코드가 들어 있어 클릭 한 번으로 팀 만들기 화면까지 갑니다. 줌 채팅·카카오톡·구글 문서에 붙여 넣거나, 기본 주소를 띄우고 수업 코드를 불러 줘도 됩니다." />
+        <FlowStep num="4" icon="⏳" title="팀 등록 대기" desc="참가자가 팀을 만들면 대시보드에 실시간으로 표시됩니다. 팀이 2개 이상이어야 '라운드 시작' 버튼이 켜집니다." />
       </div>
 
       <div style={cardStyle}>
@@ -303,13 +316,18 @@ function TeacherTab() {
         <Table
           headers={['버튼', '기능', '언제 사용']}
           rows={[
-            ['🎮 라운드 시작', '새 라운드 시작', '팀 2개 이상 등록 후'],
-            ['⏹ 대화 강제 종료', '채팅 즉시 마감', '모든 팀 턴 완료 시'],
+            ['🎮 라운드 시작', '새 라운드 시작', '팀 2개 이상 등록 후. 진행 중인 라운드가 있으면 눌리지 않음'],
+            ['⏹ 대화 강제 종료', '채팅 즉시 마감', '모든 팀 턴 완료 시 (턴이 모두 끝나면 자동으로 투표로 넘어감)'],
             ['⏹ 투표 강제 마감', '투표 즉시 마감', '모든 팀 투표 완료 시'],
-            ['🎯 결과 공개', '정답 + 점수 공개', '투표 마감 후'],
-            ['🏁 토너먼트 종료', '최종 순위 발표', '모든 라운드 완료 후'],
+            ['🎯 결과 공개', '정답 + 점수 + 튜링 30% 기준 공개', '투표 마감 후'],
+            ['🏁 토너먼트 종료', '최종 순위 발표, CSV 다운로드', '모든 라운드 완료 후'],
+            ['🔒 수업 완전 종료', '점수 집계 없이 세션 종료', '중간에 그만둘 때. 같은 코드로 새 세션을 열 수 있음'],
           ]}
         />
+        <p style={paraStyle}>
+          서버가 요청을 거부하면(팀 부족, 중복 시작, 인증 만료) 사이드바 STATUS에 빨간 글씨로 이유가 표시됩니다.
+          AI 호출이 실패하면 같은 자리에 경고 배너가 뜹니다. 참가자에게는 회피 문구가 나가므로 교사만 알 수 있습니다.
+        </p>
       </div>
 
       <div style={cardStyle}>
@@ -317,7 +335,7 @@ function TeacherTab() {
         <h2 style={headingStyle}>아레나 — 매치 카드</h2>
         <p style={paraStyle}>
           라운드가 시작되면 메인 영역에 <strong style={{ color: '#818cf8' }}>매치 카드</strong>가 표시됩니다.
-          각 카드는 심문관과 플레이어의 대결을 보여줍니다.
+          각 카드는 질문자과 답변자의 대결을 보여줍니다.
         </p>
         <div style={{
           padding: '14px 16px', background: '#0f172a', borderRadius: 8,
@@ -329,7 +347,7 @@ function TeacherTab() {
 │ MATCH 1                    3/8턴   │
 │                                     │
 │ 🔍 알파팀  ←── 벽 ──→  🎭 베타팀   │
-│   심문관                 플레이어   │
+│   질문자                 답변자   │
 │                                     │
 │ ▓▓▓▓▓░░░░░░░ 37%                   │
 │ 누적 3점              누적 5점      │
@@ -350,14 +368,15 @@ function StudentTab() {
       <div style={cardStyle}>
         <p style={labelStyle}>JOIN</p>
         <h2 style={headingStyle}>입장하기</h2>
-        <FlowStep num="1" icon="🔗" title="링크 접속" desc="교사가 공유한 링크 클릭 또는 기본 URL에서 수업 코드 입력" />
-        <FlowStep num="2" icon="👥" title="팀 만들기" desc="팀 이름 + 팀원 이름 입력 → '팀 만들고 입장!' 클릭" />
-        <FlowStep num="3" icon="⏳" title="대기" desc="'게임 대기 중' 화면에서 교사의 라운드 시작을 기다립니다" />
+        <FlowStep num="1" icon="🔗" title="링크 접속" desc="교사가 공유한 링크를 클릭하거나, 기본 주소에서 수업 코드를 입력합니다 (대소문자 구분 없음)." />
+        <FlowStep num="2" icon="👥" title="팀 만들기" desc="팀 이름 + 팀원 이름 입력 → '팀 만들고 입장!' 클릭. 이미 만들어진 팀에 합류할 수도 있습니다." />
+        <FlowStep num="3" icon="⏳" title="대기" desc="'게임 대기 중' 화면에서 교사의 라운드 시작을 기다립니다. 라운드가 시작되면 역할별 미션 브리핑이 먼저 나옵니다." />
+        <FlowStep num="4" icon="🔊" title="소리" desc="시작 화면과 브리핑에서 모스 부호 배경음이 흐르고, 답변이 도착하면 짧은 전신음이 납니다. 화면 오른쪽 아래 🔊 버튼으로 끌 수 있습니다." />
       </div>
 
       <div style={cardStyle}>
         <p style={labelStyle}>🔍 INTERROGATOR</p>
-        <h2 style={headingStyle}>심문관 역할</h2>
+        <h2 style={headingStyle}>질문자 역할</h2>
         <p style={paraStyle}>
           벽 너머의 상대에게 질문을 보내 <strong style={{ color: '#818cf8' }}>사람인지 AI인지</strong> 판별하세요.
         </p>
@@ -379,15 +398,15 @@ function StudentTab() {
 
       <div style={cardStyle}>
         <p style={labelStyle}>🎭 PLAYER</p>
-        <h2 style={headingStyle}>플레이어 역할</h2>
+        <h2 style={headingStyle}>답변자 역할</h2>
         <p style={paraStyle}>
           질문에 자연스럽게 답변해서 <strong style={{ color: '#34d399' }}>사람임을 증명</strong>하세요. 들키면 상대 팀 점수!
         </p>
 
         <div style={subHeadingStyle}>사람 턴 (직접 답변)</div>
         <p style={paraStyle}>
-          심문관의 질문이 채팅에 표시되면 하단 입력창에 60자 이내로 답변합니다.
-          답변은 <strong style={{ color: '#818cf8' }}>말투 변환</strong> 후 심문관에게 전달됩니다.
+          질문자의 질문이 채팅에 표시되면 하단 입력창에 60자 이내로 답변합니다.
+          답변은 <strong style={{ color: '#818cf8' }}>말투 변환</strong> 후 질문자에게 전달됩니다.
         </p>
 
         <div style={subHeadingStyle}>AI 턴 (위장 모드 🎭)</div>
@@ -438,6 +457,28 @@ function StudentTab() {
 function TipsTab() {
   return (
     <>
+      <div style={cardStyle}>
+        <p style={labelStyle}>WORKSHOP</p>
+        <h2 style={headingStyle}>연수용 가벼운 체험 (교사 10명, 25~30분)</h2>
+        <p style={paraStyle}>
+          진행자가 세션을 하나 열고, 교사들은 2명씩 5팀으로 참가합니다. 라운드 1만 하면 20분, 말투와 AI를 바꿔 라운드 2까지 하면 30분입니다.
+        </p>
+        <Table
+          headers={['시간', '활동', '설정·비고']}
+          rows={[
+            ['0~4분', '접속 + 팀 등록', '참가 링크를 채팅방에 붙여 넣기. 2명이 한 팀, 팀 이름만 입력'],
+            ['4~6분', '규칙 한 줄 설명', '"상대가 사람인지 AI인지 맞히면 점수". 나머지는 미션 브리핑(20초)이 설명'],
+            ['6~14분', '라운드 1', '자연스러운대화 · Claude · 6턴 · 대화 5분 · 응답 지연 20초 · 투표 1분 · 브리핑 20초'],
+            ['14~17분', '결과 공개 + 튜링 30% 기준 이야기', '"AI가 사람으로 판정된 비율"이 30%를 넘었는지 함께 확인'],
+            ['17~25분', '라운드 2 (선택)', '사극체 · Gemini 또는 Solar · 같은 설정. 말투가 바뀌면 판별이 얼마나 어려워지는지 체감'],
+            ['25~30분', '토너먼트 종료 + 교사 화면 둘러보기', '각자 입장 코드로 교사 화면에 들어가 세션을 만들어 보기 (라운드는 안 돌려도 됨)'],
+          ]}
+        />
+        <p style={paraStyle}>
+          응답 지연 20초면 한 턴이 30초 안팎이라 6턴에 3~4분이 걸립니다. 시간이 빠듯하면 턴 수를 6으로 두고 대화 시간을 3분으로 줄이세요.
+        </p>
+      </div>
+
       <div style={cardStyle}>
         <p style={labelStyle}>LESSON PLAN</p>
         <h2 style={headingStyle}>권장 수업 구성 (50분)</h2>
@@ -540,14 +581,21 @@ function TroubleTab() {
         <div style={subHeadingStyle}>AI 응답이 없거나 느릴 때</div>
         <p style={paraStyle}>
           대시보드 사이드바의 <strong style={{ color: '#818cf8' }}>AI STATUS</strong>를 확인하세요.
-          "준비"가 아닌 모델은 API 키가 없는 것입니다. 다른 모델로 변경하거나, 응답 딜레이를 30초로 늘려 보세요.
+          "준비"는 서버 공용 키 또는 교사가 넣은 키가 있다는 뜻입니다. AI 호출이 실패하면 STATUS 아래에 빨간 경고 배너가 뜨고 참가자에게는 회피 문구("글쎄...")가 나갑니다.
+          경고가 반복되면 다른 모델로 바꾸거나 응답 지연을 30초로 늘려 보세요.
         </p>
 
-        <div style={subHeadingStyle}>학생 화면이 멈췄을 때</div>
-        <p style={paraStyle}>페이지 새로고침(F5)하세요. 라운드 진행 중이면 자동으로 현재 상태를 복구합니다.</p>
+        <div style={subHeadingStyle}>교사 화면에서 "인증이 만료되었습니다"가 뜰 때</div>
+        <p style={paraStyle}>입장 토큰은 12시간 동안 유효하고 서버가 재시작되면 사라집니다. 교사 화면을 새로고침해 입장 코드를 다시 넣으면 됩니다. 세션과 점수는 그대로 남아 있습니다.</p>
 
-        <div style={subHeadingStyle}>투표 화면에 대화가 안 보일 때</div>
-        <p style={paraStyle}>대화 시간 내에 턴이 하나도 완료되지 않은 경우입니다. 교사가 "대화 강제 종료"로 넘어가면 현재까지 완료된 턴만 투표 가능합니다.</p>
+        <div style={subHeadingStyle}>"다른 선생님이 진행 중인 수업 코드입니다"가 뜰 때</div>
+        <p style={paraStyle}>같은 코드를 다른 교사가 쓰고 있습니다. '다른 코드 뽑기'를 누르거나 다른 말로 바꾸세요.</p>
+
+        <div style={subHeadingStyle}>참가자 화면이 멈췄을 때</div>
+        <p style={paraStyle}>페이지 새로고침(F5)하세요. 같은 팀으로 다시 들어가지만 진행 중이던 대화 내역은 비어서 보일 수 있습니다. 가능하면 라운드 중에는 새로고침하지 않는 것이 좋습니다.</p>
+
+        <div style={subHeadingStyle}>투표 화면이 "질문 팀이 투표 중입니다"로 보일 때</div>
+        <p style={paraStyle}>정상입니다. 이번 라운드에서 답변 역할이었던 팀은 투표할 대화가 없어 대기 화면이 나옵니다. 다음 라운드에서 역할이 바뀝니다.</p>
       </div>
 
       <div style={cardStyle}>
@@ -559,8 +607,9 @@ function TroubleTab() {
             ['프론트엔드', 'React 18 + Vite'],
             ['백엔드', 'Express + Socket.IO'],
             ['데이터베이스', 'SQLite (better-sqlite3)'],
-            ['AI 말투 변환', 'Claude Haiku (빠른 속도)'],
-            ['AI 응답 생성', '교사 선택 모델'],
+            ['AI 말투 변환', 'Claude Haiku 5.5 (빠른 속도)'],
+            ['AI 응답 생성', 'Claude Sonnet 5.5 · GPT-6.1 Terra · Gemini 3.5 Flash-Lite · Solar Pro 4 (교사 선택)'],
+            ['교사 인증', '입장 코드 또는 본인 API 키 → 12시간 토큰'],
             ['실시간 통신', 'WebSocket (Socket.IO)'],
             ['배포', 'Railway (Docker)'],
           ]}

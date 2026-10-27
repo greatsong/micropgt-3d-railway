@@ -293,7 +293,7 @@ export default function StudentGuidePage({ navigate }) {
                   fontSize: '1.5rem',
                 }}>🔐</div>
                 <div style={{ fontSize: '0.5rem', fontWeight: 800, color: C.amber, letterSpacing: '0.15em', fontFamily: "'Courier New', monospace" }}>CODENAME: INTERROGATOR</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: C.text, margin: '4px 0' }}>당신은 심문관입니다</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: C.text, margin: '4px 0' }}>당신은 질문자입니다</div>
                 <div style={{
                   display: 'inline-block', padding: '4px 10px', borderRadius: 6,
                   background: C.amberDim, fontSize: '0.7rem', color: C.amber, fontWeight: 700,
@@ -329,12 +329,12 @@ export default function StudentGuidePage({ navigate }) {
             </div>
           </div>
         </PhoneFrame>
-        <Desc icon="🎬">라운드가 시작되면 <strong style={{ color: C.amber }}>기밀 문서 스타일</strong>로 당신의 역할을 알려줍니다. 역할은 3가지: <strong style={{ color: C.amber }}>심문관</strong>(질문), <strong style={{ color: C.green }}>플레이어</strong>(응답), <strong style={{ color: '#94a3b8' }}>관찰자</strong>(감청). 읽고 나서 아무 곳이나 터치하면 게임 시작!</Desc>
+        <Desc icon="🎬">라운드가 시작되면 <strong style={{ color: C.amber }}>기밀 문서 스타일</strong>로 당신의 역할을 알려줍니다. 역할은 3가지: <strong style={{ color: C.amber }}>질문자</strong>(질문), <strong style={{ color: C.green }}>답변자</strong>(응답), <strong style={{ color: '#94a3b8' }}>관찰자</strong>(감청). 읽고 나서 아무 곳이나 터치하면 게임 시작!</Desc>
 
         <Arrow />
 
-        {/* ── STEP 4A: 심문관 채팅 ── */}
-        <PhoneFrame step="4" title="채팅 — 심문관(질문하기)" accent={C.amber}>
+        {/* ── STEP 4A: 질문자 채팅 ── */}
+        <PhoneFrame step="4" title="채팅 — 질문자(질문하기)" accent={C.amber}>
           <div style={{ display: 'flex', flexDirection: 'column', height: 360 }}>
             {/* 헤더 */}
             <div style={{
@@ -455,7 +455,7 @@ export default function StudentGuidePage({ navigate }) {
           </div>
         </PhoneFrame>
         <Desc icon="🔍">
-          <strong style={{ color: C.amber }}>심문관</strong>은 상대에게 질문을 보내고 답변을 분석합니다.
+          <strong style={{ color: C.amber }}>질문자</strong>은 상대에게 질문을 보내고 답변을 분석합니다.
           상대가 <strong>사람인지 AI인지</strong> 판별하는 것이 목표!
           <br /><br />
           <span style={{ color: '#f87171' }}>⚠ 주의:</span> AI가 답할 수 없는 사실 확인 질문(예: "3교시 뭐야?")은 금지! 취미, 감정, 경험 등 <strong>누구나 답할 수 있는 질문</strong>을 하세요.
@@ -463,8 +463,8 @@ export default function StudentGuidePage({ navigate }) {
 
         <Arrow />
 
-        {/* ── STEP 4B: 플레이어 채팅 ── */}
-        <PhoneFrame step="4" title="채팅 — 플레이어(답변하기)" accent={C.green}>
+        {/* ── STEP 4B: 답변자 채팅 ── */}
+        <PhoneFrame step="4" title="채팅 — 답변자(답변하기)" accent={C.green}>
           <div style={{ display: 'flex', flexDirection: 'column', height: 360 }}>
             {/* 헤더 */}
             <div style={{
@@ -562,11 +562,11 @@ export default function StudentGuidePage({ navigate }) {
           </div>
         </PhoneFrame>
         <Desc icon="🎭">
-          <strong style={{ color: C.green }}>플레이어</strong>는 두 가지 상황이 번갈아 나옵니다:
+          <strong style={{ color: C.green }}>답변자</strong>는 두 가지 상황이 번갈아 나옵니다:
           <br />• <strong style={{ color: C.green }}>사람 턴</strong>: 직접 답변을 입력 → <strong>자연스럽게!</strong>
           <br />• <strong style={{ color: C.purple }}>AI 턴</strong>: AI가 자동 응답 → <strong>가만히 기다리기</strong> (타이핑하는 척!)
           <br /><br />
-          모든 답변은 <strong>같은 말투로 변환</strong>되어 전달되므로, 심문관은 문체로는 구별할 수 없어요.
+          모든 답변은 <strong>같은 말투로 변환</strong>되어 전달되므로, 질문자은 문체로는 구별할 수 없어요.
         </Desc>
 
         <Arrow />
@@ -755,7 +755,7 @@ export default function StudentGuidePage({ navigate }) {
             <div style={{ marginBottom: 6 }}><strong style={{ color: C.amber }}>① 질문 규칙</strong> — AI가 답할 수 없는 사실 질문(예: "지금 몇 교시야?") 금지. 누구나 답할 수 있는 질문만!</div>
             <div style={{ marginBottom: 6 }}><strong style={{ color: C.green }}>② 답변 규칙</strong> — 짧고 자연스럽게! 너무 완벽한 답변은 오히려 AI처럼 보여요.</div>
             <div style={{ marginBottom: 6 }}><strong style={{ color: '#f59e0b' }}>③ 투표</strong> — 모든 턴에 반드시 투표! 미투표 = 0점입니다.</div>
-            <div><strong style={{ color: '#818cf8' }}>④ 역할 순환</strong> — 매 라운드 역할이 바뀝니다. 이번에 심문관이면 다음엔 플레이어!</div>
+            <div><strong style={{ color: '#818cf8' }}>④ 역할 순환</strong> — 매 라운드 역할이 바뀝니다. 이번에 질문자이면 다음엔 답변자!</div>
           </div>
         </div>
 

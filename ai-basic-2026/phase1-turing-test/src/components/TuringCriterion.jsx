@@ -1,6 +1,6 @@
 /**
  * 튜링의 30% 기준 카드
- * 1950년 논문 "Computing Machinery and Intelligence"에서 튜링은 평범한 심문관이 5분 대화 뒤
+ * 1950년 논문 "Computing Machinery and Intelligence"에서 튜링은 평범한 질문자이 5분 대화 뒤
  * 30% 이상 기계를 사람으로 잘못 판정하면 기계가 모방 게임을 "통과"한다고 볼 만하다고 썼다.
  * 서버 calcStats의 aiFooledRate(AI 턴 중 사람으로 판정된 비율)를 그대로 보여 준다.
  */
@@ -22,7 +22,7 @@ export default function TuringCriterion({ stats, className = 'card', title = '�
         TURING'S CRITERION · 1950
       </p>
       <h3 style={{ margin: '6px 0 4px', color: accent }}>
-        {passed ? '🤖 기계가 모방 게임을 통과했습니다' : '🧑 심문관이 기계를 가려냈습니다'}
+        {passed ? '🤖 기계가 모방 게임을 통과했습니다' : '🧑 질문자이 기계를 가려냈습니다'}
       </h3>
       <p style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
         {title}: AI가 사람으로 판정된 비율 <strong style={{ color: accent, fontSize: '1.15rem' }}>{rate}%</strong>
@@ -33,7 +33,7 @@ export default function TuringCriterion({ stats, className = 'card', title = '�
         <div style={{ position: 'absolute', left: '30%', top: 0, bottom: 0, width: 2, background: 'rgba(255,255,255,0.6)' }} />
       </div>
       <p style={{ margin: 0, fontSize: '0.78rem', opacity: 0.7, lineHeight: 1.5 }}>
-        앨런 튜링은 1950년 논문에서 심문관이 5분 대화 뒤 30% 이상 속으면 기계가 "생각한다"고 볼 만하다고 썼습니다.
+        앨런 튜링은 1950년 논문에서 질문자이 5분 대화 뒤 30% 이상 속으면 기계가 "생각한다"고 볼 만하다고 썼습니다.
       </p>
     </div>
   )

@@ -109,8 +109,8 @@ export default function ChatScreen({
 
   useEffect(() => {
     // 역할별 deadline 계산
-    // - 심판(judge)/관찰자: questionSentAt 기준으로 계산 (상대 답변 대기 중)
-    // - 응답자(respondent): 서버가 내려준 incomingQuestion/previewAnswer의 deadline 사용
+    // - 질문자(judge)/관찰자: questionSentAt 기준으로 계산 (상대 답변 대기 중)
+    // - 답변자(respondent): 서버가 내려준 incomingQuestion/previewAnswer의 deadline 사용
     let deadline = null
     if (role === 'respondent') {
       deadline = incomingQuestion?.deadline || previewAnswer?.deadline || null
@@ -259,7 +259,7 @@ export default function ChatScreen({
   )
 
   // ═══════════════════════════════════════════════
-  // ── 판별관 (심판) / 관찰자 UI ──
+  // ── 판별관 (질문자) / 관찰자 UI ──
   // ═══════════════════════════════════════════════
   if (role === 'judge' || role === 'observer') {
     return (
@@ -422,7 +422,7 @@ export default function ChatScreen({
   }
 
   // ═══════════════════════════════════════════════
-  // ── 송신자 (응답자) UI ──
+  // ── 송신자 (답변자) UI ──
   // ═══════════════════════════════════════════════
   const respondentDeadline = incomingQuestion?.deadline || previewAnswer?.deadline || null
   const showRespondentTimer = respondentDeadline != null && answerCountdown != null
@@ -432,7 +432,7 @@ export default function ChatScreen({
       <style>{ANIMATIONS}</style>
       {header}
 
-      {/* 응답자용 카운트다운 바 (상단) */}
+      {/* 답변자용 카운트다운 바 (상단) */}
       {showRespondentTimer && (
         <div style={{ height: 2, background: C.greenDim }}>
           <div style={{

@@ -15,12 +15,20 @@ const aiModelOptions = [
   { value: 'solar', label: 'Solar Pro 4' },
 ]
 
-/** 교사마다 다른 기본 수업 코드 — 같은 코드로 여러 교사가 한 세션에 합쳐지는 일을 막는다 */
+/**
+ * 교사마다 다른 기본 수업 코드 — 부르기 쉬운 영어 한 단어 (예: ai-leader). 칸에서 직접 고쳐도 된다.
+ * 같은 코드를 다른 교사가 이미 쓰고 있으면 서버가 거부하므로 겹쳐도 한 세션에 합쳐지지 않는다.
+ */
+const CODE_WORDS = [
+  'leader', 'apple', 'tiger', 'ocean', 'river', 'cloud', 'star', 'moon', 'sun', 'tree',
+  'rabbit', 'whale', 'fox', 'eagle', 'panda', 'koala', 'lion', 'bear', 'wolf', 'deer',
+  'piano', 'guitar', 'drum', 'violin', 'flute', 'rocket', 'planet', 'comet', 'galaxy', 'orbit',
+  'mango', 'lemon', 'melon', 'grape', 'peach', 'berry', 'cherry', 'olive', 'honey', 'cocoa',
+  'pixel', 'robot', 'logic', 'cipher', 'enigma', 'signal', 'radio', 'vector', 'matrix', 'turing',
+  'river', 'forest', 'island', 'desert', 'canyon', 'valley', 'summit', 'harbor', 'bridge', 'tower',
+]
 function randomClassCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 혼동되는 0/O, 1/I 제외
-  let code = ''
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]
-  return `AI-${code}`
+  return `ai-${CODE_WORDS[Math.floor(Math.random() * CODE_WORDS.length)]}`
 }
 
 const defaultSettings = {
@@ -89,8 +97,9 @@ export default function TeacherApp({ navigate }) {
     aiErrorRef.current = aiError
   }, [aiError])
 
+  // 참가 링크는 세션 ID가 아니라 수업 코드로 만든다 — 같은 코드로 세션을 새로 열어도 링크가 유지된다
   const joinUrl = session
-    ? `${window.location.origin}${withBase(`/?session=${session.id}`)}`
+    ? `${window.location.origin}${withBase(`/?code=${encodeURIComponent(session.teacher_code)}`)}`
     : `${window.location.origin}${withBase('/')}`
 
   const teamMeta = useMemo(() => {
@@ -319,7 +328,7 @@ export default function TeacherApp({ navigate }) {
 
   async function refreshSession(sessionId) {
     const data = await apiGet(`/session/${sessionId}`)
-    // 서버 세션 조회에는 라운드 역할(심판/응답/관찰)이 없으므로, round:started로 받은 역할을 유지한다
+    // 서버 세션 조회에는 라운드 역할(질문자/응답/관찰)이 없으므로, round:started로 받은 역할을 유지한다
     setSession((prev) => {
       if (!prev?.teams?.length) return data
       const roleById = new Map(prev.teams.map((team) => [team.id, team.role]))
@@ -585,7 +594,7 @@ export default function TeacherApp({ navigate }) {
           <p className="eyebrow" style={{ color: '#f59e0b' }}>SESSION CLOSED</p>
           <h1 style={{ marginBottom: 8 }}>수업이 종료되었습니다</h1>
           <p className="muted" style={{ marginBottom: 20 }}>
-            세션 <strong>{session.teacher_code}</strong>가 종료되었습니다.<br />
+            세션 <strong style={{ textTransform: 'lowercase' }}>{session.teacher_code}</strong>가 종료되었습니다.<br />
             학생들의 화면도 함께 종료 처리됩니다.
           </p>
           <div style={{
@@ -609,14 +618,16 @@ export default function TeacherApp({ navigate }) {
         <div className="panel auth-panel">
           <p className="eyebrow">NEW SESSION</p>
           <h1>수업 세션 만들기</h1>
-          <p className="muted">동일한 수업 코드로 다시 열면 기존 활성 세션을 이어서 사용합니다.</p>
+          <p className="muted">학생이 입력할 수업 코드입니다. 부르기 쉬운 말로 바꿔도 됩니다. 같은 코드로 다시 열면 기존 활성 세션을 이어서 사용합니다.</p>
           <input
             className="field"
             value={teacherCode}
             onChange={(event) => setTeacherCode(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && handleCreateSession()}
-            placeholder="예: AI-BASIC-2026"
+            placeholder="예: ai-leader"
+            style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.05em' }}
           />
+          <button className="ghost-button" type="button" onClick={() => setTeacherCode(randomClassCode())} style={{ marginBottom: 6 }}>다른 코드 뽑기</button>
           {error && <p className="error-text">{error}</p>}
           <button className="primary-button" onClick={handleCreateSession}>세션 열기</button>
         </div>
@@ -659,7 +670,8 @@ export default function TeacherApp({ navigate }) {
         <aside className="sidebar">
           <section className="panel">
             <p className="eyebrow">SESSION</p>
-            <h2>{session.teacher_code}</h2>
+            <h2 style={{ textTransform: 'lowercase' }}>{session.teacher_code}</h2>
+            <p className="muted" style={{ fontSize: '0.72rem' }}>대소문자 구분 없이 입력해도 됩니다.</p>
             <p className="muted">세션 ID: <strong>{session.id}</strong></p>
             <p className="join-url">{joinUrl}</p>
             <div className="mini-callout">
@@ -683,7 +695,7 @@ export default function TeacherApp({ navigate }) {
                 <strong>{liveCompletedTurns}</strong>
               </div>
               <div className="metric-card">
-                <span className="metric-label">관찰 심판</span>
+                <span className="metric-label">관찰자</span>
                 <strong>{observerCount}</strong>
               </div>
             </div>
@@ -895,11 +907,11 @@ export default function TeacherApp({ navigate }) {
 
                       {/* 팀 대결 표시 — 익명 */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                        {/* 심판 */}
+                        {/* 질문자 */}
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ width: 12, height: 12, borderRadius: '50%', background: match.judge.color, flexShrink: 0, border: '2px solid rgba(255,255,255,0.15)' }} />
                           <div>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>심문관</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>질문자</div>
                             <div style={{ fontSize: '0.6rem', color: '#818cf8' }}>🔍 INTERROGATOR</div>
                           </div>
                         </div>
@@ -911,10 +923,10 @@ export default function TeacherApp({ navigate }) {
                           fontSize: '0.65rem', color: '#6366f1', fontWeight: 700, flexShrink: 0,
                         }}>벽</div>
 
-                        {/* 응답자 */}
+                        {/* 답변자 */}
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', textAlign: 'right' }}>
                           <div>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>플레이어</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#e2e8f0' }}>답변자</div>
                             <div style={{ fontSize: '0.6rem', color: '#34d399' }}>🎭 PLAYER</div>
                           </div>
                           <span style={{ width: 12, height: 12, borderRadius: '50%', background: match.respondent.color, flexShrink: 0, border: '2px solid rgba(255,255,255,0.15)' }} />
@@ -943,10 +955,10 @@ export default function TeacherApp({ navigate }) {
                       {isVoting && (
                         <div style={{ display: 'flex', gap: 8, fontSize: '0.7rem' }}>
                           <span style={{ color: judgeVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            심문관: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
+                            질문자: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                           <span style={{ color: respondentVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            플레이어: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
+                            답변자: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                         </div>
                       )}

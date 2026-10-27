@@ -71,6 +71,9 @@ app.get('/health', (req, res) => {
 // 두 가지 입장 방식. 성공하면 토큰을 발급하고 교사용 REST·소켓에서 검사한다.
 //  1) 입장 코드(TEACHER_PIN) — 연수·공용 키 운영용. AI 호출은 서버 환경변수 키를 쓴다.
 //  2) 본인 Anthropic API 키 — 실제 수업용. 키 유효성을 Anthropic 모델 목록 호출로 확인한다.
+// 세션을 만든 교사 토큰 (메모리). 같은 수업 코드를 다른 교사가 가로채지 못하게 한다
+const sessionOwners = new Map()
+
 const envAiStatus = () => ({
   anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
   openai: Boolean(process.env.OPENAI_API_KEY),
@@ -152,7 +155,8 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   const teacherCode = rawCode.trim().toUpperCase()
 
   // 세션 생성은 교사만 (학생 입장 mode='join'은 토큰 불필요)
-  if (mode !== 'join' && !verifyTeacherToken(req.get('x-teacher-token'))) {
+  const teacherToken = req.get('x-teacher-token')
+  if (mode !== 'join' && !verifyTeacherToken(teacherToken)) {
     return res.status(401).json({ error: '교사 인증이 필요합니다. 입장 코드로 다시 들어오세요.' })
   }
 
@@ -162,6 +166,15 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     .get(teacherCode)
 
   if (existing) {
+    // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
+    // 소유자 기록은 서버 메모리라 재배포 뒤에는 비어 있고, 그때는 이어서 사용으로 처리한다
+    if (mode !== 'join') {
+      const owner = sessionOwners.get(existing.id)
+      if (owner && owner !== teacherToken) {
+        return res.status(409).json({ error: `'${teacherCode}'는 다른 선생님이 진행 중인 수업 코드입니다. 다른 코드를 입력하세요.` })
+      }
+      sessionOwners.set(existing.id, teacherToken)
+    }
     const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(existing.id)
     return res.json({ ...existing, teams: teams.map(parseTeam) })
   }
@@ -176,6 +189,7 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   // 교사 생성: 새 세션 생성
   const id = nanoid()
   db.prepare('INSERT INTO sessions (id, teacher_code) VALUES (?, ?)').run(id, teacherCode)
+  sessionOwners.set(id, teacherToken)
   res.json({ id, teacher_code: teacherCode, status: 'waiting', teams: [] })
 })
 
