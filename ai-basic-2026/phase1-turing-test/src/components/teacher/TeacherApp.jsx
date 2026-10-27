@@ -161,6 +161,12 @@ export default function TeacherApp({ navigate }) {
     return { pairs, observers }
   }, [session?.teams, teamMeta, roundDetail?.pairings])
 
+  // 새로고침 뒤에도 서버 공용 키 상태를 다시 읽는다 (입장 코드 모드의 AI 모델 목록이 비지 않게)
+  useEffect(() => {
+    if (!authed) return
+    void refreshAiStatus().catch(() => {})
+  }, [authed])
+
   useEffect(() => {
     if (!session?.id) return
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
@@ -831,6 +837,7 @@ export default function TeacherApp({ navigate }) {
           {/* ═══ 아레나 헤더 (라운드 진행 중) ═══ */}
           {roundDetail && !currentResults && !finalResults && (
             <div style={{
+              gridColumn: '1 / -1', // 아레나 헤더는 한 줄 전체 (옆에 매치 카드가 붙어 빈 공간이 생기지 않게)
               padding: '20px 24px', borderRadius: 12,
               background: 'linear-gradient(135deg, rgba(212,165,116,0.06) 0%, rgba(74,222,128,0.04) 50%, rgba(212,165,116,0.06) 100%)',
               border: '1px solid rgba(212,165,116,0.12)',
@@ -878,7 +885,7 @@ export default function TeacherApp({ navigate }) {
           {/* ═══ 매치 카드 그리드 (라운드 진행 중) ═══ */}
           {/* 학생이 프로젝터를 통해 매칭을 알 수 없도록 팀 이름 익명 처리 */}
           {roundDetail && !currentResults && !finalResults && arenaMatches.pairs.length > 0 && (
-            <section className="panel" style={{ padding: '16px 20px' }}>
+            <section className="panel" style={{ padding: '16px 20px', gridColumn: '1 / -1' }}>
               <p className="eyebrow" style={{ marginBottom: 12 }}>MATCHES</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
                 {arenaMatches.pairs.map((match, idx) => {
@@ -1070,7 +1077,7 @@ export default function TeacherApp({ navigate }) {
 
           {/* ═══ 라이브 채팅 뷰어 ═══ */}
           {selectedLiveTurns && !currentResults && !finalResults && (
-            <section className="panel">
+            <section className="panel" style={{ gridColumn: '1 / -1' }}>
               <div className="section-header">
                 <div>
                   <p className="eyebrow">🔴 LIVE CHAT</p>

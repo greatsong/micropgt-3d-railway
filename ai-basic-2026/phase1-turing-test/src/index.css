@@ -335,6 +335,8 @@ button {
 .content-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start; /* 사이드바보다 짧을 때 행이 세로로 늘어나 빈 박스가 커지지 않게 */
   gap: 16px;
 }
 
