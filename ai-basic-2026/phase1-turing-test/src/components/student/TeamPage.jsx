@@ -6,6 +6,9 @@ import MissionBriefing from './MissionBriefing.jsx'
 import VotePanel from './VotePanel.jsx'
 import ScoreBoard from './ScoreBoard.jsx'
 import WaitingScreen from './WaitingScreen.jsx'
+import SoundToggle from './SoundToggle.jsx'
+import TuringCriterion from '../TuringCriterion.jsx'
+import { startBgm, stopBgm, playArrival } from '../../utils/morse.js'
 
 const ACCESS_KEY = 'turing_test_student_access'
 
@@ -94,6 +97,8 @@ export default function TeamPage({ navigate }) {
       setPhase('chat')
       // briefingTime이 0이면 서버가 chat:started를 먼저 보냈을 수 있으므로 브리핑 띄우지 않음
       setShowBriefing(payload.briefingTime > 0)
+      // 브리핑 동안만 모스 부호 배경음, 대화가 시작되면 멈춤
+      if (payload.briefingTime > 0) startBgm(); else stopBgm()
       setChatStarted(payload.briefingTime <= 0)
       setRemaining(payload.briefingTime > 0 ? payload.briefingTime : payload.chatTime)
       setJudgeTurns([])
@@ -124,6 +129,7 @@ export default function TeamPage({ navigate }) {
     socket.on('chat:started', () => {
       setShowBriefing(false)
       setChatStarted(true)
+      stopBgm()
     })
 
     // 브리핑 중 전송이 거부되면 낙관적으로 추가했던 메시지를 롤백
@@ -158,6 +164,7 @@ export default function TeamPage({ navigate }) {
     })
 
     socket.on('turn:answer-delivered', ({ turnNum, styledAnswer }) => {
+      playArrival() // 전신 도착음
       // 이미 추가된 질문에 답변 채우기
       setJudgeTurns((prev) => {
         const exists = prev.find((t) => t.turnNum === turnNum)
@@ -204,6 +211,7 @@ export default function TeamPage({ navigate }) {
 
     // 교사가 수업을 완전 종료했을 때
     socket.on('session:closed', () => {
+      stopBgm()
       setPhase('closed')
       setAwaitingAnswer(false)
       setIncomingQuestion(null)
@@ -353,9 +361,10 @@ export default function TeamPage({ navigate }) {
             turns={roundInfo?.totalTurns || roundInfo?.turns || 0}
             briefingTime={roundInfo?.briefingTime || 0}
             timerRemaining={remaining}
-            onDismiss={() => setShowBriefing(false)}
+            onDismiss={() => { setShowBriefing(false); stopBgm() }}
           />
         )}
+        {showBriefing && <SoundToggle />}
       </>
     )
   }
@@ -367,6 +376,10 @@ export default function TeamPage({ navigate }) {
 
   // ── 투표 ──
   if (phase === 'vote') {
+    // 응답자 팀은 투표할 대화가 없다 — 빈 투표판 대신 대기 안내
+    if (judgeTurns.length === 0) {
+      return <WaitingScreen message="🗳️ 심판 팀이 투표 중입니다" sub="이번 라운드에서 우리 팀은 응답자였어요. 결과 공개를 기다려 주세요" />
+    }
     return (
       <VotePanel
         conversations={judgeTurns}

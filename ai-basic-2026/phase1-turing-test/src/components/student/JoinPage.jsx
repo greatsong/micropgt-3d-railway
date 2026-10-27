@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPost } from '../../utils/api.js'
 import { withBase } from '../../config.js'
+import { startBgm, armBgmOnFirstGesture } from '../../utils/morse.js'
+import SoundToggle from './SoundToggle.jsx'
 
 const ACCESS_KEY = 'turing_test_student_access'
 
@@ -18,6 +20,8 @@ export default function JoinPage({ navigate }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // 시작 화면 배경음 — 브라우저 정책상 첫 클릭/터치 뒤에 시작
+    armBgmOnFirstGesture()
     if (params.get('code')) {
       void loadSessionByCode(params.get('code'))
     } else if (params.get('session')) {
@@ -107,6 +111,7 @@ export default function JoinPage({ navigate }) {
           <button className="ghost-button" onClick={() => navigate('/teacher')}>교사 화면</button>
         </div>
       </header>
+      <SoundToggle />
 
       <div className="student-grid">
         <section className="panel" style={{ animation: 'slideUp 0.4s ease-out' }}>
@@ -123,7 +128,7 @@ export default function JoinPage({ navigate }) {
             autoCorrect="off"
             spellCheck={false}
           />
-          <button className="primary-button" onClick={() => loadSessionByCode(sessionInput)}>코드 확인</button>
+          <button className="primary-button" onClick={() => { startBgm(); loadSessionByCode(sessionInput) }}>코드 확인</button>
           {session && (
             <div className="detail-box" style={{ marginTop: 10, animation: 'fadeIn 0.3s ease-out' }}>
               <p><strong>수업 코드</strong> {session.teacher_code}</p>

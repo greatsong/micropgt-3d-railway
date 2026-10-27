@@ -1,14 +1,53 @@
 import { createRound, getPartner, getRole, pairingsToRecords } from './matchmaking.js'
-import { generateAIResponseWithTimeout, styleTransform, pickFallbackPhrase } from './ai.js'
-import { getTimer } from './timer.js'
+import { generateAIResponseWithTimeout, styleTransform, pickFallbackPhrase, aiEvents } from './ai.js'
+import { getTimer, timerStore } from './timer.js'
 import { buildSharedRankings } from './utils.js'
 import { sessionApiKeys } from './apiKeyStore.js'
+import { verifyTeacherToken } from './teacherAuth.js'
 
 const activeRounds = new Map()
 
+/** 교사 전용 이벤트 — 토큰이 없거나 만료면 거부하고 교사 화면에 알린다 */
+function teacherOk(socket, token) {
+  if (verifyTeacherToken(token)) return true
+  socket.emit('error', { message: '교사 인증이 만료되었습니다. 입장 코드로 다시 들어오세요.' })
+  return false
+}
+
+/**
+ * 라운드 상태 공통 정리 — 답변 전달 예약 취소, 타이머 종료, activeRounds 제거
+ * reveal / session:close / tournament:end 모두 이 함수를 거친다 (이전 라운드 이벤트가 다음 라운드에 섞이지 않게)
+ */
+function cleanupRound(io, sessionId) {
+  const roundState = activeRounds.get(sessionId)
+  if (roundState) {
+    for (const cancelDelivery of roundState.deliveryCancels) {
+      try { cancelDelivery() } catch {}
+    }
+    roundState.deliveryCancels = []
+    roundState.phase = 'done'
+  }
+  try { getTimer(io, sessionId).forceEnd() } catch {}
+  activeRounds.delete(sessionId)
+  return roundState
+}
+
+/** 세션이 완전히 끝났을 때 메모리 항목 제거 */
+function releaseSession(sessionId) {
+  timerStore.delete(sessionId)
+  sessionApiKeys.delete(sessionId)
+}
+
 export function registerSocketHandlers(io, db) {
+  // AI 호출 실패를 해당 세션의 교사 화면으로 전달 (콘솔에만 남지 않게)
+  aiEvents.on('error', ({ sessionId, model, reason }) => {
+    if (!sessionId) return
+    io.to(`session:${sessionId}:teacher`).emit('ai:error', { model, reason, at: Date.now() })
+  })
+
   io.on('connection', (socket) => {
-    socket.on('teacher:join', ({ sessionId }) => {
+    socket.on('teacher:join', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
       socket.join(`session:${sessionId}`)
       socket.join(`session:${sessionId}:teacher`)
     })
@@ -38,7 +77,8 @@ export function registerSocketHandlers(io, db) {
       }
     })
 
-    socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel, briefingTime }) => {
+    socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel, briefingTime, token }) => {
+      if (!teacherOk(socket, token)) return
       // 종료된 세션에서는 새 라운드를 시작할 수 없음
       const sessionRow = db.prepare('SELECT status FROM sessions WHERE id = ?').get(sessionId)
       if (!sessionRow) {
@@ -47,6 +87,11 @@ export function registerSocketHandlers(io, db) {
       }
       if (sessionRow.status === 'ended' || sessionRow.status === 'closed') {
         socket.emit('error', { message: '이 수업은 이미 종료되었습니다. 새 세션을 만들어 주세요.' })
+        return
+      }
+      // 진행 중인 라운드가 있으면 중복 시작 금지 (버튼 두 번 누름·다른 탭 대비)
+      if (activeRounds.has(sessionId)) {
+        socket.emit('error', { message: '진행 중인 라운드가 있습니다. 결과 공개 뒤에 다음 라운드를 시작하세요.' })
         return
       }
 
@@ -133,6 +178,7 @@ export function registerSocketHandlers(io, db) {
         voteTime,
         pointValue: pointValue ?? 1,
         briefingTime: briefingSeconds,
+        phase: 'chatting', // chatting → voting → closed → done
         pairs,
         soloObserver,
         observerTargetTeamId,
@@ -198,6 +244,7 @@ export function registerSocketHandlers(io, db) {
       try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
+      if (roundState.phase !== 'chatting') return
       // 브리핑 단계에서는 질문 전송 차단
       // 클라이언트가 낙관적으로 추가한 메시지를 롤백할 수 있도록 거부 이벤트를 돌려줌
       if (!roundState.chatStarted) {
@@ -323,7 +370,8 @@ export function registerSocketHandlers(io, db) {
         roundState.style,
         roundState.aiModel,
         Math.max(4000, (roundState.responseDelay - 2) * 1000),
-        roundState.apiKeys
+        roundState.apiKeys,
+        { sessionId }
       ).then((answer) => {
         if (deliveryClosed) return
         aiAnswerText = answer
@@ -367,6 +415,7 @@ export function registerSocketHandlers(io, db) {
       try {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
+      if (roundState.phase !== 'chatting') return
       // 브리핑 단계에서는 답변 전송 차단
       if (!roundState.chatStarted) return
 
@@ -402,12 +451,18 @@ export function registerSocketHandlers(io, db) {
       } catch (err) { console.error('[respondent:send-answer]', err.message) }
     })
 
-    socket.on('round:force-end-chat', ({ sessionId }) => {
+    socket.on('round:force-end-chat', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
+      const roundState = activeRounds.get(sessionId)
+      if (!roundState || roundState.phase !== 'chatting') return
       getTimer(io, sessionId).forceEnd()
       endChatPhase(io, db, sessionId)
     })
 
-    socket.on('round:force-end-vote', ({ sessionId }) => {
+    socket.on('round:force-end-vote', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
+      const roundState = activeRounds.get(sessionId)
+      if (!roundState || roundState.phase !== 'voting') return
       getTimer(io, sessionId).forceEnd()
       endVotePhase(io, db, sessionId)
     })
@@ -415,6 +470,8 @@ export function registerSocketHandlers(io, db) {
     socket.on('vote:submit', ({ sessionId, teamId, votes }) => {
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
+      if (roundState.phase !== 'voting') return
+      if (!Array.isArray(votes)) return
 
       roundState.voteData[teamId] = votes
 
@@ -431,13 +488,15 @@ export function registerSocketHandlers(io, db) {
       })
     })
 
-    socket.on('round:reveal', ({ sessionId }) => {
+    socket.on('round:reveal', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
       const roundState = activeRounds.get(sessionId)
-      if (!roundState) return
+      if (!roundState || roundState.phase === 'done') return
       revealResults(io, db, sessionId, roundState)
     })
 
-    socket.on('round:show-conversation', ({ sessionId, teamId, roundId }) => {
+    socket.on('round:show-conversation', ({ sessionId, teamId, roundId, token }) => {
+      if (!teacherOk(socket, token)) return
       const targetRoundId = roundId || activeRounds.get(sessionId)?.roundId
       if (!targetRoundId) return
       const turns = db.prepare(
@@ -446,7 +505,8 @@ export function registerSocketHandlers(io, db) {
       io.to(`session:${sessionId}:teacher`).emit('round:conversation-detail', { teamId, turns })
     })
 
-    socket.on('teacher:get-live-turns', ({ sessionId, teamId, roundId }) => {
+    socket.on('teacher:get-live-turns', ({ sessionId, teamId, roundId, token }) => {
+      if (!teacherOk(socket, token)) return
       const turns = db.prepare(`
         SELECT turn_number, question_text, styled_answer, respondent_type
         FROM turns
@@ -458,28 +518,20 @@ export function registerSocketHandlers(io, db) {
 
     // 세션 완전 종료 — 라운드 진행 중이든, 대기 중이든, 결과 화면이든 언제든 호출 가능
     // tournament:end는 "토너먼트 최종 집계 후 종료"이지만, session:close는 "수업을 그냥 끝냄"
-    socket.on('session:close', ({ sessionId }) => {
+    socket.on('session:close', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
       try {
-        // 1. 타이머 강제 종료
-        getTimer(io, sessionId).forceEnd()
-
-        // 2. 진행 중 라운드가 있다면 delivery 예약 취소 + 정리
-        const roundState = activeRounds.get(sessionId)
-        if (roundState) {
-          for (const cancelDelivery of roundState.deliveryCancels) {
-            try { cancelDelivery() } catch {}
-          }
-          roundState.deliveryCancels = []
+        // 1~2. 타이머 종료 + 진행 중 라운드의 전달 예약 취소 + activeRounds 제거
+        const roundState = cleanupRound(io, sessionId)
+        if (roundState?.roundId) {
           // 진행 중이던 라운드 status도 정리 (결과 미집계 상태)
-          if (roundState.roundId) {
-            db.prepare("UPDATE rounds SET status = 'closed' WHERE id = ? AND status != 'done'").run(roundState.roundId)
-          }
+          db.prepare("UPDATE rounds SET status = 'closed' WHERE id = ? AND status != 'done'").run(roundState.roundId)
         }
 
         // 3. 세션 상태 업데이트 — 'closed'는 "강제 중단"이라 tournament:end의 'ended'와 구분됨
         //    'ended'는 정상 종료 (점수 집계 완료) / 'closed'는 중간 abort (점수 없음)
         db.prepare("UPDATE sessions SET status = 'closed' WHERE id = ?").run(sessionId)
-        activeRounds.delete(sessionId)
+        releaseSession(sessionId)
 
         // 4. 전체 세션(교사+학생)에 종료 이벤트 브로드캐스트
         io.to(`session:${sessionId}`).emit('session:closed', {
@@ -493,7 +545,8 @@ export function registerSocketHandlers(io, db) {
       }
     })
 
-    socket.on('tournament:end', ({ sessionId }) => {
+    socket.on('tournament:end', ({ sessionId, token }) => {
+      if (!teacherOk(socket, token)) return
       const rounds = db.prepare(
         'SELECT * FROM rounds WHERE session_id = ? ORDER BY round_number'
       ).all(sessionId)
@@ -579,7 +632,8 @@ export function registerSocketHandlers(io, db) {
       })
 
       db.prepare("UPDATE sessions SET status = 'ended' WHERE id = ?").run(sessionId)
-      activeRounds.delete(sessionId)
+      cleanupRound(io, sessionId)
+      releaseSession(sessionId)
     })
   })
 }
@@ -646,10 +700,12 @@ function endChatPhase(io, db, sessionId) {
   const roundState = activeRounds.get(sessionId)
   if (!roundState) return
 
+  if (roundState.phase !== 'chatting') return // 이미 투표 단계로 넘어감 (타이머 만료와 강제 종료가 겹친 경우)
   for (const cancelDelivery of roundState.deliveryCancels) {
-    cancelDelivery()
+    try { cancelDelivery() } catch {}
   }
   roundState.deliveryCancels = []
+  roundState.phase = 'voting'
 
   db.prepare("UPDATE rounds SET status = 'voting' WHERE id = ?").run(roundState.roundId)
 
@@ -689,6 +745,8 @@ function endVotePhase(io, db, sessionId) {
   const roundState = activeRounds.get(sessionId)
   if (!roundState) return
 
+  if (roundState.phase !== 'voting') return
+  roundState.phase = 'closed'
   db.prepare("UPDATE rounds SET status = 'revealed' WHERE id = ?").run(roundState.roundId)
   emitToParticipants(io, sessionId, roundState, 'vote:closed', {})
 }
@@ -758,7 +816,7 @@ function revealResults(io, db, sessionId, roundState) {
     })))),
   })
 
-  activeRounds.delete(sessionId)
+  cleanupRound(io, sessionId)
 }
 
 function checkAllTurnsComplete(io, db, sessionId, roundState) {
@@ -795,7 +853,7 @@ function buildRoundStartedPayload(roundState, teamId) {
 function calcStats(turns) {
   const totalTurns = turns.length
   if (!totalTurns) {
-    return { totalCorrect: 0, totalTurns: 0, accuracy: 0, aiAiRate: 0, humanHumanRate: 0 }
+    return { totalCorrect: 0, totalTurns: 0, accuracy: 0, aiAiRate: 0, humanHumanRate: 0, aiVotedTurns: 0, aiFooledRate: null, turingPassed: null }
   }
 
   const normalizedTurns = turns.map((turn) => ({
@@ -807,10 +865,18 @@ function calcStats(turns) {
   const totalCorrect = normalizedTurns.filter((turn) => turn.isCorrect).length
   const aiTurns = normalizedTurns.filter((turn) => turn.respondentType === 'ai')
   const humanTurns = normalizedTurns.filter((turn) => turn.respondentType === 'human')
+  // 튜링의 기준: 심문관이 기계를 사람으로 잘못 판정한 비율 (투표한 AI 턴 기준). 30% 이상이면 "기계 통과"
+  const aiVotedTurns = aiTurns.filter((turn) => turn.verdict === 'ai' || turn.verdict === 'human')
+  const aiFooledRate = aiVotedTurns.length
+    ? Math.round((aiVotedTurns.filter((turn) => turn.verdict === 'human').length / aiVotedTurns.length) * 100)
+    : null
 
   return {
     totalCorrect,
     totalTurns,
+    aiVotedTurns: aiVotedTurns.length,
+    aiFooledRate,
+    turingPassed: aiFooledRate !== null ? aiFooledRate >= 30 : null,
     accuracy: Math.round((totalCorrect / totalTurns) * 100),
     aiAiRate: aiTurns.length ? Math.round((aiTurns.filter((turn) => turn.verdict === 'ai').length / aiTurns.length) * 100) : 0,
     humanHumanRate: humanTurns.length ? Math.round((humanTurns.filter((turn) => turn.verdict === 'human').length / humanTurns.length) * 100) : 0,

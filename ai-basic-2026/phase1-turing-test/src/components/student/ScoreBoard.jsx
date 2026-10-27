@@ -1,3 +1,5 @@
+import TuringCriterion from '../TuringCriterion.jsx'
+
 export default function ScoreBoard({ myTeam, results, finalResults }) {
   // 최종 결과 화면
   if (finalResults) {
@@ -157,6 +159,9 @@ export default function ScoreBoard({ myTeam, results, finalResults }) {
             </div>
           )}
 
+          {/* ── 튜링의 30% 기준 ── */}
+          <TuringCriterion stats={overallStats} title="전체 라운드" />
+
           {/* ── 전체 통계 ── */}
           {overallStats && (
             <div className="card">
@@ -238,6 +243,9 @@ export default function ScoreBoard({ myTeam, results, finalResults }) {
             ))}
           </div>
         )}
+
+        {/* 튜링의 30% 기준 (이번 라운드 학급 전체) */}
+        <TuringCriterion stats={results.stats} title={`라운드 ${roundNum}`} />
 
         {/* 누적 순위 */}
         <div className="card">

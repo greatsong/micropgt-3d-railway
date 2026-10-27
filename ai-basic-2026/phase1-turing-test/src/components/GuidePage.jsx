@@ -232,7 +232,7 @@ function OverviewTab() {
             ['Claude', 'Anthropic', '자연스러운 한국어, 안정적'],
             ['GPT', 'OpenAI', '다양한 답변 스타일'],
             ['Gemini', 'Google', '빠른 응답'],
-            ['Solar Pro 3', 'Upstage', '한국어 특화'],
+            ['Solar Pro 4', 'Upstage', '한국어 특화'],
           ]}
         />
         <p style={paraStyle}>교사가 라운드마다 다른 AI를 선택하면, 학생들이 AI별 차이를 체감할 수 있습니다.</p>
@@ -250,7 +250,7 @@ function TeacherTab() {
       <div style={cardStyle}>
         <p style={labelStyle}>SETUP</p>
         <h2 style={headingStyle}>초기 설정</h2>
-        <FlowStep num="1" icon="🔐" title="교사 PIN 입력" desc="기본 PIN: 000000. /teacher 경로로 접속합니다." />
+        <FlowStep num="1" icon="🔐" title="입장 코드 입력" desc="/teacher 경로에서 안내받은 입장 코드를 넣습니다. 본인 API 키로 입장할 수도 있습니다." />
         <FlowStep num="2" icon="📝" title="수업 코드 입력" desc="예: AI-BASIC-2026. 같은 코드로 재접속하면 기존 세션을 이어서 사용합니다." />
         <FlowStep num="3" icon="📋" title="참가 링크 공유" desc="대시보드의 '참가 링크 복사' 버튼으로 학생에게 공유합니다." />
         <FlowStep num="4" icon="⏳" title="팀 등록 대기" desc="학생들이 팀을 만들면 대시보드에 실시간으로 표시됩니다." />
