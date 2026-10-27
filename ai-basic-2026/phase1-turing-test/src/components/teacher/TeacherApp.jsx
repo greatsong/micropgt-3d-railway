@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { apiGet, apiPost } from '../../utils/api.js'
+import { apiGet, apiPost, apiDownload, getTeacherToken, setTeacherToken, clearTeacherToken } from '../../utils/api.js'
 import { createSocket } from '../../utils/socket.js'
 import { withBase } from '../../config.js'
+import TuringCriterion from '../TuringCriterion.jsx'
 
-const AUTH_KEY = 'turing_test_teacher_auth'
 const SESSION_KEY = 'turing_test_teacher_session'
 const API_KEYS_KEY = 'turing_test_api_keys'
 
@@ -12,8 +12,16 @@ const aiModelOptions = [
   { value: 'claude', label: 'Claude' },
   { value: 'gpt', label: 'GPT' },
   { value: 'gemini', label: 'Gemini' },
-  { value: 'solar', label: 'Solar Pro 3' },
+  { value: 'solar', label: 'Solar Pro 4' },
 ]
+
+/** 교사마다 다른 기본 수업 코드 — 같은 코드로 여러 교사가 한 세션에 합쳐지는 일을 막는다 */
+function randomClassCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 혼동되는 0/O, 1/I 제외
+  let code = ''
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return `AI-${code}`
+}
 
 const defaultSettings = {
   style: '자연스러운대화',
@@ -27,11 +35,10 @@ const defaultSettings = {
 }
 
 export default function TeacherApp({ navigate }) {
-  const [authed, setAuthed] = useState(() => {
-    const timestamp = sessionStorage.getItem(AUTH_KEY)
-    return timestamp && Date.now() - Number(timestamp) < 2 * 60 * 60 * 1000
-  })
+  const [authed, setAuthed] = useState(() => Boolean(getTeacherToken()))
   const [pin, setPin] = useState('')
+  const [entryMode, setEntryMode] = useState('pin') // 'pin' 입장 코드 | 'keys' 본인 API 키
+  const [aiError, setAiError] = useState(null)
   const [anthropicKey, setAnthropicKey] = useState(() => {
     try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}').anthropic || '' } catch { return '' }
   })
@@ -48,7 +55,7 @@ export default function TeacherApp({ navigate }) {
   const [savedApiKeys, setSavedApiKeys] = useState(() => {
     try { return JSON.parse(localStorage.getItem(API_KEYS_KEY) || '{}') } catch { return {} }
   })
-  const [teacherCode, setTeacherCode] = useState('AI-BASIC-2026')
+  const [teacherCode, setTeacherCode] = useState(() => randomClassCode())
   const [session, setSession] = useState(() => {
     const stored = sessionStorage.getItem(SESSION_KEY)
     return stored ? JSON.parse(stored) : null
@@ -72,10 +79,15 @@ export default function TeacherApp({ navigate }) {
   const [sessionClosed, setSessionClosed] = useState(false)
   const socketRef = useRef(null)
   const currentRoundIdRef = useRef(null)
+  const aiErrorRef = useRef(null)
 
   useEffect(() => {
     currentRoundIdRef.current = currentRoundId
   }, [currentRoundId])
+
+  useEffect(() => {
+    aiErrorRef.current = aiError
+  }, [aiError])
 
   const joinUrl = session
     ? `${window.location.origin}${withBase(`/?session=${session.id}`)}`
@@ -150,7 +162,30 @@ export default function TeacherApp({ navigate }) {
 
     const socket = createSocket()
     socketRef.current = socket
-    socket.emit('teacher:join', { sessionId: session.id })
+    const token = getTeacherToken()
+    socket.emit('teacher:join', { sessionId: session.id, token })
+
+    // 네트워크가 끊겼다 붙으면 교사 room에 다시 들어간다 (안 그러면 실시간 이벤트가 끊긴다)
+    socket.on('connect', () => {
+      socket.emit('teacher:join', { sessionId: session.id, token })
+      void refreshSession(session.id)
+    })
+
+    // 서버가 거부한 요청(팀 부족, 중복 시작, 인증 만료 등)을 화면에 보여 준다
+    socket.on('error', (payload) => {
+      const message = payload?.message || '요청이 거부되었습니다.'
+      setError(message)
+      setTimeout(() => setError((prev) => (prev === message ? '' : prev)), 6000)
+      if (message.includes('인증')) {
+        clearTeacherToken()
+        setAuthed(false)
+      }
+    })
+
+    // AI 호출 실패 알림 (키 오류·한도 초과·타임아웃). 학생에게는 회피 문구가 나가므로 교사만 안다
+    socket.on('ai:error', (payload) => {
+      setAiError({ ...payload, count: (aiErrorRef.current?.count || 0) + 1 })
+    })
 
     socket.on('team:registered', () => {
       void refreshSession(session.id)
@@ -161,6 +196,7 @@ export default function TeacherApp({ navigate }) {
       setCurrentResults(null)
       setFinalResults(null)
       setRoundDetail(null)
+      setAiError(null)
       setVoteProgress({})
       setSelectedTurn(null)
       setSelectedLiveTurns(null)
@@ -187,7 +223,7 @@ export default function TeacherApp({ navigate }) {
       }
       // 라이브 대화 보기 중이면 자동 갱신
       if (payload?.teamId && currentRoundIdRef.current) {
-        socket.emit('teacher:get-live-turns', { sessionId: session.id, teamId: payload.teamId, roundId: currentRoundIdRef.current })
+        socket.emit('teacher:get-live-turns', { sessionId: session.id, teamId: payload.teamId, roundId: currentRoundIdRef.current, token })
       }
     })
 
@@ -283,7 +319,12 @@ export default function TeacherApp({ navigate }) {
 
   async function refreshSession(sessionId) {
     const data = await apiGet(`/session/${sessionId}`)
-    setSession(data)
+    // 서버 세션 조회에는 라운드 역할(심판/응답/관찰)이 없으므로, round:started로 받은 역할을 유지한다
+    setSession((prev) => {
+      if (!prev?.teams?.length) return data
+      const roleById = new Map(prev.teams.map((team) => [team.id, team.role]))
+      return { ...data, teams: (data.teams || []).map((team) => (roleById.has(team.id) ? { ...team, role: roleById.get(team.id) } : team)) }
+    })
   }
 
   async function refreshRounds(sessionId) {
@@ -309,25 +350,48 @@ export default function TeacherApp({ navigate }) {
   }
 
   async function handleAuth() {
-    if (!anthropicKey.trim()) {
-      setError('Anthropic API 키는 필수입니다')
-      return
-    }
     try {
-      const apiKeys = {
-        anthropic: anthropicKey.trim(),
-        ...(openaiKey.trim() && { openai: openaiKey.trim() }),
-        ...(googleKey.trim() && { google: googleKey.trim() }),
-        ...(upstageKey.trim() && { upstage: upstageKey.trim() }),
+      if (entryMode === 'pin') {
+        // 입장 코드 — 연수·공용 키 운영. AI 호출은 서버 공용 키를 쓴다
+        if (!pin.trim()) {
+          setError('입장 코드를 입력하세요')
+          return
+        }
+        const data = await apiPost('/auth/teacher', { pin: pin.trim() })
+        setTeacherToken(data.token)
+        if (data.aiStatus) setAiStatus((prev) => ({ ...(prev || {}), ...data.aiStatus }))
+        // 이전에 저장해 둔 본인 키는 쓰지 않는다 (공용 키로 통일)
+        localStorage.removeItem(API_KEYS_KEY)
+        setSavedApiKeys({})
+      } else {
+        if (!anthropicKey.trim()) {
+          setError('Anthropic API 키는 필수입니다')
+          return
+        }
+        const apiKeys = {
+          anthropic: anthropicKey.trim(),
+          ...(openaiKey.trim() && { openai: openaiKey.trim() }),
+          ...(googleKey.trim() && { google: googleKey.trim() }),
+          ...(upstageKey.trim() && { upstage: upstageKey.trim() }),
+        }
+        const data = await apiPost('/auth/teacher', { apiKeys })
+        setTeacherToken(data.token)
+        localStorage.setItem(API_KEYS_KEY, JSON.stringify(apiKeys))
+        setSavedApiKeys(apiKeys)
       }
-      await apiPost('/auth/teacher', { apiKeys })
-      sessionStorage.setItem(AUTH_KEY, Date.now().toString())
-      localStorage.setItem(API_KEYS_KEY, JSON.stringify(apiKeys))
-      setSavedApiKeys(apiKeys)
       setAuthed(true)
       setError('')
     } catch (authError) {
       setError(authError.message)
+    }
+  }
+
+  async function downloadCsv() {
+    if (!session?.id) return
+    try {
+      await apiDownload(`/dashboard/${session.id}/export`, `turing-test-${session.teacher_code}.csv`)
+    } catch (downloadError) {
+      setError(downloadError.message)
     }
   }
 
@@ -356,28 +420,29 @@ export default function TeacherApp({ navigate }) {
     socketRef.current.emit('round:start', {
       sessionId: session.id,
       ...settings,
+      token: getTeacherToken(),
     })
   }
 
   function forceEndChat() {
-    socketRef.current?.emit('round:force-end-chat', { sessionId: session.id })
+    socketRef.current?.emit('round:force-end-chat', { sessionId: session.id, token: getTeacherToken() })
   }
 
   function forceEndVote() {
-    socketRef.current?.emit('round:force-end-vote', { sessionId: session.id })
+    socketRef.current?.emit('round:force-end-vote', { sessionId: session.id, token: getTeacherToken() })
   }
 
   function revealResults() {
-    socketRef.current?.emit('round:reveal', { sessionId: session.id })
+    socketRef.current?.emit('round:reveal', { sessionId: session.id, token: getTeacherToken() })
   }
 
   function endTournament() {
-    socketRef.current?.emit('tournament:end', { sessionId: session.id })
+    socketRef.current?.emit('tournament:end', { sessionId: session.id, token: getTeacherToken() })
   }
 
   function closeSession() {
     if (!session?.id) return
-    socketRef.current?.emit('session:close', { sessionId: session.id })
+    socketRef.current?.emit('session:close', { sessionId: session.id, token: getTeacherToken() })
     setShowCloseConfirm(false)
   }
 
@@ -401,6 +466,7 @@ export default function TeacherApp({ navigate }) {
         sessionId: session.id,
         teamId,
         roundId: currentRoundId,
+        token: getTeacherToken(),
       })
     }
   }
@@ -409,7 +475,7 @@ export default function TeacherApp({ navigate }) {
     setSelectedTeamName(teamName)
     setSelectedLiveTurns(null)
     if (currentRoundId) {
-      socketRef.current?.emit('teacher:get-live-turns', { sessionId: session.id, teamId, roundId: currentRoundId })
+      socketRef.current?.emit('teacher:get-live-turns', { sessionId: session.id, teamId, roundId: currentRoundId, token: getTeacherToken() })
     }
   }
 
@@ -419,7 +485,36 @@ export default function TeacherApp({ navigate }) {
         <div className="panel auth-panel" style={{ maxWidth: 440 }}>
           <p className="eyebrow">🔐 AUTH</p>
           <h1>이미테이션 게임</h1>
-          <p className="muted">AI API 키를 입력하여 수업을 시작하세요.</p>
+
+          {entryMode === 'pin' ? (
+            <>
+              <p className="muted">입장 코드를 입력하면 바로 수업을 시작할 수 있습니다.</p>
+              <label className="field-label">🔑 입장 코드</label>
+              <input
+                className="field"
+                type="password"
+                value={pin}
+                onChange={(event) => setPin(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleAuth()}
+                placeholder="연수에서 안내받은 입장 코드"
+                autoFocus
+                autoComplete="off"
+                style={{ fontFamily: "'Courier New', monospace", fontSize: '1rem', letterSpacing: '0.15em' }}
+              />
+              <p className="muted" style={{ fontSize: '0.72rem', marginTop: 2, marginBottom: 8 }}>AI 호출은 서버에 등록된 공용 키를 사용합니다. 따로 준비할 것이 없습니다.</p>
+              {error && <p className="error-text">{error}</p>}
+              <button className="primary-button" onClick={handleAuth} disabled={!pin.trim()}>입장</button>
+              <button
+                type="button"
+                onClick={() => { setEntryMode('keys'); setError('') }}
+                style={{ background: 'none', border: 'none', color: '#d4a574', cursor: 'pointer', fontSize: '0.78rem', padding: '10px 0 0', width: '100%' }}
+              >
+                ▶ 내 API 키로 입장하기 (실제 수업용)
+              </button>
+            </>
+          ) : (
+            <>
+          <p className="muted">본인의 AI API 키로 입장합니다.</p>
 
           <label className="field-label">🔑 Anthropic API 키 <span style={{ color: '#ef4444' }}>*</span></label>
           <input
@@ -467,6 +562,15 @@ export default function TeacherApp({ navigate }) {
           <p className="muted" style={{ fontSize: '0.7rem', marginTop: 8, lineHeight: 1.4 }}>
             API 키는 브라우저에 저장되며, 서버 메모리에서만 사용됩니다. 서버에 영구 저장되지 않습니다.
           </p>
+          <button
+            type="button"
+            onClick={() => { setEntryMode('pin'); setError('') }}
+            style={{ background: 'none', border: 'none', color: '#d4a574', cursor: 'pointer', fontSize: '0.78rem', padding: '10px 0 0', width: '100%' }}
+          >
+            ◀ 입장 코드로 돌아가기
+          </button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -524,6 +628,14 @@ export default function TeacherApp({ navigate }) {
   const selectedTeamResult = currentResults?.teamResults.find((team) => team.teamId === selectedTeamId) || currentResults?.teamResults[0]
   const selectedTurnDetail = selectedTeamResult?.turns.find((turn) => turn.turnNum === selectedTurn)
   const activeTeamCount = session.teams.length
+  // 사용 가능한 AI: 교사가 넣은 키 또는 서버 공용 키 (입장 코드 모드)
+  const keyAvailable = {
+    anthropic: Boolean(savedApiKeys.anthropic || aiStatus?.anthropic),
+    openai: Boolean(savedApiKeys.openai || aiStatus?.openai),
+    google: Boolean(savedApiKeys.google || aiStatus?.google),
+    upstage: Boolean(savedApiKeys.upstage || aiStatus?.upstage),
+  }
+  const roundInProgress = Boolean(roundDetail && !currentResults && !finalResults && ['chatting', 'voting', 'revealed'].includes(roundDetail.round?.status))
   const observerCount = roundDetail?.pairings?.filter((pairing) => pairing.observer_team_id).length || 0
   const liveCompletedTurns = roundDetail?.teamProgress?.reduce((sum, team) => sum + team.completedTurns, 0) || 0
 
@@ -578,6 +690,17 @@ export default function TeacherApp({ navigate }) {
             <p className="status-line">상태: <strong>{roundDetail?.round?.status || latestRound?.status || session.status}</strong></p>
             {timerInfo && <p className="status-line">타이머: <strong>{timerInfo.phase}</strong> / {formatDuration(timerInfo.remaining)}</p>}
             {notice && <p className="notice-text">{notice}</p>}
+            {error && <p className="error-text">{error}</p>}
+            {aiError && (
+              <div style={{
+                marginTop: 8, padding: '8px 10px', borderRadius: 8, fontSize: '0.75rem', lineHeight: 1.45,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5',
+              }}>
+                ⚠️ AI 호출 실패 {aiError.count}회 ({displayModel(aiError.model)}): {aiError.reason}
+                <br />학생에게는 회피 문구가 나갑니다. 계속되면 다른 모델을 고르세요.
+                <button type="button" onClick={() => setAiError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', fontSize: '0.72rem' }}>닫기</button>
+              </div>
+            )}
           </section>
 
           <section className="panel">
@@ -590,10 +713,10 @@ export default function TeacherApp({ navigate }) {
             <label className="field-label">AI 모델</label>
             <select className="field" value={settings.aiModel} onChange={(event) => setSettings((prev) => ({ ...prev, aiModel: event.target.value }))}>
               {aiModelOptions.filter((option) => {
-                if (option.value === 'claude') return savedApiKeys.anthropic
-                if (option.value === 'gpt') return savedApiKeys.openai
-                if (option.value === 'gemini') return savedApiKeys.google
-                if (option.value === 'solar') return savedApiKeys.upstage
+                if (option.value === 'claude') return keyAvailable.anthropic
+                if (option.value === 'gpt') return keyAvailable.openai
+                if (option.value === 'gemini') return keyAvailable.google
+                if (option.value === 'solar') return keyAvailable.upstage
                 return false
               }).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
@@ -637,7 +760,14 @@ export default function TeacherApp({ navigate }) {
               onChange={(event) => setSettings((prev) => ({ ...prev, pointValue: Math.max(0, Number(event.target.value) || 0) }))}
             />
 
-            <button className="primary-button" onClick={startRound}>라운드 시작</button>
+            <button
+              className="primary-button"
+              onClick={startRound}
+              disabled={activeTeamCount < 2 || roundInProgress}
+              title={activeTeamCount < 2 ? '팀이 2개 이상 등록되어야 시작할 수 있습니다' : roundInProgress ? '진행 중인 라운드가 끝나면 시작할 수 있습니다' : ''}
+            >
+              {activeTeamCount < 2 ? `라운드 시작 (팀 ${activeTeamCount}/2)` : roundInProgress ? '라운드 진행 중' : '라운드 시작'}
+            </button>
             <div className="stack-buttons">
               <button className="ghost-button" onClick={forceEndChat}>대화 강제 종료</button>
               <button className="ghost-button" onClick={forceEndVote}>투표 강제 마감</button>
@@ -661,12 +791,12 @@ export default function TeacherApp({ navigate }) {
           <section className="panel">
             <p className="eyebrow">AI STATUS</p>
             <div className="status-pill-row">
-              <span className={`status-pill ${savedApiKeys.anthropic ? 'ok' : 'missing'}`}>Claude {savedApiKeys.anthropic ? '준비' : '없음'}</span>
-              <span className={`status-pill ${savedApiKeys.openai ? 'ok' : 'missing'}`}>GPT {savedApiKeys.openai ? '준비' : '없음'}</span>
-              <span className={`status-pill ${savedApiKeys.google ? 'ok' : 'missing'}`}>Gemini {savedApiKeys.google ? '준비' : '없음'}</span>
-              <span className={`status-pill ${savedApiKeys.upstage ? 'ok' : 'missing'}`}>Solar {savedApiKeys.upstage ? '준비' : '없음'}</span>
+              <span className={`status-pill ${keyAvailable.anthropic ? 'ok' : 'missing'}`}>Claude {keyAvailable.anthropic ? '준비' : '없음'}</span>
+              <span className={`status-pill ${keyAvailable.openai ? 'ok' : 'missing'}`}>GPT {keyAvailable.openai ? '준비' : '없음'}</span>
+              <span className={`status-pill ${keyAvailable.google ? 'ok' : 'missing'}`}>Gemini {keyAvailable.google ? '준비' : '없음'}</span>
+              <span className={`status-pill ${keyAvailable.upstage ? 'ok' : 'missing'}`}>Solar {keyAvailable.upstage ? '준비' : '없음'}</span>
             </div>
-            <p className="muted">교사가 입력한 API 키 기준입니다.</p>
+            <p className="muted">{savedApiKeys.anthropic ? '교사가 입력한 API 키 기준입니다.' : '서버 공용 키 기준입니다 (입장 코드 모드).'}</p>
           </section>
 
           <section className="panel">
@@ -995,6 +1125,8 @@ export default function TeacherApp({ navigate }) {
                 </div>
               </section>
 
+              <TuringCriterion stats={currentResults.stats} className="panel" title={`라운드 ${currentResults.roundNum} 학급 전체`} />
+
               {selectedTeamResult && (
                 <section className="panel">
                   <div className="section-header">
@@ -1046,6 +1178,12 @@ export default function TeacherApp({ navigate }) {
           {/* ═══ 최종 순위 + 통계 대시보드 ═══ */}
           {finalResults && (
             <>
+              <section className="panel" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="muted" style={{ flex: 1, minWidth: 180 }}>토너먼트가 끝났습니다. 결과를 저장하거나 새 수업을 시작하세요.</span>
+                <button className="ghost-button" onClick={downloadCsv}>📄 CSV 다운로드</button>
+                <button className="primary-button" style={{ width: 'auto' }} onClick={startNewSession}>새 수업 시작</button>
+              </section>
+              <TuringCriterion stats={finalResults.overallStats} className="panel" title="전체 라운드" />
               <section className="panel">
                 <div style={{
                   textAlign: 'center', padding: '20px 0 16px',

@@ -1,11 +1,31 @@
 /**
  * AI 모듈 — 말투 변환 + AI 응답 생성
  *
- * - 말투 변환: 항상 Claude Haiku (빠른 속도)
+ * - 말투 변환: 항상 Claude Haiku (빠른 속도, effort low)
  * - AI 응답 생성: 교사가 선택한 모델 (claude / gpt / gemini / solar)
+ *
+ * 모델 ID는 2026-10-27 공식 문서와 실호출로 확인했다. 교체 시 UPGRADE-REVIEW-261027.md 3절 참고.
+ * Claude 5.5 세대는 thinking이 기본으로 켜지므로 effort를 낮추고, 응답은 type === 'text' 블록만 읽는다.
  */
 
 import Anthropic from '@anthropic-ai/sdk'
+import { EventEmitter } from 'events'
+
+export const MODELS = {
+  styleTransform: 'claude-haiku-5-5',
+  claude: 'claude-sonnet-5-5',
+  gpt: 'gpt-6.1-terra',
+  gemini: 'gemini-3.5-flash-lite',
+  solar: 'solar-pro4',
+}
+
+/** AI 호출 실패를 교사 화면에 알리기 위한 이벤트 (socketHandlers에서 구독) */
+export const aiEvents = new EventEmitter()
+function reportAiError(meta, model, reason) {
+  try {
+    aiEvents.emit('error', { sessionId: meta?.sessionId ?? null, model, reason: String(reason || '').slice(0, 160) })
+  } catch {}
+}
 
 // ── 말투 정의 ──────────────────────────────────────────────────────────────
 const STYLE_PROMPTS = {
@@ -33,9 +53,18 @@ function getAnthropic(apiKey) {
   const key = apiKey || process.env.ANTHROPIC_API_KEY
   if (!key) throw new Error('ANTHROPIC_API_KEY 없음')
   if (!anthropicClients.has(key)) {
-    anthropicClients.set(key, new Anthropic({ apiKey: key }))
+    anthropicClients.set(key, new Anthropic({ apiKey: key, maxRetries: 1 }))
   }
   return anthropicClients.get(key)
+}
+
+/** Claude 응답에서 텍스트 블록만 모은다 (thinking 블록이 앞에 올 수 있음) */
+function claudeText(message) {
+  return (message?.content || [])
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('')
+    .trim()
 }
 
 // ── 회피형 Fallback 문구 (AI 실패 시 사람처럼 보이게 랜덤 로테이션) ────
@@ -60,21 +89,24 @@ export function pickFallbackPhrase() {
 /**
  * @param {string} text - 원본 텍스트
  * @param {string} style - 말투 이름 (자연스러운대화, 임함체, 사극체, AI체)
- * @returns {Promise<string>} 변환된 텍스트
+ * @param {object} apiKeys - 세션에 등록된 교사 키 (없으면 서버 환경변수 키)
+ * @param {object} meta - { sessionId } 교사 알림용
+ * @returns {Promise<string>} 변환된 텍스트 (실패 시 원문)
  */
-export async function styleTransform(text, style, apiKeys = {}) {
+export async function styleTransform(text, style, apiKeys = {}, meta = {}) {
   const styleInfo = STYLE_PROMPTS[style]
   if (!styleInfo) return text
 
-  // 입력 글자수 기준 max_tokens 산정 (짧은 입력 → 적은 토큰)
+  // 입력 글자수 기준 max_tokens 산정 (짧은 입력 → 적은 토큰). 한글은 토큰이 많이 들어 하한을 넉넉히 둔다
   const inputLen = text.length
-  const maxTokens = Math.min(120, Math.max(30, Math.ceil(inputLen * 2.5)))
+  const maxTokens = Math.min(200, Math.max(80, Math.ceil(inputLen * 2.5)))
 
   try {
     const client = getAnthropic(apiKeys.anthropic)
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: MODELS.styleTransform,
       max_tokens: maxTokens,
+      output_config: { effort: 'low' },
       messages: [
         {
           role: 'user',
@@ -92,8 +124,8 @@ ${styleInfo.instruction}
 원본: ${text}`,
         },
       ],
-    })
-    let result = message.content[0]?.text?.trim() || text
+    }, { timeout: 15000 })
+    let result = claudeText(message) || text
     // LLM이 따옴표로 감싸는 경우 제거 (사람/AI 판별 단서 방지)
     if ((result.startsWith('"') && result.endsWith('"')) || (result.startsWith("'") && result.endsWith("'"))) {
       result = result.slice(1, -1)
@@ -108,6 +140,7 @@ ${styleInfo.instruction}
     return result
   } catch (err) {
     console.error('[AI] 말투 변환 실패:', err.message, '(key 존재:', Boolean(apiKeys.anthropic || process.env.ANTHROPIC_API_KEY), ')')
+    reportAiError(meta, 'style', `말투 변환 실패: ${err.message}`)
     return text
   }
 }
@@ -117,26 +150,29 @@ ${styleInfo.instruction}
  * @param {string} question - 심판의 질문
  * @param {string} style - 말투 이름
  * @param {string} model - AI 모델 (claude / gpt / gemini / solar)
- * @returns {Promise<string>} 말투가 적용된 AI 답변
+ * @param {object} apiKeys - 세션 키
+ * @param {AbortSignal} [signal] - 타임아웃 시 요청 중단용
+ * @param {object} meta - { sessionId }
+ * @returns {Promise<string>} 말투가 적용된 AI 답변 (실패 시 회피 문구)
  */
-export async function generateAIResponse(question, style, model = 'claude', apiKeys = {}) {
+export async function generateAIResponse(question, style, model = 'claude', apiKeys = {}, signal = undefined, meta = {}) {
   const systemPrompt = buildSystemPrompt(style)
 
   let rawAnswer
   try {
     switch (model) {
       case 'gpt':
-        rawAnswer = await generateWithGPT(question, systemPrompt, apiKeys.openai)
+        rawAnswer = await generateWithGPT(question, systemPrompt, apiKeys.openai, signal)
         break
       case 'gemini':
-        rawAnswer = await generateWithGemini(question, systemPrompt, apiKeys.google)
+        rawAnswer = await generateWithGemini(question, systemPrompt, apiKeys.google, signal)
         break
       case 'solar':
-        rawAnswer = await generateWithSolar(question, systemPrompt, apiKeys.upstage)
+        rawAnswer = await generateWithSolar(question, systemPrompt, apiKeys.upstage, signal)
         break
       case 'claude':
       default:
-        rawAnswer = await generateWithClaude(question, systemPrompt, apiKeys.anthropic)
+        rawAnswer = await generateWithClaude(question, systemPrompt, apiKeys.anthropic, signal)
         break
     }
   } catch (err) {
@@ -148,14 +184,15 @@ export async function generateAIResponse(question, style, model = 'claude', apiK
     )
     console.error(`[AI] ${model} 응답 생성 실패:`, err.message, '(API 키 존재:', hasKey, ')')
     if (!hasKey) {
-      console.error(`[AI] ⚠️  ${model} API 키가 세션에 등록되지 않았습니다. 교사 화면에서 API 키를 다시 등록하세요.`)
+      console.error(`[AI] ⚠️  ${model} API 키가 없습니다. 서버 환경변수 또는 교사 화면의 키를 확인하세요.`)
     }
+    reportAiError(meta, model, hasKey ? err.message : `${model} API 키 없음`)
     rawAnswer = null
   }
 
   // AI 응답 실패 시 랜덤 fallback (같은 문구 반복 방지 → 튜링 테스트 의미 보존)
   if (!rawAnswer) {
-    return styleTransform(pickFallbackPhrase(), style, apiKeys)
+    return styleTransform(pickFallbackPhrase(), style, apiKeys, meta)
   }
 
   return rawAnswer
@@ -178,31 +215,34 @@ ${noEmoji ? '5. 이모지(😊🎉 등)를 절대 사용하지 마. 텍스트만
 }
 
 // ── Claude (Anthropic SDK) ────────────────────────────────────────────────
-async function generateWithClaude(question, systemPrompt, apiKey) {
+async function generateWithClaude(question, systemPrompt, apiKey, signal) {
   const client = getAnthropic(apiKey)
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 80,
+    model: MODELS.claude,
+    max_tokens: 200,
+    output_config: { effort: 'low' },
     system: systemPrompt,
     messages: [{ role: 'user', content: question }],
-  })
-  return message.content[0]?.text?.trim() || null
+  }, { signal })
+  return claudeText(message) || null
 }
 
 // ── GPT (OpenAI, fetch 직접 호출) ────────────────────────────────────────
-async function generateWithGPT(question, systemPrompt, providedKey) {
+async function generateWithGPT(question, systemPrompt, providedKey, signal) {
   const apiKey = providedKey || process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY 없음')
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: 200,
+      model: MODELS.gpt,
+      max_completion_tokens: 200,
+      reasoning_effort: 'none', // 짧은 답변에 추론 토큰이 들어가지 않도록
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: question },
@@ -212,7 +252,7 @@ async function generateWithGPT(question, systemPrompt, providedKey) {
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`GPT API 오류: ${response.status} ${err}`)
+    throw new Error(`GPT API 오류: ${response.status} ${err.slice(0, 200)}`)
   }
 
   const data = await response.json()
@@ -220,45 +260,49 @@ async function generateWithGPT(question, systemPrompt, providedKey) {
 }
 
 // ── Gemini (Google, fetch 직접 호출) ─────────────────────────────────────
-async function generateWithGemini(question, systemPrompt, providedKey) {
+async function generateWithGemini(question, systemPrompt, providedKey, signal) {
   const apiKey = providedKey || process.env.GOOGLE_API_KEY
   if (!apiKey) throw new Error('GOOGLE_API_KEY 없음')
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.gemini}:generateContent`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      signal,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: question }] }],
-        generationConfig: { maxOutputTokens: 200 },
+        // thinking 토큰이 maxOutputTokens를 잠식하지 않도록 최소 단계
+        generationConfig: { maxOutputTokens: 200, thinkingConfig: { thinkingLevel: 'minimal' } },
       }),
     }
   )
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`Gemini API 오류: ${response.status} ${err}`)
+    throw new Error(`Gemini API 오류: ${response.status} ${err.slice(0, 200)}`)
   }
 
   const data = await response.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
+  const parts = data.candidates?.[0]?.content?.parts || []
+  return parts.filter((part) => !part.thought && part.text).map((part) => part.text).join('').trim() || null
 }
 
-// ── Solar Pro 3 (Upstage, fetch 직접 호출) ───────────────────────────────
-async function generateWithSolar(question, systemPrompt, providedKey) {
+// ── Solar Pro 4 (Upstage, fetch 직접 호출) ───────────────────────────────
+async function generateWithSolar(question, systemPrompt, providedKey, signal) {
   const apiKey = providedKey || process.env.UPSTAGE_API_KEY
   if (!apiKey) throw new Error('UPSTAGE_API_KEY 없음')
 
   const response = await fetch('https://api.upstage.ai/v1/chat/completions', {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'solar-pro3',
+      model: MODELS.solar,
       max_tokens: 200,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -269,7 +313,7 @@ async function generateWithSolar(question, systemPrompt, providedKey) {
 
   if (!response.ok) {
     const err = await response.text()
-    throw new Error(`Solar API 오류: ${response.status} ${err}`)
+    throw new Error(`Solar API 오류: ${response.status} ${err.slice(0, 200)}`)
   }
 
   const data = await response.json()
@@ -278,22 +322,26 @@ async function generateWithSolar(question, systemPrompt, providedKey) {
 
 // ── 타임아웃 래퍼 ─────────────────────────────────────────────────────────
 /**
- * AI 응답 생성에 타임아웃 적용
+ * AI 응답 생성에 타임아웃 적용. 시간이 지나면 원 요청을 실제로 중단(abort)한다.
  * @param {string} question
  * @param {string} style
  * @param {string} model
  * @param {number} timeoutMs - 타임아웃 (밀리초)
+ * @param {object} apiKeys
+ * @param {object} meta - { sessionId }
  */
-export async function generateAIResponseWithTimeout(question, style, model, timeoutMs = 25000, apiKeys = {}) {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('AI 응답 타임아웃')), timeoutMs)
-  )
+export async function generateAIResponseWithTimeout(question, style, model, timeoutMs = 25000, apiKeys = {}, meta = {}) {
+  const controller = new AbortController()
+  let timedOut = false
+  const handle = setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
   try {
-    return await Promise.race([generateAIResponse(question, style, model, apiKeys), timeoutPromise])
+    return await generateAIResponse(question, style, model, apiKeys, controller.signal, meta)
   } catch (err) {
-    console.warn(`[AI] 타임아웃/오류 (${model}):`, err.message)
-    // 랜덤 fallback 반환
-    return styleTransform(pickFallbackPhrase(), style, apiKeys)
+    console.warn(`[AI] 타임아웃/오류 (${model}):`, timedOut ? `${timeoutMs}ms 초과` : err.message)
+    reportAiError(meta, model, timedOut ? `${Math.round(timeoutMs / 1000)}초 안에 답하지 못함` : err.message)
+    return styleTransform(pickFallbackPhrase(), style, apiKeys, meta)
+  } finally {
+    clearTimeout(handle)
   }
 }
 

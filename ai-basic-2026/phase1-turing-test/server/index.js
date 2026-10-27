@@ -11,6 +11,7 @@ import { nanoid } from './utils.js'
 import db from './db.js'
 import { registerSocketHandlers } from './socketHandlers.js'
 import { sessionApiKeys } from './apiKeyStore.js'
+import { issueTeacherToken, verifyTeacherToken, requireTeacher, getTeacherPin, checkPinAttempt } from './teacherAuth.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -66,24 +67,60 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
-// ── 교사 인증 (API 키 입력) ───────────────────────────────────────────────
-const TEACHER_PIN = process.env.TEACHER_PIN || '000000'
-
-app.post(`${BASE_PATH}/api/auth/teacher`, (req, res) => {
-  const { pin, apiKeys } = req.body
-  // PIN 인증 (기존 호환)
-  if (pin === TEACHER_PIN) {
-    res.json({ ok: true })
-  } else if (apiKeys && apiKeys.anthropic) {
-    // API 키 방식 인증 — Anthropic 키가 있으면 인증 통과
-    res.json({ ok: true })
-  } else {
-    res.status(401).json({ error: '인증 코드가 올바르지 않습니다' })
-  }
+// ── 교사 인증 ─────────────────────────────────────────────────────────────
+// 두 가지 입장 방식. 성공하면 토큰을 발급하고 교사용 REST·소켓에서 검사한다.
+//  1) 입장 코드(TEACHER_PIN) — 연수·공용 키 운영용. AI 호출은 서버 환경변수 키를 쓴다.
+//  2) 본인 Anthropic API 키 — 실제 수업용. 키 유효성을 Anthropic 모델 목록 호출로 확인한다.
+const envAiStatus = () => ({
+  anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+  openai: Boolean(process.env.OPENAI_API_KEY),
+  google: Boolean(process.env.GOOGLE_API_KEY),
+  upstage: Boolean(process.env.UPSTAGE_API_KEY),
 })
 
-// 세션에 API 키 연결
-app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, (req, res) => {
+async function isValidAnthropicKey(key) {
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/models?limit=1', {
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      signal: AbortSignal.timeout(8000),
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
+  const { pin, apiKeys } = req.body || {}
+
+  // 1) 입장 코드
+  if (typeof pin === 'string' && pin.trim()) {
+    const expected = getTeacherPin()
+    if (!expected) {
+      return res.status(503).json({ error: '입장 코드가 서버에 설정되지 않았습니다. 관리자에게 문의하세요.' })
+    }
+    if (!checkPinAttempt(req.ip)) {
+      return res.status(429).json({ error: '입장 코드 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
+    }
+    if (pin.trim() !== expected) {
+      return res.status(401).json({ error: '입장 코드가 올바르지 않습니다' })
+    }
+    return res.json({ ok: true, token: issueTeacherToken('pin'), mode: 'pin', aiStatus: envAiStatus() })
+  }
+
+  // 2) 본인 API 키
+  if (apiKeys && typeof apiKeys.anthropic === 'string' && apiKeys.anthropic.trim()) {
+    if (!(await isValidAnthropicKey(apiKeys.anthropic.trim()))) {
+      return res.status(401).json({ error: 'Anthropic API 키가 유효하지 않습니다' })
+    }
+    return res.json({ ok: true, token: issueTeacherToken('keys'), mode: 'keys', aiStatus: envAiStatus() })
+  }
+
+  res.status(401).json({ error: '입장 코드 또는 Anthropic API 키가 필요합니다' })
+})
+
+// 세션에 API 키 연결 (본인 키 입장 시에만)
+app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, requireTeacher, (req, res) => {
   const { apiKeys } = req.body
   if (!apiKeys || !apiKeys.anthropic) {
     return res.status(400).json({ error: 'Anthropic API 키는 필수입니다' })
@@ -93,7 +130,7 @@ app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, (req, res) => {
 })
 
 // API 키 상태 확인 (키 값은 노출하지 않음)
-app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, (req, res) => {
+app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, requireTeacher, (req, res) => {
   const keys = sessionApiKeys.get(req.params.sessionId) || {}
   res.json({
     anthropic: Boolean(keys.anthropic),
@@ -113,6 +150,11 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     return res.status(400).json({ error: '수업 코드 필요' })
   }
   const teacherCode = rawCode.trim().toUpperCase()
+
+  // 세션 생성은 교사만 (학생 입장 mode='join'은 토큰 불필요)
+  if (mode !== 'join' && !verifyTeacherToken(req.get('x-teacher-token'))) {
+    return res.status(401).json({ error: '교사 인증이 필요합니다. 입장 코드로 다시 들어오세요.' })
+  }
 
   // 기존 활성 세션 확인
   const existing = db
@@ -205,7 +247,7 @@ app.get(`${BASE_PATH}/api/team/:teamId`, (req, res) => {
 // ── 대시보드 API ──────────────────────────────────────────────────────────
 
 // 라운드 목록 조회
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, requireTeacher, (req, res) => {
   const rounds = db
     .prepare('SELECT * FROM rounds WHERE session_id = ? ORDER BY round_number')
     .all(req.params.sessionId)
@@ -213,7 +255,7 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, (req, res) => {
 })
 
 // 라운드 상세 (턴 진행 현황 포함)
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireTeacher, (req, res) => {
   const round = db.prepare('SELECT * FROM rounds WHERE id = ?').get(req.params.roundId)
   if (!round) return res.status(404).json({ error: '라운드 없음' })
 
@@ -235,7 +277,14 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, (req, res) => {
 })
 
 // CSV 다운로드
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/export`, (req, res) => {
+// CSV 셀 이스케이프 — 쉼표·따옴표·줄바꿈 처리, 수식 시작 문자(=+-@)는 엑셀 수식 실행 방지
+function csvCell(value) {
+  let text = String(value ?? '')
+  if (/^[=+\-@]/.test(text)) text = `'${text}`
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/export`, requireTeacher, (req, res) => {
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.sessionId)
   if (!session) return res.status(404).json({ error: '세션 없음' })
 
@@ -263,7 +312,7 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/export`, (req, res) => {
         turns.length,
         earned,
         cumulative,
-      ].join(','))
+      ].map(csvCell).join(','))
     }
   }
 
@@ -296,6 +345,7 @@ app.get(`${BASE_PATH}/api/system/ai-status`, (req, res) => {
     upstage: Boolean(process.env.UPSTAGE_API_KEY),
     appBasePath: BASE_PATH,
     teacherKeyMode: true,
+    entryCodeMode: Boolean(getTeacherPin()), // 입장 코드 로그인 가능 여부 (코드 값은 노출하지 않음)
   })
 })
 

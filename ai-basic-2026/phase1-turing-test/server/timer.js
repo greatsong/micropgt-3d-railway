@@ -94,7 +94,10 @@ export class RoundTimer {
     const elapsed = Date.now() - questionSentAt
     const remaining = Math.max(0, delaySeconds * 1000 - elapsed)
 
-    const handle = setTimeout(callback, remaining)
+    // async 콜백의 예외가 unhandled rejection으로 새지 않도록 감싼다
+    const handle = setTimeout(() => {
+      Promise.resolve().then(callback).catch((err) => console.error('[timer] 답변 전달 콜백 오류:', err?.message || err))
+    }, remaining)
     return () => clearTimeout(handle)
   }
 
