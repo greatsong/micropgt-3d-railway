@@ -621,11 +621,11 @@ export default function ChatScreen({
               fontSize: '0.6rem', fontWeight: 700, color: '#a78bfa',
               fontFamily: "'Courier New', monospace",
             }}>DISGUISE MODE</span>
-            <span style={{ fontSize: '0.6rem', color: C.muted }}>기계가 대신 응답합니다</span>
+            <span style={{ fontSize: '0.6rem', color: C.muted }}>이번 턴은 AI가 대신 답합니다. 아래 칸은 전송되지 않는 위장용입니다</span>
           </div>
           <input type="text" value={fakeText}
             onChange={(e) => setFakeText(e.target.value)}
-            placeholder="타이핑하는 척하세요..."
+            placeholder="옆 팀이 눈치채지 못하게 타이핑하는 척하세요 (전송 안 됨)"
             style={{
               width: '100%', padding: '10px 14px', background: C.input,
               border: `1px solid ${C.purpleBorder}`, borderRadius: 8,

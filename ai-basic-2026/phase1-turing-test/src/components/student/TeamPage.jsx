@@ -44,7 +44,7 @@ export default function TeamPage({ navigate }) {
   // 미션 브리핑
   const [showBriefing, setShowBriefing] = useState(false)
   // 대화 단계 시작 여부 — 브리핑 중에는 false, 'chat:started' 수신 시 true
-  // 질문자이 브리핑 중에 메시지를 보내도 서버가 폐기하므로 클라이언트도 차단
+  // 질문자가 브리핑 중에 메시지를 보내도 서버가 폐기하므로 클라이언트도 차단
   const [chatStarted, setChatStarted] = useState(false)
 
   // 라운드 도중 합류한 팀 안내
@@ -95,6 +95,19 @@ export default function TeamPage({ navigate }) {
       setLockedNotice(null)
       setRoundInfo(payload)
       setPhase('chat')
+      if (payload.restored) {
+        // 재접속·늦은 합류: 서버가 현재 단계를 알려 준다. 브리핑이 끝났으면 다시 띄우지 않고 입력창도 잠그지 않는다.
+        // 대화 내역은 곧 오는 turn:history로 채우고, 투표 중이면 vote:phase-started가 뒤따른다
+        const chatOn = Boolean(payload.chatStarted)
+        setShowBriefing(!chatOn && payload.briefingTime > 0)
+        setChatStarted(chatOn)
+        if (chatOn) stopBgm(); else startBgm()
+        setVoteSubmitted(false)
+        setRoundResults(null)
+        setFinalResults(null)
+        setJudgeNotice('')
+        return
+      }
       // briefingTime이 0이면 서버가 chat:started를 먼저 보냈을 수 있으므로 브리핑 띄우지 않음
       setShowBriefing(payload.briefingTime > 0)
       // 브리핑 동안만 모스 부호 배경음, 대화가 시작되면 멈춤
@@ -112,6 +125,14 @@ export default function TeamPage({ navigate }) {
       setJudgeNotice('')
       setRespondTurns([])
       pendingQuestionsRef.current = {}
+    })
+
+    // 재접속 복원: 지금까지의 대화와 대기 상태
+    socket.on('turn:history', ({ judgeTurns: jt = [], respondTurns: rt = [], awaitingAnswer: waiting = false }) => {
+      setJudgeTurns(jt)
+      setRespondTurns(rt)
+      setAwaitingAnswer(waiting)
+      pendingQuestionsRef.current = Object.fromEntries(jt.map((t) => [t.turnNum, t.question]))
     })
 
     socket.on('observer:question-seen', ({ turnNum, question }) => {
@@ -187,10 +208,12 @@ export default function TeamPage({ navigate }) {
       setPreviewAnswer(null)
     })
 
-    socket.on('vote:phase-started', ({ conversations }) => {
+    socket.on('vote:phase-started', ({ conversations, alreadyVoted }) => {
       const teamConversations = conversations[teamId] || conversations[Number(teamId)] || []
       setJudgeTurns(teamConversations)
-      setVoteSubmitted(false)
+      setVoteSubmitted(Boolean(alreadyVoted))
+      setShowBriefing(false)
+      stopBgm()
       setPhase('vote')
     })
 
@@ -220,7 +243,7 @@ export default function TeamPage({ navigate }) {
       localStorage.removeItem(ACCESS_KEY)
     })
 
-    return () => socket.disconnect()
+    return () => { stopBgm(); socket.disconnect() }
   }, [sessionId, teamId])
 
   // ── 콜백 ──

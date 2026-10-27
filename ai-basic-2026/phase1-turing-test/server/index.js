@@ -11,7 +11,10 @@ import { nanoid } from './utils.js'
 import db from './db.js'
 import { registerSocketHandlers, buildSessionSummary } from './socketHandlers.js'
 import { sessionApiKeys } from './apiKeyStore.js'
-import { issueTeacherToken, verifyTeacherToken, requireTeacher, getTeacherPin, checkPinAttempt } from './teacherAuth.js'
+import {
+  issueTeacherToken, verifyTeacherToken, requireTeacher, requireSessionOwner, getTeacherPin,
+  pinBlocked, recordPinFailure, clearPinFailures, normalizeTeacherId, canManageSession, sessionOwner,
+} from './teacherAuth.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -49,8 +52,16 @@ const io = new Server(httpServer, {
   cors: corsOptions,
 })
 
+// Railway 등 프록시 뒤에서 req.ip가 실제 접속 IP가 되도록 (입장 코드 실패 횟수 제한용)
+app.set('trust proxy', 1)
+
 app.use(cors(corsOptions))
 app.use(express.json())
+
+// 서버가 (재)시작되면 메모리의 라운드 상태·타이머가 없으므로, DB에 진행 중으로 남은 라운드는 중단 처리한다
+// (그대로 두면 교사 화면이 "진행 중"으로 판단해 다음 라운드를 시작하지 못한다)
+const orphaned = db.prepare("UPDATE rounds SET status = 'closed' WHERE status IN ('chatting', 'voting', 'revealed')").run()
+if (orphaned.changes > 0) console.log(`[boot] 진행 중이던 라운드 ${orphaned.changes}개를 중단 처리했습니다 (서버 재시작)`)
 
 // db와 io를 라우터에서 사용할 수 있도록 주입
 app.use((req, res, next) => {
@@ -71,9 +82,6 @@ app.get('/health', (req, res) => {
 // 두 가지 입장 방식. 성공하면 토큰을 발급하고 교사용 REST·소켓에서 검사한다.
 //  1) 입장 코드(TEACHER_PIN) — 연수·공용 키 운영용. AI 호출은 서버 환경변수 키를 쓴다.
 //  2) 본인 Anthropic API 키 — 실제 수업용. 키 유효성을 Anthropic 모델 목록 호출로 확인한다.
-// 세션을 만든 교사 토큰 (메모리). 같은 수업 코드를 다른 교사가 가로채지 못하게 한다
-const sessionOwners = new Map()
-
 const envAiStatus = () => ({
   anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
   openai: Boolean(process.env.OPENAI_API_KEY),
@@ -95,6 +103,7 @@ async function isValidAnthropicKey(key) {
 
 app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
   const { pin, apiKeys } = req.body || {}
+  const teacherId = normalizeTeacherId(req.body?.teacherId) // 브라우저가 만든 교사 식별자 (세션 소유권용)
 
   // 1) 입장 코드
   if (typeof pin === 'string' && pin.trim()) {
@@ -102,13 +111,16 @@ app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
     if (!expected) {
       return res.status(503).json({ error: '입장 코드가 서버에 설정되지 않았습니다. 관리자에게 문의하세요.' })
     }
-    if (!checkPinAttempt(req.ip)) {
-      return res.status(429).json({ error: '입장 코드 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
-    }
     if (pin.trim() !== expected) {
+      // 실패만 센다 (같은 공용 IP의 정상 로그인이 막히지 않게)
+      recordPinFailure(req.ip)
+      if (pinBlocked(req.ip)) {
+        return res.status(429).json({ error: '입장 코드 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
+      }
       return res.status(401).json({ error: '입장 코드가 올바르지 않습니다' })
     }
-    return res.json({ ok: true, token: issueTeacherToken('pin'), mode: 'pin', aiStatus: envAiStatus() })
+    clearPinFailures(req.ip)
+    return res.json({ ok: true, token: issueTeacherToken('pin', teacherId), teacherId, mode: 'pin', aiStatus: envAiStatus() })
   }
 
   // 2) 본인 API 키
@@ -116,14 +128,14 @@ app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
     if (!(await isValidAnthropicKey(apiKeys.anthropic.trim()))) {
       return res.status(401).json({ error: 'Anthropic API 키가 유효하지 않습니다' })
     }
-    return res.json({ ok: true, token: issueTeacherToken('keys'), mode: 'keys', aiStatus: envAiStatus() })
+    return res.json({ ok: true, token: issueTeacherToken('keys', teacherId), teacherId, mode: 'keys', aiStatus: envAiStatus() })
   }
 
   res.status(401).json({ error: '입장 코드 또는 Anthropic API 키가 필요합니다' })
 })
 
-// 세션에 API 키 연결 (본인 키 입장 시에만)
-app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, requireTeacher, (req, res) => {
+// 세션에 API 키 연결 (본인 키 입장 시에만, 세션 소유자만)
+app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, requireSessionOwner, (req, res) => {
   const { apiKeys } = req.body
   if (!apiKeys || !apiKeys.anthropic) {
     return res.status(400).json({ error: 'Anthropic API 키는 필수입니다' })
@@ -133,7 +145,7 @@ app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, requireTeacher, (req, r
 })
 
 // API 키 상태 확인 (키 값은 노출하지 않음)
-app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, requireTeacher, (req, res) => {
+app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, requireSessionOwner, (req, res) => {
   const keys = sessionApiKeys.get(req.params.sessionId) || {}
   res.json({
     anthropic: Boolean(keys.anthropic),
@@ -155,8 +167,8 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   const teacherCode = rawCode.trim().toUpperCase()
 
   // 세션 생성은 교사만 (학생 입장 mode='join'은 토큰 불필요)
-  const teacherToken = req.get('x-teacher-token')
-  if (mode !== 'join' && !verifyTeacherToken(teacherToken)) {
+  const teacher = mode !== 'join' ? verifyTeacherToken(req.get('x-teacher-token')) : null
+  if (mode !== 'join' && !teacher) {
     return res.status(401).json({ error: '교사 인증이 필요합니다. 입장 코드로 다시 들어오세요.' })
   }
 
@@ -166,14 +178,10 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     .get(teacherCode)
 
   if (existing) {
-    // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
-    // 소유자 기록은 서버 메모리라 재배포 뒤에는 비어 있고, 그때는 이어서 사용으로 처리한다
-    if (mode !== 'join') {
-      const owner = sessionOwners.get(existing.id)
-      if (owner && owner !== teacherToken) {
-        return res.status(409).json({ error: `'${teacherCode}'는 다른 선생님이 진행 중인 수업 코드입니다. 다른 코드를 입력하세요.` })
-      }
-      sessionOwners.set(existing.id, teacherToken)
+    // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사(브라우저) 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
+    // 소유자 기록은 서버 메모리라 재배포 뒤에는 비어 있고, 그때는 처음 여는 교사가 가져간다
+    if (mode !== 'join' && !canManageSession(existing.id, teacher.teacherId)) {
+      return res.status(409).json({ error: `'${teacherCode}'는 다른 선생님이 진행 중인 수업 코드입니다. 다른 코드를 입력하세요.` })
     }
     const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(existing.id)
     return res.json({ ...existing, teams: teams.map(parseTeam) })
@@ -189,7 +197,7 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   // 교사 생성: 새 세션 생성
   const id = nanoid()
   db.prepare('INSERT INTO sessions (id, teacher_code) VALUES (?, ?)').run(id, teacherCode)
-  sessionOwners.set(id, teacherToken)
+  canManageSession(id, teacher.teacherId) // 소유자 등록
   res.json({ id, teacher_code: teacherCode, status: 'waiting', teams: [] })
 })
 
@@ -261,7 +269,7 @@ app.get(`${BASE_PATH}/api/team/:teamId`, (req, res) => {
 // ── 대시보드 API ──────────────────────────────────────────────────────────
 
 // 라운드 목록 조회
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, requireTeacher, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, requireSessionOwner, (req, res) => {
   const rounds = db
     .prepare('SELECT * FROM rounds WHERE session_id = ? ORDER BY round_number')
     .all(req.params.sessionId)
@@ -269,7 +277,7 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, requireTeacher, (req, re
 })
 
 // 라운드 상세 (턴 진행 현황 포함)
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireTeacher, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireSessionOwner, (req, res) => {
   const round = db.prepare('SELECT * FROM rounds WHERE id = ?').get(req.params.roundId)
   if (!round) return res.status(404).json({ error: '라운드 없음' })
 
@@ -292,7 +300,7 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireTeacher, 
 
 // CSV 다운로드
 // 세션 요약 (수업 완전 종료 뒤 분석 화면용) — 라운드별 통계·팀 순위·전체 통계
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/summary`, requireTeacher, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/summary`, requireSessionOwner, (req, res) => {
   const summary = buildSessionSummary(db, req.params.sessionId)
   if (!summary) return res.status(404).json({ error: '세션 없음' })
   res.json(summary)
@@ -305,7 +313,7 @@ function csvCell(value) {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-app.get(`${BASE_PATH}/api/dashboard/:sessionId/export`, requireTeacher, (req, res) => {
+app.get(`${BASE_PATH}/api/dashboard/:sessionId/export`, requireSessionOwner, (req, res) => {
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.sessionId)
   if (!session) return res.status(404).json({ error: '세션 없음' })
 

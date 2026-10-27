@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { apiGet, apiPost, apiDownload, getTeacherToken, setTeacherToken, clearTeacherToken } from '../../utils/api.js'
+import { apiGet, apiPost, apiDownload, getTeacherToken, setTeacherToken, clearTeacherToken, getTeacherId } from '../../utils/api.js'
 import { createSocket } from '../../utils/socket.js'
 import { withBase } from '../../config.js'
 import TuringCriterion from '../TuringCriterion.jsx'
@@ -36,7 +36,7 @@ const defaultSettings = {
   aiModel: 'claude',
   turns: 8,
   chatTime: 300,
-  responseDelay: 15,
+  responseDelay: 20, // 선택지(20·30·40초)에 있는 값이어야 화면과 실제 값이 같다
   voteTime: 120,
   pointValue: 1,
   briefingTime: 20, // 안내문 읽기 시간 (대화 시간과 별도)
@@ -169,6 +169,13 @@ export default function TeacherApp({ navigate }) {
     void refreshAiStatus().catch(() => {})
   }, [authed])
 
+  // REST가 401을 돌려주면(토큰 만료·서버 재시작) 로그인 화면으로 돌아간다. 세션 정보는 남겨 두어 다시 들어오면 이어진다
+  useEffect(() => {
+    const onExpired = () => { setAuthed(false); setError('로그인이 풀렸습니다. 입장 코드를 다시 넣으면 수업이 이어집니다.') }
+    window.addEventListener('teacher:auth-expired', onExpired)
+    return () => window.removeEventListener('teacher:auth-expired', onExpired)
+  }, [])
+
   useEffect(() => {
     if (!session?.id) return
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
@@ -214,6 +221,7 @@ export default function TeacherApp({ navigate }) {
       setFinalResults(null)
       setRoundDetail(null)
       setAiError(null)
+      liveTeamIdRef.current = null
       setVoteProgress({})
       setSelectedTurn(null)
       setSelectedLiveTurns(null)
@@ -245,6 +253,7 @@ export default function TeacherApp({ navigate }) {
     })
 
     socket.on('teacher:live-turns', ({ teamId, turns }) => {
+      if (liveTeamIdRef.current !== teamId) return // 닫은 뒤 늦게 온 응답이나 다른 팀 응답은 무시
       setSelectedLiveTurns(turns)
     })
 
@@ -384,7 +393,7 @@ export default function TeacherApp({ navigate }) {
           setError('입장 코드를 입력하세요')
           return
         }
-        const data = await apiPost('/auth/teacher', { pin: pin.trim() })
+        const data = await apiPost('/auth/teacher', { pin: pin.trim(), teacherId: getTeacherId() })
         setTeacherToken(data.token)
         if (data.aiStatus) setAiStatus((prev) => ({ ...(prev || {}), ...data.aiStatus }))
         // 이전에 저장해 둔 본인 키는 쓰지 않는다 (공용 키로 통일)
@@ -401,7 +410,7 @@ export default function TeacherApp({ navigate }) {
           ...(googleKey.trim() && { google: googleKey.trim() }),
           ...(upstageKey.trim() && { upstage: upstageKey.trim() }),
         }
-        const data = await apiPost('/auth/teacher', { apiKeys })
+        const data = await apiPost('/auth/teacher', { apiKeys, teacherId: getTeacherId() })
         setTeacherToken(data.token)
         localStorage.setItem(API_KEYS_KEY, JSON.stringify(apiKeys))
         setSavedApiKeys(apiKeys)
@@ -464,6 +473,7 @@ export default function TeacherApp({ navigate }) {
   }
 
   function endTournament() {
+    if (!window.confirm('모든 라운드를 마치고 최종 순위를 발표할까요?\n종료 뒤에는 이 세션에서 새 라운드를 시작할 수 없습니다.')) return
     socketRef.current?.emit('tournament:end', { sessionId: session.id, token: getTeacherToken() })
   }
 
@@ -737,7 +747,8 @@ export default function TeacherApp({ navigate }) {
     google: Boolean(savedApiKeys.google || aiStatus?.google),
     upstage: Boolean(savedApiKeys.upstage || aiStatus?.upstage),
   }
-  const roundInProgress = Boolean(roundDetail && !currentResults && !finalResults && ['chatting', 'voting', 'revealed'].includes(roundDetail.round?.status))
+  const liveStatus = roundDetail && !currentResults && !finalResults ? roundDetail.round?.status : null
+  const roundInProgress = ['chatting', 'voting', 'revealed'].includes(liveStatus)
   const observerCount = roundDetail?.pairings?.filter((pairing) => pairing.observer_team_id).length || 0
   const liveCompletedTurns = roundDetail?.teamProgress?.reduce((sum, team) => sum + team.completedTurns, 0) || 0
 
@@ -873,10 +884,18 @@ export default function TeacherApp({ navigate }) {
               {activeTeamCount < 2 ? `라운드 시작 (팀 ${activeTeamCount}/2)` : roundInProgress ? '라운드 진행 중' : '라운드 시작'}
             </button>
             <div className="stack-buttons">
-              <button className="ghost-button" onClick={forceEndChat}>대화 강제 종료</button>
-              <button className="ghost-button" onClick={forceEndVote}>투표 강제 마감</button>
-              <button className="ghost-button" onClick={revealResults}>결과 공개</button>
-              <button className="ghost-button danger" onClick={endTournament}>토너먼트 종료</button>
+              {/* 지금 단계에 맞는 버튼만 켠다 (대화 중 결과 공개 → 투표 건너뜀 사고 방지) */}
+              <button className="ghost-button" onClick={forceEndChat} disabled={liveStatus !== 'chatting'}>대화 강제 종료</button>
+              <button className="ghost-button" onClick={forceEndVote} disabled={liveStatus !== 'voting'}>투표 강제 마감</button>
+              <button
+                className={liveStatus === 'voting' || liveStatus === 'revealed' ? 'primary-button' : 'ghost-button'}
+                onClick={revealResults}
+                disabled={liveStatus !== 'voting' && liveStatus !== 'revealed'}
+                title={liveStatus === 'chatting' ? '먼저 대화를 끝내고(자동 또는 강제 종료) 투표가 진행된 뒤 공개할 수 있습니다' : ''}
+              >
+                {liveStatus === 'revealed' ? '결과 공개 (투표 마감됨)' : '결과 공개'}
+              </button>
+              <button className="ghost-button danger" onClick={endTournament} disabled={roundInProgress}>토너먼트 종료</button>
               <button
                 className="ghost-button"
                 onClick={() => setShowCloseConfirm(true)}
@@ -1051,7 +1070,7 @@ export default function TeacherApp({ navigate }) {
                             질문자: {judgeVote?.submitted ? '✅ 제출' : `${judgeVote?.votedCount || 0}/${totalTurns}`}
                           </span>
                           <span style={{ color: respondentVote?.submitted ? '#22c55e' : '#64748b' }}>
-                            답변자: {respondentVote?.submitted ? '✅ 제출' : `${respondentVote?.votedCount || 0}/${totalTurns}`}
+                            답변자: 투표 없음
                           </span>
                         </div>
                       )}

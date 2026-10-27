@@ -204,12 +204,12 @@ export default function StudentGuidePage({ navigate }) {
               <div style={{
                 padding: '8px 10px', borderRadius: 6, background: C.card,
                 border: `1px solid ${C.amberBorder}`, fontSize: '0.75rem', color: C.muted,
-              }}>AI-BASIC-2026</div>
+              }}>ai-leader</div>
               <div style={{
                 marginTop: 8, padding: '8px 0', borderRadius: 6, textAlign: 'center',
                 background: 'linear-gradient(135deg, #6366f1, #818cf8)',
                 fontSize: '0.75rem', fontWeight: 700, color: '#fff',
-              }}>입장하기</div>
+              }}>코드 확인</div>
             </div>
             {/* 팀 만들기 */}
             <div style={{ background: C.surface, borderRadius: 10, padding: 12, border: `1px solid ${C.amberBorder}` }}>
@@ -329,7 +329,7 @@ export default function StudentGuidePage({ navigate }) {
             </div>
           </div>
         </PhoneFrame>
-        <Desc icon="🎬">라운드가 시작되면 <strong style={{ color: C.amber }}>기밀 문서 스타일</strong>로 당신의 역할을 알려줍니다. 역할은 3가지: <strong style={{ color: C.amber }}>질문자</strong>(질문), <strong style={{ color: C.green }}>답변자</strong>(응답), <strong style={{ color: '#94a3b8' }}>관찰자</strong>(감청). 읽고 나서 아무 곳이나 터치하면 게임 시작!</Desc>
+        <Desc icon="🎬">라운드가 시작되면 <strong style={{ color: C.amber }}>기밀 문서 스타일</strong>로 당신의 역할을 알려줍니다. 역할은 3가지: <strong style={{ color: C.amber }}>질문자</strong>(질문), <strong style={{ color: C.green }}>답변자</strong>(응답), <strong style={{ color: '#94a3b8' }}>관찰자</strong>(감청). 안내문 읽기 시간이 끝나면 자동으로 대화가 시작됩니다.</Desc>
 
         <Arrow />
 
@@ -566,7 +566,7 @@ export default function StudentGuidePage({ navigate }) {
           <br />• <strong style={{ color: C.green }}>사람 턴</strong>: 직접 답변을 입력 → <strong>자연스럽게!</strong>
           <br />• <strong style={{ color: C.purple }}>AI 턴</strong>: AI가 자동 응답 → <strong>가만히 기다리기</strong> (타이핑하는 척!)
           <br /><br />
-          모든 답변은 <strong>같은 말투로 변환</strong>되어 전달되므로, 질문자은 문체로는 구별할 수 없어요.
+          모든 답변은 <strong>같은 말투로 변환</strong>되어 전달되므로, 질문자는 문체로는 구별할 수 없어요.
         </Desc>
 
         <Arrow />
@@ -755,7 +755,7 @@ export default function StudentGuidePage({ navigate }) {
             <div style={{ marginBottom: 6 }}><strong style={{ color: C.amber }}>① 질문 규칙</strong> — AI가 답할 수 없는 사실 질문(예: "지금 몇 교시야?") 금지. 누구나 답할 수 있는 질문만!</div>
             <div style={{ marginBottom: 6 }}><strong style={{ color: C.green }}>② 답변 규칙</strong> — 짧고 자연스럽게! 너무 완벽한 답변은 오히려 AI처럼 보여요.</div>
             <div style={{ marginBottom: 6 }}><strong style={{ color: '#f59e0b' }}>③ 투표</strong> — 모든 턴에 반드시 투표! 미투표 = 0점입니다.</div>
-            <div><strong style={{ color: '#818cf8' }}>④ 역할 순환</strong> — 매 라운드 역할이 바뀝니다. 이번에 질문자이면 다음엔 답변자!</div>
+            <div><strong style={{ color: '#818cf8' }}>④ 역할 순환</strong> — 매 라운드 역할이 바뀝니다. 이번에 질문자라면 다음엔 답변자!</div>
           </div>
         </div>
 

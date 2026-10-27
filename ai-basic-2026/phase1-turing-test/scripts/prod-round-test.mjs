@@ -1,7 +1,8 @@
 // 배포 서버에서 N팀 라운드 점검 — 테스트 팀을 N개 맞춰 두고 소켓으로 참여. 라운드 시작·결과 공개는 교사가 누른다.
 // 실행: node scripts/prod-round-test.mjs ./node_modules <sessionId> [팀 수=6]  (교사 화면에서 라운드 시작·투표 마감·결과 공개는 사람이 누른다)
 import { createRequire } from 'module'
-const require = createRequire(process.argv[2] + '/')
+import path from 'path'
+const require = createRequire(path.resolve(process.argv[2] || 'node_modules') + '/')
 const { io } = require('socket.io-client')
 const HOST = 'https://ai-turing-production.up.railway.app'
 const BASE = `${HOST}/turing-test/api`

@@ -58,8 +58,8 @@ const ROLE_DATA = {
   },
   observer: {
     icon: '👓',
-    codename: 'INTERCEPTOR',
-    title: '당신은 감청관입니다',
+    codename: 'OBSERVER',
+    title: '당신은 관찰자입니다',
     mission: '다른 팀의 교신을 감청하라',
     color: '#94a3b8',
     borderColor: 'rgba(148,163,184,0.15)',
@@ -112,7 +112,7 @@ export default function MissionBriefing({ role, style, roundNum, turns, onDismis
   const showCountdown = briefingTime > 0 && typeof timerRemaining === 'number'
 
   return (
-    <div onClick={onDismiss} style={{
+    <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.92)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -336,7 +336,7 @@ export default function MissionBriefing({ role, style, roundNum, turns, onDismis
             letterSpacing: '0.05em',
             animation: 'pulseBtn 2s ease-in-out infinite',
           }}>
-            {showCountdown ? '닫기 (대기 중)' : '임무 수행 시작'}
+            {showCountdown ? `안내문 닫기 (${timerRemaining ?? ''}초 뒤 자동으로 대화 시작)` : '임무 수행 시작'}
           </button>
         </div>
       </div>

@@ -1,7 +1,8 @@
 // 수정 후 검증: 입장 코드 토큰 인증 + 생명주기 반복 + 중복 시작 거부 + 대화 중 결과 공개 정리 + 10세션 동시(4모델)
 // 실행: 서버를 PORT=4999 TEACHER_PIN=000000 으로 띄운 뒤  node scripts/lifecycle-test.mjs ./node_modules
 import { createRequire } from 'module'
-const require = createRequire(process.argv[2] + '/')
+import path from 'path'
+const require = createRequire(path.resolve(process.argv[2] || 'node_modules') + '/')
 const { io } = require('socket.io-client')
 
 const HOST = 'http://localhost:4999'
@@ -128,12 +129,19 @@ async function lifecycle() {
   emitT(ctx, 'round:start', { style: '사극체', turns: 2, chatTime: 60, responseDelay: 6, voteTime: 30, pointValue: 1, aiModel: 'solar', briefingTime: 0 })
   const dup = await dupP
   if (!dup || !dup.message.includes('진행 중')) flag('진행 중 라운드에서 round:start 중복이 거부되지 않음'); else log(`중복 시작 거부: "${dup.message}"`)
-  // 대화 중 결과 공개 → 정리(타이머 멈춤) 확인
+  // 대화 중 결과 공개는 거부되어야 함 (투표 건너뜀 방지)
+  const revErrP = once(ctx.teacher, 'error', 5000).catch(() => null)
+  emitT(ctx, 'round:reveal')
+  const revErr = await revErrP
+  if (!revErr || !revErr.message.includes('투표 단계')) flag('대화 중 round:reveal이 거부되지 않음'); else log(`대화 중 reveal 거부: "${revErr.message}"`)
+  // 대화 강제 종료 → 투표 강제 마감 → 결과 공개 → 정리(타이머 멈춤) 확인
+  emitT(ctx, 'round:force-end-chat'); await wait(400)
+  emitT(ctx, 'round:force-end-vote'); await wait(400)
   const resP = once(ctx.teacher, 'round:results', 10000)
   emitT(ctx, 'round:reveal')
   await resP
   const t0 = ctx.ticks; await wait(2500)
-  if (ctx.ticks !== t0) flag(`대화 중 reveal 뒤에도 timer:tick ${ctx.ticks - t0}회`); else log('대화 중 reveal → 타이머 정리 확인')
+  if (ctx.ticks !== t0) flag(`조기 종료·공개 뒤에도 timer:tick ${ctx.ticks - t0}회`); else log('대화 강제 종료 → 투표 마감 → 공개 → 타이머 정리 확인')
   // 다음 라운드 정상 시작되는지
   const r3 = await playRound(ctx, { expectRoundNum: 3, aiModel: 'gpt' })
   log(`세션1 R3(gpt): ${r3.results.teamResults.map((t) => `${t.teamName} ${t.correct}/${t.total}`).join(', ')}`)
