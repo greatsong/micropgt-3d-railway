@@ -1,4 +1,4 @@
-import { timingSafeEqual, createHash } from 'node:crypto';
+import { timingSafeEqual, createHash, randomBytes } from 'node:crypto';
 import { rooms, getRoomState, isTeacher, broadcastRoomUpdate, publicStudent, emitToRoomByRole } from './roomManager.js';
 import { getWordPosition } from './gameLogic.js';
 import {
@@ -20,8 +20,25 @@ const MAX_STUDENTS_PER_ROOM = 50;
 
 // 교사 비밀번호 추측 제한 — 접속 주소별 10분에 20회 실패하면 막는다. 소켓을 새로 만들어도 이어진다
 const PASSWORD_FAIL_WINDOW_MS = 10 * 60 * 1000;
-const PASSWORD_FAIL_LIMIT = 20;
+const PASSWORD_FAIL_LIMIT = 30;
 const passwordFailures = new Map(); // 접속 주소 → { count, windowStart }
+
+// 로그인한 교사의 재연결 토큰. 같은 학교 IP에서 학생이 실패 횟수를 채워도 수업 중인 교사 화면은 복귀할 수 있다
+const DASHBOARD_TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+const dashboardTokens = new Map(); // 토큰 → 만료 시각
+
+function issueDashboardToken() {
+  const now = Date.now();
+  for (const [token, expiresAt] of dashboardTokens) if (expiresAt < now) dashboardTokens.delete(token);
+  const token = randomBytes(24).toString('hex');
+  dashboardTokens.set(token, now + DASHBOARD_TOKEN_TTL_MS);
+  return token;
+}
+
+function validDashboardToken(token) {
+  const expiresAt = typeof token === 'string' ? dashboardTokens.get(token) : undefined;
+  return Boolean(expiresAt && expiresAt > Date.now());
+}
 
 function clientAddress(socket) {
   const headers = socket.handshake.headers;
@@ -198,18 +215,22 @@ export function registerSocketHandlers(io) {
 
     // ▸ 교사 관제탑 입장 (비밀번호 인증)
     socket.on('join_dashboard', safeHandler('join_dashboard', (payload) => {
-      const { password } = payload;
+      const { password, resumeToken } = payload;
       const roomCode = sanitize(payload.roomCode, 10);
       const address = clientAddress(socket);
 
-      if (passwordBlocked(address)) {
-        socket.emit('auth_error', { message: '비밀번호 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' });
-        return;
-      }
-      if (!passwordMatches(password)) {
-        recordPasswordFailure(address);
-        socket.emit('auth_error', { message: '교사 비밀번호가 올바르지 않습니다.' });
-        return;
+      if (!validDashboardToken(resumeToken)) {
+        if (passwordBlocked(address)) {
+          socket.emit('auth_error', { message: '비밀번호 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' });
+          return;
+        }
+        if (!passwordMatches(password)) {
+          recordPasswordFailure(address);
+          socket.emit('auth_error', { message: '교사 비밀번호가 올바르지 않습니다.' });
+          return;
+        }
+        passwordFailures.delete(address);
+        socket.emit('dashboard_token', { token: issueDashboardToken() });
       }
       if (!roomCode) {
         socket.emit('auth_error', { message: '방 코드를 입력하세요.' });
@@ -326,7 +347,6 @@ export function registerSocketHandlers(io) {
       room.raceTeams[teamId] = {
         id: teamId,
         name: sanitize(payload.teamName, 24) || existingTeam.name || studentInfo?.studentName || 'Team',
-        memberNames: existingTeam.memberNames || studentInfo?.memberNames || '',
         color: payload.color || existingTeam.color || `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
         learningRate,
         momentum,
@@ -652,7 +672,6 @@ export function registerSocketHandlers(io) {
           room.raceTeams[socketId] = {
             id: socketId,
             name: student.studentName || '익명',
-            memberNames: student.memberNames || '',
             color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`,
             learningRate: 0.1,
             momentum: 0.9,

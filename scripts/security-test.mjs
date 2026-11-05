@@ -40,6 +40,19 @@ const c = await connect();
 c.emit('join_class', { studentName: '삼조', memberNames: '10103 박민수', roomCode: 'ROOM1', stableId: 'stable-c' });
 await wait(200);
 
+// 레이스 단계: raceTeams에 학번·이름이 실리지 않아야 한다
+a.emit('set_race_params', { learningRate: 0.1, momentum: 0.9, teamName: '일조', mapLevel: 2 });
+await wait(100);
+teacher.emit('prepare_race', { mapLevel: 2 });
+await wait(300);
+const lateStudent = await connect();
+const lateEvents = [];
+lateStudent.onAny((event, payload) => lateEvents.push([event, payload]));
+lateStudent.emit('join_class', { studentName: '사조', memberNames: '10104 최수민', roomCode: 'ROOM1', stableId: 'stable-d' });
+await wait(200);
+check('레이스 준비 이벤트가 발생했다', studentEvents.some(([event]) => event === 'race_prepare'));
+check('늦게 들어온 소켓도 다른 팀의 학번·이름을 받지 않는다', !/김철수|이영희|박민수/.test(JSON.stringify(lateEvents)));
+
 const studentDump = JSON.stringify(studentEvents);
 const teacherDump = JSON.stringify(teacherEvents);
 check('학생은 다른 팀의 학번·이름을 받지 않는다', !studentDump.includes('김철수') && !studentDump.includes('박민수'));
@@ -52,13 +65,22 @@ const errors = [];
 attacker.on('auth_error', (payload) => errors.push(payload.message));
 let granted = false;
 attacker.on('room_state', () => { granted = true; });
-for (let i = 0; i < 21; i += 1) attacker.emit('join_dashboard', { roomCode: 'ROOM1', password: `wrong${i}` });
+const resume = teacherEvents.find(([event]) => event === 'dashboard_token')?.[1]?.token;
+check('교사가 재연결 토큰을 받는다', Boolean(resume));
+for (let i = 0; i < 31; i += 1) attacker.emit('join_dashboard', { roomCode: 'ROOM1', password: `wrong${i}` });
 await wait(200);
 attacker.emit('join_dashboard', { roomCode: 'ROOM1', password: 'test-pw' });
 await wait(200);
 check('비밀번호 실패 제한 뒤에는 맞아도 막힌다', !granted && errors.at(-1)?.includes('너무 많습니다'));
 
-for (const s of [teacher, a, b, c, attacker]) s.disconnect();
+const reconnected = await connect();
+let resumed = false;
+reconnected.on('room_state', () => { resumed = true; });
+reconnected.emit('join_dashboard', { roomCode: 'ROOM1', resumeToken: resume });
+await wait(200);
+check('차단 중에도 로그인했던 교사는 재연결한다', resumed);
+
+for (const s of [teacher, a, b, c, lateStudent, attacker, reconnected]) s.disconnect();
 http.close();
 io.close();
 originalLog(failed ? `실패 ${failed}건` : '모두 통과');
