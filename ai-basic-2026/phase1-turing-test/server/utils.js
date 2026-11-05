@@ -15,6 +15,17 @@ export function createJoinToken() {
   return crypto.randomBytes(24).toString('hex')
 }
 
+/**
+ * 수업 코드 뒤에 붙이는 임의 문자열 (5자, 약 2,800만 가지). 기본 코드는 낱말 59종이라 전수 탐색이 되므로
+ * 교사가 고른 낱말과 상관없이 서버가 붙인다. 칠판에서 헷갈리는 0·O·1·I·L은 뺐다
+ */
+export function createCodeSuffix(size = 5) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  let suffix = ''
+  for (let i = 0; i < size; i++) suffix += chars[crypto.randomInt(chars.length)]
+  return suffix
+}
+
 /** 무인증·학생 응답에서 실명을 가린다: "김철수" → "김○○" */
 export function maskName(name) {
   const chars = Array.from(String(name ?? ''))

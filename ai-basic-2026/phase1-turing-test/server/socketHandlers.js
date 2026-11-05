@@ -3,7 +3,7 @@ import { generateAIResponseWithTimeout, styleTransform, pickFallbackPhrase, aiEv
 import { getTimer, timerStore } from './timer.js'
 import { buildSharedRankings, maskName, safeEqual } from './utils.js'
 import { sessionApiKeys } from './apiKeyStore.js'
-import { verifyTeacherToken, canManageSession } from './teacherAuth.js'
+import { verifyTeacherToken, canManageSession, teacherTokenExpiresAt } from './teacherAuth.js'
 
 const activeRounds = new Map()
 
@@ -19,6 +19,22 @@ const isSessionId = (value) => typeof value === 'string' && SESSION_ID_RE.test(v
 function isTeamSocket(socket, sessionId, teamId) {
   const team = socket.data.team
   return Boolean(team) && team.sessionId === sessionId && team.teamId === teamId
+}
+
+/**
+ * 토큰 만료 시각에 교사 방에서 내보낸다. 소켓은 입장할 때만 인증하므로, 그대로 두면 만료 뒤에도
+ * 실명이 든 교사 이벤트를 계속 받는다. 다시 teacher:join하면 새 토큰 기준으로 시각을 잡는다
+ */
+function expireTeacherRooms(socket, sessionId, teacher) {
+  clearTimeout(socket.data.teacherExpiry)
+  const delay = Math.max(0, teacherTokenExpiresAt(teacher) - Date.now())
+  socket.data.teacherExpiry = setTimeout(() => {
+    socket.leave(`session:${sessionId}:teacher`)
+    // 학생 소켓이 아니면 수업 방에서도 나온다
+    if (socket.data.team?.sessionId !== sessionId) socket.leave(`session:${sessionId}`)
+    socket.emit('error', { message: '교사 인증이 만료되었습니다. 입장 코드로 다시 들어오세요.' })
+  }, Math.min(delay, 2 ** 31 - 1))
+  socket.data.teacherExpiry.unref?.()
 }
 
 /** 세션 id·라운드 id·팀 id가 서로 같은 수업의 것인지 확인한다 (교사가 다른 수업의 대화를 읽지 못하게) */
@@ -127,11 +143,14 @@ export function registerSocketHandlers(io, db) {
   })
 
   io.on('connection', (socket) => {
-    socket.on('teacher:join', ({ sessionId, token }) => {
+    socket.on('teacher:join', ({ sessionId, token } = {}) => {
       if (!teacherOk(socket, token, sessionId)) return
       socket.join(`session:${sessionId}`)
       socket.join(`session:${sessionId}:teacher`)
+      expireTeacherRooms(socket, sessionId, verifyTeacherToken(token))
     })
+
+    socket.on('disconnect', () => clearTimeout(socket.data.teacherExpiry))
 
     socket.on('team:join', ({ sessionId, teamId, joinToken } = {}) => {
       const numericTeamId = Number(teamId)

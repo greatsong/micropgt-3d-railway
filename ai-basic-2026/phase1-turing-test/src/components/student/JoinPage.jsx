@@ -130,7 +130,7 @@ export default function JoinPage({ navigate }) {
             className="field"
             value={sessionInput}
             onChange={(event) => setSessionInput(event.target.value.replace(/\s+/g, ''))}
-            placeholder="수업 코드 입력 (예: ai-leader, 대소문자 무관)"
+            placeholder="수업 코드 입력 (예: ai-leader-k7qx2, 대소문자 무관)"
             onKeyDown={(e) => e.key === 'Enter' && loadSessionByCode(sessionInput)}
             autoCapitalize="off"
             autoCorrect="off"

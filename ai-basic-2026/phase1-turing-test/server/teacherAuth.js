@@ -12,7 +12,7 @@
 import crypto from 'crypto'
 import db from './db.js'
 
-const TOKEN_TTL_MS = 12 * 60 * 60 * 1000
+const TOKEN_TTL_MS = Number(process.env.TEACHER_TOKEN_TTL_MS) || 12 * 60 * 60 * 1000
 const tokens = new Map() // token -> { createdAt, mode: 'pin' | 'keys', teacherId }
 
 // 입장 코드 실패 횟수 제한 (IP당 10분에 30회 실패). 성공은 세지 않는다 — 학교 공용망에서 교사 10명이 같은 IP를 쓴다
@@ -53,9 +53,9 @@ export function recordPinFailure(ip) {
   recordFailure(pinFailures, ip)
 }
 
-// 수업 코드 추측 제한 (IP당 10분에 60회 실패). 학교 공용 IP에서 학생들의 오타로 막히지 않게 교사 코드보다 넉넉하게 둔다
+// 수업 코드 추측 제한 (IP당 10분에 30회 실패). 학교 공용 IP에서 학생들의 오타로 막히지 않게 교사 코드와 같은 값을 둔다
 const codeFailures = new Map()
-const CODE_FAIL_LIMIT = Number(process.env.JOIN_CODE_FAIL_LIMIT) || 60
+const CODE_FAIL_LIMIT = Number(process.env.JOIN_CODE_FAIL_LIMIT) || 30
 
 export function joinCodeBlocked(ip) {
   return isBlocked(codeFailures, ip, CODE_FAIL_LIMIT)
@@ -86,6 +86,11 @@ export function issueTeacherToken(mode, teacherId) {
   return token
 }
 
+/** 토큰이 만료되는 시각 (밀리초) */
+export function teacherTokenExpiresAt(entry) {
+  return entry.createdAt + TOKEN_TTL_MS
+}
+
 /** 유효하면 토큰 정보 { mode, teacherId }, 아니면 null */
 export function verifyTeacherToken(token) {
   if (typeof token !== 'string' || !token) return null
@@ -100,19 +105,23 @@ export function verifyTeacherToken(token) {
 
 /**
  * 세션 관리 권한 — teacher는 verifyTeacherToken이 돌려준 { mode, teacherId }.
- * 소유자가 저장돼 있으면 같은 교사만 통과한다.
- * 이 기능 이전에 만든 진행 중 세션만 소유자가 비어 있다. 그때는 입장 코드 교사만 넘겨받는다
- * (본인 API 키 입장은 키만 유효하면 누구나 가능하므로 빈 세션을 가져갈 수 없다).
- * 없는 세션이나 이미 끝난 옛 세션은 거부한다.
+ * 저장된 소유자와 같은 교사만 통과한다. 소유자가 비어 있는 세션은 누구도 자동으로 가져가지 못한다.
  */
 export function canManageSession(sessionId, teacher) {
   if (typeof sessionId !== 'string' || !sessionId || !teacher?.teacherId) return false
-  const row = db.prepare('SELECT owner_teacher_id, status FROM sessions WHERE id = ?').get(sessionId)
-  if (!row) return false
-  if (row.owner_teacher_id) return row.owner_teacher_id === teacher.teacherId
-  if (teacher.mode !== 'pin' || (row.status !== 'waiting' && row.status !== 'active')) return false
-  db.prepare('UPDATE sessions SET owner_teacher_id = ? WHERE id = ? AND owner_teacher_id IS NULL').run(teacher.teacherId, sessionId)
-  return true
+  const row = db.prepare('SELECT owner_teacher_id FROM sessions WHERE id = ?').get(sessionId)
+  return Boolean(row?.owner_teacher_id) && row.owner_teacher_id === teacher.teacherId
+}
+
+/**
+ * 소유자 저장 기능 이전에 만든 진행 중 세션을 넘겨받는다. 세션 id가 아니라 수업 코드를 직접 입력해
+ * 세션을 연 입장 코드 교사만 호출한다. 본인 API 키 입장은 키만 유효하면 누구나 가능하므로 제외한다.
+ * 끝난 옛 세션은 scripts/assign-session-owner.mjs로 운영자가 지정한다.
+ */
+export function claimLegacySession(session, teacher) {
+  if (session.owner_teacher_id || teacher?.mode !== 'pin') return false
+  return db.prepare('UPDATE sessions SET owner_teacher_id = ? WHERE id = ? AND owner_teacher_id IS NULL')
+    .run(teacher.teacherId, session.id).changes === 1
 }
 
 /** Express 미들웨어 — 교사용 REST 보호 */

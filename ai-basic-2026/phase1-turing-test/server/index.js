@@ -7,13 +7,13 @@ import cors from 'cors'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import fs from 'fs'
-import { nanoid, createJoinToken, maskName, safeEqual } from './utils.js'
+import { nanoid, createCodeSuffix, createJoinToken, maskName, safeEqual } from './utils.js'
 import db from './db.js'
 import { registerSocketHandlers, buildSessionSummary } from './socketHandlers.js'
 import { sessionApiKeys } from './apiKeyStore.js'
 import {
   issueTeacherToken, verifyTeacherToken, requireSessionOwner, getTeacherPin,
-  pinBlocked, recordPinFailure, clearPinFailures, normalizeTeacherId, canManageSession,
+  pinBlocked, recordPinFailure, clearPinFailures, normalizeTeacherId, canManageSession, claimLegacySession,
   joinCodeBlocked, recordJoinCodeFailure,
 } from './teacherAuth.js'
 import { startRetentionJob } from './retention.js'
@@ -240,8 +240,8 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
 
   if (existing) {
     // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사(브라우저) 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
-    // 소유자 기록은 서버 메모리라 재배포 뒤에는 비어 있고, 그때는 처음 여는 교사가 가져간다
-    if (mode !== 'join' && !canManageSession(existing.id, teacher)) {
+    // 소유자가 비어 있는 옛 세션은 코드를 직접 입력한 입장 코드 교사만 넘겨받는다
+    if (mode !== 'join' && !canManageSession(existing.id, teacher) && !claimLegacySession(existing, teacher)) {
       return res.status(409).json({ error: `'${teacherCode}'는 다른 선생님이 진행 중인 수업 코드입니다. 다른 코드를 입력하세요.` })
     }
     const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(existing.id)
@@ -256,12 +256,24 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     })
   }
 
-  // 교사 생성: 새 세션 생성
+  // 같은 교사가 낱말만 다시 입력하면 자기가 연 수업을 이어 간다
+  const ownSession = db.prepare(`
+    SELECT * FROM sessions
+    WHERE owner_teacher_id = ? AND (status = 'waiting' OR status = 'active') AND substr(teacher_code, 1, ?) = ?
+    ORDER BY rowid DESC LIMIT 1
+  `).get(teacher.teacherId, teacherCode.length + 1, `${teacherCode}-`)
+  if (ownSession) {
+    const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(ownSession.id)
+    return res.json(sessionForViewer(ownSession, teams, 'teacher'))
+  }
+
+  // 교사 생성: 새 세션 생성. 코드는 교사가 고른 낱말 뒤에 임의 문자열을 붙여 추측할 수 없게 한다
   const id = nanoid()
   const joinToken = createJoinToken()
+  const classCode = `${teacherCode}-${createCodeSuffix()}`
   db.prepare('INSERT INTO sessions (id, teacher_code, owner_teacher_id, join_token) VALUES (?, ?, ?, ?)')
-    .run(id, teacherCode, teacher.teacherId, joinToken)
-  res.json({ id, teacher_code: teacherCode, status: 'waiting', joinToken, teams: [] })
+    .run(id, classCode, teacher.teacherId, joinToken)
+  res.json({ id, teacher_code: classCode, status: 'waiting', joinToken, teams: [] })
 })
 
 // 세션 조회 — 입장 권한이 없으면 상태만 알려 준다 (학생 화면이 수업 종료 여부를 확인하는 용도)

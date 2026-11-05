@@ -25,7 +25,11 @@ const code = `SEC${Date.now().toString(36).slice(-5)}`.toUpperCase()
 const created = (await api('POST', '/session', { teacherCode: code }, { 'x-teacher-token': A.token })).data
 check('교사 세션 생성 시 입장 토큰 포함', Boolean(created.joinToken))
 
-const join = (await api('POST', '/session', { teacherCode: code, mode: 'join' })).data
+check('수업 코드에 임의 문자열이 붙는다', new RegExp(`^${code}-[A-Z2-9]{5}$`).test(created.teacher_code))
+const again = (await api('POST', '/session', { teacherCode: code }, { 'x-teacher-token': A.token })).data
+check('같은 교사가 낱말을 다시 입력하면 자기 수업을 이어 간다', again.id === created.id)
+check('낱말만으로는 학생이 입장하지 못한다', (await api('POST', '/session', { teacherCode: code, mode: 'join' })).status === 404)
+const join = (await api('POST', '/session', { teacherCode: created.teacher_code, mode: 'join' })).data
 check('학생은 코드로 입장 토큰을 받는다', join.joinToken === created.joinToken)
 check('세션 응답에 소유자 값 없음', !('owner_teacher_id' in join) && !('join_token' in join))
 
@@ -83,16 +87,40 @@ const code2 = `${code}X`.slice(-8)
 const other = (await api('POST', '/session', { teacherCode: code2 }, { 'x-teacher-token': B.token })).data
 check('라운드가 다른 세션이면 404', (await api('GET', `/dashboard/${other.id}/round/${rounds[0].id}`, null, { 'x-teacher-token': B.token })).status === 404)
 
+// 다른 교사는 낱말이 같아도 새 수업을 받고, 전체 코드로는 거부된다
+check('다른 교사는 전체 코드로 남의 수업을 열지 못한다', (await api('POST', '/session', { teacherCode: created.teacher_code }, { 'x-teacher-token': B.token })).status === 409)
+const sameWord = (await api('POST', '/session', { teacherCode: code }, { 'x-teacher-token': B.token })).data
+check('같은 낱말을 고른 다른 교사는 별도 수업을 받는다', sameWord.id && sameWord.id !== created.id)
+
 // CORS
 const cors = await fetch(`${BASE}/health`, { headers: { Origin: 'https://evil.example' } })
 check('외부 사이트에 CORS 허용 헤더 없음', !cors.headers.get('access-control-allow-origin'))
+
+// 소유자가 비어 있는 옛 세션 (TEST_DB=<turing.db 임시 경로>일 때만)
+if (process.env.TEST_DB) {
+  const Database = require('better-sqlite3')
+  const raw = new Database(process.env.TEST_DB)
+  raw.prepare("INSERT INTO sessions (id, teacher_code, status) VALUES ('legacyActive1', 'OLD-ACTIVE', 'active'), ('legacyEnded01', 'OLD-ENDED', 'ended')").run()
+  raw.close()
+  const asA = { 'x-teacher-token': A.token }
+  const asB = { 'x-teacher-token': B.token }
+  check('옛 세션을 세션 id만으로 가져가지 못한다', (await api('GET', '/dashboard/legacyActive1/rounds', null, asB)).status === 403)
+  check('옛 세션 소켓 입장 거부 뒤에도 소유자 없음 유지', (await api('GET', '/dashboard/legacyActive1/rounds', null, asA)).status === 403)
+  check('코드를 직접 입력한 입장 코드 교사가 넘겨받는다', (await api('POST', '/session', { teacherCode: 'OLD-ACTIVE' }, asA)).data.id === 'legacyActive1')
+  check('넘겨받은 뒤 다른 교사는 409', (await api('POST', '/session', { teacherCode: 'OLD-ACTIVE' }, asB)).status === 409)
+  check('넘겨받은 교사는 대시보드를 본다', (await api('GET', '/dashboard/legacyActive1/rounds', null, asA)).status === 200)
+  check('끝난 옛 세션은 자동으로 넘어가지 않는다', (await api('GET', '/dashboard/legacyEnded01/summary', null, asA)).status === 403)
+  const check2 = new Database(process.env.TEST_DB, { readonly: true })
+  check('끝난 옛 세션의 기록은 남아 있다', Boolean(check2.prepare("SELECT 1 FROM sessions WHERE id = 'legacyEnded01'").get()))
+  check2.close()
+}
 
 // 입장 코드 제한: 차단 뒤에는 맞는 코드도 통과하지 않는다
 if (process.env.TEST_RATE_LIMIT === '1') {
   for (let i = 0; i < 31; i++) await api('POST', '/auth/teacher', { pin: `wrong${i}` })
   check('차단 뒤 맞는 코드도 429', (await api('POST', '/auth/teacher', { pin: process.env.TEST_PIN || '000000' })).status === 429)
   let status = 0
-  for (let i = 0; i < 61; i++) status = (await api('POST', '/session', { teacherCode: `NOPE${i}`, mode: 'join' })).status
+  for (let i = 0; i < 31; i++) status = (await api('POST', '/session', { teacherCode: `NOPE${i}`, mode: 'join' })).status
   check('수업 코드 추측 제한', status === 429)
 }
 
