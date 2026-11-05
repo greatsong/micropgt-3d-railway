@@ -87,6 +87,25 @@ const code2 = `${code}X`.slice(-8)
 const other = (await api('POST', '/session', { teacherCode: code2 }, { 'x-teacher-token': B.token })).data
 check('라운드가 다른 세션이면 404', (await api('GET', `/dashboard/${other.id}/round/${rounds[0].id}`, null, { 'x-teacher-token': B.token })).status === 404)
 
+const prefixed = (await api('POST', '/session', { teacherCode: `${code}-OTHER` }, { 'x-teacher-token': A.token })).data
+check('낱말이 앞부분만 같은 다른 수업과 합쳐지지 않는다', prefixed.id !== created.id)
+const prefixedAgain = (await api('POST', '/session', { teacherCode: `${code}-AB` }, { 'x-teacher-token': A.token })).data
+check('낱말 재입력은 그 낱말의 수업만 잇는다', prefixedAgain.id !== created.id && prefixedAgain.id !== prefixed.id)
+
+// 수업을 옮긴 교사 소켓은 이전 수업의 교사 이벤트를 받지 않는다
+const moved = await connect()
+const movedEvents = []
+moved.onAny((event) => movedEvents.push(event))
+moved.emit('teacher:join', { sessionId: join.id, token: A.token })
+await wait(100)
+moved.emit('teacher:join', { sessionId: prefixed.id, token: A.token })
+await wait(100)
+movedEvents.length = 0
+await api('POST', `/session/${join.id}/team`, { name: '옮긴뒤', members: ['최'] }, student)
+await wait(200)
+check('수업을 옮기면 이전 교사 방에서 나온다', !movedEvents.includes('team:registered'))
+moved.disconnect()
+
 // 다른 교사는 낱말이 같아도 새 수업을 받고, 전체 코드로는 거부된다
 check('다른 교사는 전체 코드로 남의 수업을 열지 못한다', (await api('POST', '/session', { teacherCode: created.teacher_code }, { 'x-teacher-token': B.token })).status === 409)
 const sameWord = (await api('POST', '/session', { teacherCode: code }, { 'x-teacher-token': B.token })).data
@@ -104,6 +123,7 @@ if (process.env.TEST_DB) {
   raw.close()
   const asA = { 'x-teacher-token': A.token }
   const asB = { 'x-teacher-token': B.token }
+  check('넘겨받기 전 옛 세션은 코드로 학생 입장이 안 된다', (await api('POST', '/session', { teacherCode: 'OLD-ACTIVE', mode: 'join' })).status === 404)
   check('옛 세션을 세션 id만으로 가져가지 못한다', (await api('GET', '/dashboard/legacyActive1/rounds', null, asB)).status === 403)
   check('옛 세션 소켓 입장 거부 뒤에도 소유자 없음 유지', (await api('GET', '/dashboard/legacyActive1/rounds', null, asA)).status === 403)
   check('코드를 직접 입력한 입장 코드 교사가 넘겨받는다', (await api('POST', '/session', { teacherCode: 'OLD-ACTIVE' }, asA)).data.id === 'legacyActive1')

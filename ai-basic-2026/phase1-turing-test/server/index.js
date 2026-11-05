@@ -161,6 +161,7 @@ app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, requireSessionOwn
 // 학생은 로그인 없이 수업 코드로 들어온다. 코드를 확인하면 세션의 입장 토큰을 받고,
 // 팀 조회·등록과 소켓 입장에서 이 토큰을 확인한다. 세션 id나 팀 번호만으로는 명단을 볼 수 없다.
 const MAX_TEAMS_PER_SESSION = 60
+const CODE_SUFFIX_LENGTH = 5
 const MAX_MEMBERS_PER_TEAM = 6
 const MAX_NAME_LENGTH = 30
 
@@ -234,9 +235,11 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   }
 
   // 기존 활성 세션 확인
-  const existing = db
+  const found = db
     .prepare("SELECT * FROM sessions WHERE teacher_code = ? AND (status = 'waiting' OR status = 'active') ORDER BY rowid DESC LIMIT 1")
     .get(teacherCode)
+  // 소유자가 빈 옛 세션은 코드가 낱말뿐이라 추측할 수 있다. 교사가 넘겨받기 전에는 학생 입장을 받지 않는다
+  const existing = mode === 'join' && found && !found.owner_teacher_id ? null : found
 
   if (existing) {
     // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사(브라우저) 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
@@ -257,11 +260,13 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   }
 
   // 같은 교사가 낱말만 다시 입력하면 자기가 연 수업을 이어 간다
+  // 길이까지 비교해 '낱말-임의 문자열'만 잡는다. 'WORD'를 입력했을 때 'WORD-OTHER-XXXXX'로 합쳐지면 안 된다
   const ownSession = db.prepare(`
     SELECT * FROM sessions
-    WHERE owner_teacher_id = ? AND (status = 'waiting' OR status = 'active') AND substr(teacher_code, 1, ?) = ?
+    WHERE owner_teacher_id = ? AND (status = 'waiting' OR status = 'active')
+      AND substr(teacher_code, 1, ?) = ? AND length(teacher_code) = ?
     ORDER BY rowid DESC LIMIT 1
-  `).get(teacher.teacherId, teacherCode.length + 1, `${teacherCode}-`)
+  `).get(teacher.teacherId, teacherCode.length + 1, `${teacherCode}-`, teacherCode.length + 1 + CODE_SUFFIX_LENGTH)
   if (ownSession) {
     const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(ownSession.id)
     return res.json(sessionForViewer(ownSession, teams, 'teacher'))
@@ -270,7 +275,7 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   // 교사 생성: 새 세션 생성. 코드는 교사가 고른 낱말 뒤에 임의 문자열을 붙여 추측할 수 없게 한다
   const id = nanoid()
   const joinToken = createJoinToken()
-  const classCode = `${teacherCode}-${createCodeSuffix()}`
+  const classCode = `${teacherCode}-${createCodeSuffix(CODE_SUFFIX_LENGTH)}`
   db.prepare('INSERT INTO sessions (id, teacher_code, owner_teacher_id, join_token) VALUES (?, ?, ?, ?)')
     .run(id, classCode, teacher.teacherId, joinToken)
   res.json({ id, teacher_code: classCode, status: 'waiting', joinToken, teams: [] })

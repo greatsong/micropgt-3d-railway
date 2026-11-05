@@ -21,6 +21,12 @@ function isTeamSocket(socket, sessionId, teamId) {
   return Boolean(team) && team.sessionId === sessionId && team.teamId === teamId
 }
 
+function leaveTeacherRooms(socket, sessionId) {
+  socket.leave(`session:${sessionId}:teacher`)
+  // 학생 소켓이 아니면 수업 방에서도 나온다
+  if (socket.data.team?.sessionId !== sessionId) socket.leave(`session:${sessionId}`)
+}
+
 /**
  * 토큰 만료 시각에 교사 방에서 내보낸다. 소켓은 입장할 때만 인증하므로, 그대로 두면 만료 뒤에도
  * 실명이 든 교사 이벤트를 계속 받는다. 다시 teacher:join하면 새 토큰 기준으로 시각을 잡는다
@@ -29,9 +35,8 @@ function expireTeacherRooms(socket, sessionId, teacher) {
   clearTimeout(socket.data.teacherExpiry)
   const delay = Math.max(0, teacherTokenExpiresAt(teacher) - Date.now())
   socket.data.teacherExpiry = setTimeout(() => {
-    socket.leave(`session:${sessionId}:teacher`)
-    // 학생 소켓이 아니면 수업 방에서도 나온다
-    if (socket.data.team?.sessionId !== sessionId) socket.leave(`session:${sessionId}`)
+    leaveTeacherRooms(socket, sessionId)
+    socket.data.teacherSessionId = null
     socket.emit('error', { message: '교사 인증이 만료되었습니다. 입장 코드로 다시 들어오세요.' })
   }, Math.min(delay, 2 ** 31 - 1))
   socket.data.teacherExpiry.unref?.()
@@ -145,6 +150,10 @@ export function registerSocketHandlers(io, db) {
   io.on('connection', (socket) => {
     socket.on('teacher:join', ({ sessionId, token } = {}) => {
       if (!teacherOk(socket, token, sessionId)) return
+      // 다른 수업의 교사 방에 있던 소켓이면 먼저 나온다. 남아 있으면 만료 처리에서 빠진다
+      const previous = socket.data.teacherSessionId
+      if (previous && previous !== sessionId) leaveTeacherRooms(socket, previous)
+      socket.data.teacherSessionId = sessionId
       socket.join(`session:${sessionId}`)
       socket.join(`session:${sessionId}:teacher`)
       expireTeacherRooms(socket, sessionId, verifyTeacherToken(token))
