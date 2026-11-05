@@ -98,7 +98,7 @@ function belongsToSession(db, sessionId, { roundId, teamId }) {
   return Boolean(round && team)
 }
 
-/** 교사 전용 이벤트 — 토큰이 없거나 만료면 거부하고, 다른 교사의 세션이면 거부한다 */
+/** 교사 전용 이벤트 — 토큰이 없거나 만료면 거부하고, 다른 교사의 세션이면 거부한다. 통과하면 토큰 정보를 돌려준다 */
 function teacherOk(socket, token, sessionId) {
   const teacher = verifyTeacherToken(token)
   if (!teacher) {
@@ -109,7 +109,7 @@ function teacherOk(socket, token, sessionId) {
     socket.emit('error', { message: '다른 선생님이 진행 중인 수업입니다. 조작할 수 없습니다.' })
     return false
   }
-  return true
+  return teacher
 }
 
 /**
@@ -200,14 +200,16 @@ export function registerSocketHandlers(io, db) {
     const on = safeEvents(socket)
 
     on('teacher:join', ({ sessionId, token }) => {
-      if (!teacherOk(socket, token, sessionId)) return
+      // 검사한 토큰 정보를 그대로 쓴다. 다시 조회하면 그 사이 만료될 때 만료 예약이 빠진다
+      const teacher = teacherOk(socket, token, sessionId)
+      if (!teacher) return
       // 다른 수업의 교사 방에 있던 소켓이면 먼저 나온다. 남아 있으면 만료 처리에서 빠진다
       const previous = socket.data.teacherSessionId
       if (previous && previous !== sessionId) leaveTeacherRooms(socket, previous)
       socket.data.teacherSessionId = sessionId
       socket.join(`session:${sessionId}`)
       socket.join(`session:${sessionId}:teacher`)
-      expireTeacherRooms(socket, sessionId, verifyTeacherToken(token))
+      expireTeacherRooms(socket, sessionId, teacher)
     })
 
     on('disconnect', () => clearTimeout(socket.data.teacherExpiry))
