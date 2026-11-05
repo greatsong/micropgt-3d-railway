@@ -31,22 +31,38 @@ export function getTeacherId() {
   }
 }
 
-// 학생 입장 토큰 — 수업 코드를 확인하면 서버가 준다. 새로고침·재접속 뒤에도 이어지도록 localStorage에 둔다
-const JOIN_TOKEN_KEY = 'turing_test_join_token'
+// 학생 입장 토큰 — 수업 코드를 확인하면 서버가 준다. 새로고침·재접속 뒤에도 이어지도록 localStorage에 둔다.
+// 수업별로 저장한다. 칸이 하나면 같은 기기로 다른 수업에 들어갔을 때 앞 수업 화면이 튕긴다
+const JOIN_TOKEN_KEY = 'turing_test_join_tokens'
+const MAX_SAVED_TOKENS = 5
 
-export function getJoinToken() {
-  try { return JSON.parse(localStorage.getItem(JOIN_TOKEN_KEY) || '{}').token || '' } catch { return '' }
+function readJoinTokens() {
+  try {
+    const value = JSON.parse(localStorage.getItem(JOIN_TOKEN_KEY) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+}
+
+function writeJoinTokens(entries) {
+  try { localStorage.setItem(JOIN_TOKEN_KEY, JSON.stringify(entries)) } catch {}
+}
+
+export function getJoinToken(sessionId) {
+  return readJoinTokens().find((entry) => entry.sessionId === sessionId)?.token || ''
 }
 export function setJoinToken(sessionId, token) {
-  try { localStorage.setItem(JOIN_TOKEN_KEY, JSON.stringify({ sessionId, token })) } catch {}
+  const others = readJoinTokens().filter((entry) => entry.sessionId !== sessionId)
+  writeJoinTokens([{ sessionId, token }, ...others].slice(0, MAX_SAVED_TOKENS))
 }
-export function clearJoinToken() {
-  try { localStorage.removeItem(JOIN_TOKEN_KEY) } catch {}
+export function clearJoinToken(sessionId) {
+  writeJoinTokens(readJoinTokens().filter((entry) => entry.sessionId !== sessionId))
 }
 
-function authHeaders() {
+function authHeaders(sessionId) {
   const token = getTeacherToken()
-  const joinToken = getJoinToken()
+  const joinToken = sessionId ? getJoinToken(sessionId) : ''
   return {
     ...(token ? { 'x-teacher-token': token } : {}),
     ...(joinToken ? { 'x-join-token': joinToken } : {}),
@@ -66,15 +82,16 @@ async function readJson(response) {
   return data
 }
 
-export async function apiGet(path) {
-  const response = await fetch(`${API_BASE}${path}`, { headers: authHeaders() })
+/** sessionId를 주면 그 수업의 입장 토큰을 함께 보낸다 */
+export async function apiGet(path, sessionId) {
+  const response = await fetch(`${API_BASE}${path}`, { headers: authHeaders(sessionId) })
   return readJson(response)
 }
 
-export async function apiPost(path, body) {
+export async function apiPost(path, body, sessionId) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(sessionId) },
     body: JSON.stringify(body),
   })
   return readJson(response)

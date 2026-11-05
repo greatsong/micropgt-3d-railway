@@ -20,6 +20,10 @@ import { startRetentionJob } from './retention.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+// 처리하지 못한 예외 하나로 수업 중 서버 전체가 내려가지 않게 한다 (각 소켓 핸들러는 자체적으로 예외를 잡는다)
+process.on('uncaughtException', (err) => console.error('[process] 처리되지 않은 예외:', err.message))
+process.on('unhandledRejection', (reason) => console.error('[process] 처리되지 않은 거부:', reason?.message || reason))
+
 // ── 서브패스 설정 ──────────────────────────────────────────────────────────
 const BASE_PATH = process.env.APP_BASE_PATH || '/turing-test'
 
@@ -50,8 +54,9 @@ const io = new Server(httpServer, {
   cors: corsOptions,
 })
 
-// Railway 등 프록시 뒤에서 req.ip가 실제 접속 IP가 되도록 (입장 코드 실패 횟수 제한용)
-app.set('trust proxy', 1)
+// Railway·Fly 프록시 뒤에서만 X-Forwarded-For를 믿는다 (입장 코드 실패 횟수 제한용).
+// 프록시 없이 직접 접속하는 환경에서 믿으면 요청마다 헤더를 바꿔 제한을 우회할 수 있다
+app.set('trust proxy', process.env.RAILWAY_ENVIRONMENT_NAME || process.env.FLY_APP_NAME ? 1 : false)
 
 app.use(cors(corsOptions))
 app.use(express.json())

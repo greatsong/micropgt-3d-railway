@@ -49,7 +49,7 @@ export default function JoinPage({ navigate }) {
 
   async function loadSession(sessionId) {
     try {
-      const data = await apiGet(`/session/${sessionId}`)
+      const data = await apiGet(`/session/${sessionId}`, sessionId)
       // 입장 토큰이 없으면 팀 목록을 받지 못한다. 세션 주소만으로는 들어올 수 없으므로 코드를 입력하게 한다
       if (!Array.isArray(data.teams)) {
         setSession(null)
@@ -85,7 +85,7 @@ export default function JoinPage({ navigate }) {
       const team = await apiPost(`/session/${session.id}/team`, {
         name: teamName.trim(),
         members,
-      })
+      }, session.id)
       goToTeam(team.id)
     } catch (teamError) {
       setError(teamError.message)
@@ -95,7 +95,7 @@ export default function JoinPage({ navigate }) {
   async function joinTeam(teamId) {
     if (!session?.id || !teamId) return
     try {
-      await apiPost(`/session/${session.id}/join`, { teamId })
+      await apiPost(`/session/${session.id}/join`, { teamId }, session.id)
       goToTeam(teamId)
     } catch (joinError) {
       setError(joinError.message)

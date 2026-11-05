@@ -135,10 +135,42 @@ if (process.env.TEST_DB) {
   check2.close()
 }
 
+// 익명 소켓의 잘못된 메시지로 서버가 내려가지 않는다
+const fuzz = await connect()
+for (const event of ['round:start', 'session:close', 'tournament:end', 'round:reveal', 'round:force-end-chat', 'round:force-end-vote', 'round:show-conversation', 'teacher:get-live-turns', 'teacher:join', 'team:join', 'judge:send-question', 'respondent:send-answer', 'vote:submit']) {
+  fuzz.emit(event)
+  fuzz.emit(event, null)
+  fuzz.emit(event, 'text')
+  fuzz.emit(event, [1])
+  fuzz.emit(event, { sessionId: { a: 1 }, teamId: { b: 2 }, token: {}, joinToken: {} })
+}
+await wait(300)
+fuzz.disconnect()
+check('잘못된 소켓 메시지 뒤에도 서버가 응답한다', (await api('GET', '/health')).status === 200)
+
+// 끊긴 동안의 투표: team:join 전에 도착해도 입장 토큰이 있으면 받는다
+const fresh = await connect()
+teacherSock.emit('round:force-end-chat', { sessionId: join.id, token: A.token })
+await wait(400)
+const liveRounds = (await api('GET', `/dashboard/${join.id}/rounds`, null, { 'x-teacher-token': A.token })).data
+fresh.emit('vote:submit', { sessionId: join.id, teamId: t1.id, votes: [{ turn: { x: 1 }, verdict: 'ai' }], joinToken: join.joinToken })
+const progress = new Promise((resolve) => { teacherSock.once('vote:progress', () => resolve(true)); setTimeout(() => resolve(false), 1500) })
+fresh.emit('vote:submit', { sessionId: join.id, teamId: t1.id, votes: [{ turn: 1, verdict: 'ai' }], joinToken: join.joinToken })
+check('투표 단계로 넘어갔다', liveRounds[0].status === 'voting')
+check('team:join 전의 투표도 입장 토큰으로 받는다', await progress)
+const anonVote = new Promise((resolve) => { teacherSock.once('vote:progress', () => resolve(true)); setTimeout(() => resolve(false), 600) })
+const stranger = await connect()
+stranger.emit('vote:submit', { sessionId: join.id, teamId: t2.id, votes: [{ turn: 1, verdict: 'ai' }] })
+check('토큰 없는 투표는 받지 않는다', !(await anonVote))
+stranger.disconnect()
+fresh.disconnect()
+
 // 입장 코드 제한: 차단 뒤에는 맞는 코드도 통과하지 않는다
 if (process.env.TEST_RATE_LIMIT === '1') {
   for (let i = 0; i < 31; i++) await api('POST', '/auth/teacher', { pin: `wrong${i}` })
   check('차단 뒤 맞는 코드도 429', (await api('POST', '/auth/teacher', { pin: process.env.TEST_PIN || '000000' })).status === 429)
+  // 프록시 환경이 아니면 X-Forwarded-For를 바꿔도 제한을 피하지 못한다
+  check('헤더 위조로 차단을 우회하지 못한다', (await api('POST', '/auth/teacher', { pin: process.env.TEST_PIN || '000000' }, { 'X-Forwarded-For': '203.0.113.9' })).status === 429)
   let status = 0
   for (let i = 0; i < 31; i++) status = (await api('POST', '/session', { teacherCode: `NOPE${i}`, mode: 'join' })).status
   check('수업 코드 추측 제한', status === 429)

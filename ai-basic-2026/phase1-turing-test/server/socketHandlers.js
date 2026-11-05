@@ -21,6 +21,55 @@ function isTeamSocket(socket, sessionId, teamId) {
   return Boolean(team) && team.sessionId === sessionId && team.teamId === teamId
 }
 
+/**
+ * 입장 토큰을 확인해 소켓에 팀 신원을 묶고 방에 넣는다. 성공하면 true.
+ * 질문·답변·투표도 토큰을 함께 보낸다. 소켓이 끊긴 동안 쌓인 메시지는 다시 연결될 때 team:join보다
+ * 먼저 전송되므로, 신원을 team:join으로만 묶으면 끊긴 동안의 투표가 버려진다.
+ */
+function bindTeamSocket(db, socket, sessionId, teamId, joinToken) {
+  const numericTeamId = Number(teamId)
+  // 방 이름은 세션 id로 만들므로 형식을 먼저 검사한다. 예전에는 'ID:teacher'를 보내면 교사 방에 들어갈 수 있었다
+  const session = isSessionId(sessionId) ? db.prepare('SELECT join_token FROM sessions WHERE id = ?').get(sessionId) : null
+  const team = session && Number.isInteger(numericTeamId)
+    ? db.prepare('SELECT id FROM teams WHERE id = ? AND session_id = ?').get(numericTeamId, sessionId)
+    : null
+  if (!team || !session.join_token || !safeEqual(joinToken, session.join_token)) return false
+
+  // 다른 팀으로 들어와 있던 소켓이면 먼저 나온다
+  const previous = socket.data.team
+  if (previous && (previous.sessionId !== sessionId || previous.teamId !== numericTeamId)) {
+    for (const room of [...socket.rooms]) {
+      if (room.startsWith(`session:${previous.sessionId}`)) socket.leave(room)
+    }
+  }
+  socket.data.team = { sessionId, teamId: numericTeamId }
+
+  socket.join(`session:${sessionId}`)
+  socket.join(`session:${sessionId}:team:${numericTeamId}`)
+  // 팀 단위 참여: 모든 팀원이 심판+응답 모두 보임
+  socket.join(`session:${sessionId}:team:${numericTeamId}:judge`)
+  socket.join(`session:${sessionId}:team:${numericTeamId}:respondent`)
+  return true
+}
+
+const teamAllowed = (db, socket, { sessionId, teamId, joinToken }) => (
+  isTeamSocket(socket, sessionId, teamId) || bindTeamSocket(db, socket, sessionId, teamId, joinToken)
+)
+
+/**
+ * 소켓 이벤트 공통 래퍼. payload가 객체가 아니어도 핸들러가 구조 분해에서 터지지 않게 빈 객체로 바꾸고,
+ * 예외를 잡는다. 익명 소켓 메시지 하나로 서버 프로세스가 끝나면 안 된다.
+ */
+function safeEvents(socket) {
+  return (event, handler) => socket.on(event, async (payload) => {
+    try {
+      await handler(payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {})
+    } catch (err) {
+      console.error(`[socket:${event}]`, err.message)
+    }
+  })
+}
+
 function leaveTeacherRooms(socket, sessionId) {
   socket.leave(`session:${sessionId}:teacher`)
   // 학생 소켓이 아니면 수업 방에서도 나온다
@@ -148,7 +197,9 @@ export function registerSocketHandlers(io, db) {
   })
 
   io.on('connection', (socket) => {
-    socket.on('teacher:join', ({ sessionId, token } = {}) => {
+    const on = safeEvents(socket)
+
+    on('teacher:join', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       // 다른 수업의 교사 방에 있던 소켓이면 먼저 나온다. 남아 있으면 만료 처리에서 빠진다
       const previous = socket.data.teacherSessionId
@@ -159,34 +210,14 @@ export function registerSocketHandlers(io, db) {
       expireTeacherRooms(socket, sessionId, verifyTeacherToken(token))
     })
 
-    socket.on('disconnect', () => clearTimeout(socket.data.teacherExpiry))
+    on('disconnect', () => clearTimeout(socket.data.teacherExpiry))
 
-    socket.on('team:join', ({ sessionId, teamId, joinToken } = {}) => {
-      const numericTeamId = Number(teamId)
-      // 방 이름은 세션 id로 만들므로 형식을 먼저 검사한다. 예전에는 'ID:teacher'를 보내면 교사 방에 들어갈 수 있었다
-      const session = isSessionId(sessionId) ? db.prepare('SELECT join_token FROM sessions WHERE id = ?').get(sessionId) : null
-      const team = session && Number.isInteger(numericTeamId)
-        ? db.prepare('SELECT id FROM teams WHERE id = ? AND session_id = ?').get(numericTeamId, sessionId)
-        : null
-      if (!team || !session.join_token || !safeEqual(joinToken, session.join_token)) {
+    on('team:join', ({ sessionId, teamId, joinToken }) => {
+      if (!bindTeamSocket(db, socket, sessionId, teamId, joinToken)) {
         socket.emit('team:join:error', { message: '수업 코드로 다시 입장해 주세요.' })
         return
       }
-
-      // 다른 팀으로 들어와 있던 소켓이면 먼저 나온다
-      const previous = socket.data.team
-      if (previous && (previous.sessionId !== sessionId || previous.teamId !== numericTeamId)) {
-        for (const room of [...socket.rooms]) {
-          if (room.startsWith(`session:${previous.sessionId}`)) socket.leave(room)
-        }
-      }
-      socket.data.team = { sessionId, teamId: numericTeamId }
-
-      socket.join(`session:${sessionId}`)
-      socket.join(`session:${sessionId}:team:${numericTeamId}`)
-      // 팀 단위 참여: 모든 팀원이 심판+응답 모두 보임
-      socket.join(`session:${sessionId}:team:${numericTeamId}:judge`)
-      socket.join(`session:${sessionId}:team:${numericTeamId}:respondent`)
+      const numericTeamId = Number(teamId)
 
       const roundState = activeRounds.get(sessionId)
       if (roundState) {
@@ -205,7 +236,7 @@ export function registerSocketHandlers(io, db) {
       }
     })
 
-    socket.on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel, briefingTime, token }) => {
+    on('round:start', ({ sessionId, style, turns, chatTime, responseDelay, voteTime, pointValue, aiModel, briefingTime, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       // 종료된 세션에서는 새 라운드를 시작할 수 없음
       const sessionRow = db.prepare('SELECT status FROM sessions WHERE id = ?').get(sessionId)
@@ -369,9 +400,9 @@ export function registerSocketHandlers(io, db) {
       })
     })
 
-    socket.on('judge:send-question', ({ sessionId, teamId, message } = {}) => {
+    on('judge:send-question', ({ sessionId, teamId, message, joinToken }) => {
       try {
-      if (!isTeamSocket(socket, sessionId, teamId)) return
+      if (!teamAllowed(db, socket, { sessionId, teamId, joinToken })) return
       if (typeof message !== 'string' || !message.trim() || message.length > MAX_MESSAGE_LENGTH) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
@@ -548,9 +579,9 @@ export function registerSocketHandlers(io, db) {
       } catch (err) { console.error('[judge:send-question]', err.message) }
     })
 
-    socket.on('respondent:send-answer', async ({ sessionId, teamId, message } = {}) => {
+    on('respondent:send-answer', async ({ sessionId, teamId, message, joinToken }) => {
       try {
-      if (!isTeamSocket(socket, sessionId, teamId)) return
+      if (!teamAllowed(db, socket, { sessionId, teamId, joinToken })) return
       if (typeof message !== 'string' || !message.trim() || message.length > MAX_MESSAGE_LENGTH) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
@@ -591,7 +622,7 @@ export function registerSocketHandlers(io, db) {
       } catch (err) { console.error('[respondent:send-answer]', err.message) }
     })
 
-    socket.on('round:force-end-chat', ({ sessionId, token }) => {
+    on('round:force-end-chat', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState || roundState.phase !== 'chatting') {
@@ -602,7 +633,7 @@ export function registerSocketHandlers(io, db) {
       endChatPhase(io, db, sessionId)
     })
 
-    socket.on('round:force-end-vote', ({ sessionId, token }) => {
+    on('round:force-end-vote', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState || roundState.phase !== 'voting') {
@@ -613,13 +644,13 @@ export function registerSocketHandlers(io, db) {
       endVotePhase(io, db, sessionId)
     })
 
-    socket.on('vote:submit', ({ sessionId, teamId, votes } = {}) => {
-      if (!isTeamSocket(socket, sessionId, teamId)) return
+    on('vote:submit', ({ sessionId, teamId, votes, joinToken }) => {
+      if (!teamAllowed(db, socket, { sessionId, teamId, joinToken })) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.phase !== 'voting') return
       if (!Array.isArray(votes) || votes.length > roundState.totalTurns) return
-      if (!votes.every((vote) => vote && (vote.verdict === 'human' || vote.verdict === 'ai'))) return
+      if (!votes.every((vote) => vote && (vote.verdict === 'human' || vote.verdict === 'ai') && Number.isInteger(vote.turn))) return
 
       roundState.voteData[teamId] = votes
 
@@ -636,7 +667,7 @@ export function registerSocketHandlers(io, db) {
       })
     })
 
-    socket.on('round:reveal', ({ sessionId, token }) => {
+    on('round:reveal', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
@@ -648,7 +679,7 @@ export function registerSocketHandlers(io, db) {
       revealResults(io, db, sessionId, roundState)
     })
 
-    socket.on('round:show-conversation', ({ sessionId, teamId, roundId, token }) => {
+    on('round:show-conversation', ({ sessionId, teamId, roundId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const targetRoundId = roundId || activeRounds.get(sessionId)?.roundId
       if (!targetRoundId || !belongsToSession(db, sessionId, { roundId: targetRoundId, teamId })) return
@@ -658,7 +689,7 @@ export function registerSocketHandlers(io, db) {
       io.to(`session:${sessionId}:teacher`).emit('round:conversation-detail', { teamId, turns })
     })
 
-    socket.on('teacher:get-live-turns', ({ sessionId, teamId, roundId, token }) => {
+    on('teacher:get-live-turns', ({ sessionId, teamId, roundId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       if (!belongsToSession(db, sessionId, { roundId, teamId })) return
       const turns = db.prepare(`
@@ -672,7 +703,7 @@ export function registerSocketHandlers(io, db) {
 
     // 세션 완전 종료 — 라운드 진행 중이든, 대기 중이든, 결과 화면이든 언제든 호출 가능
     // tournament:end는 "토너먼트 최종 집계 후 종료"이지만, session:close는 "수업을 그냥 끝냄"
-    socket.on('session:close', ({ sessionId, token }) => {
+    on('session:close', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       try {
         // 1~2. 타이머 종료 + 진행 중 라운드의 전달 예약 취소 + activeRounds 제거
@@ -699,7 +730,7 @@ export function registerSocketHandlers(io, db) {
       }
     })
 
-    socket.on('tournament:end', ({ sessionId, token }) => {
+    on('tournament:end', ({ sessionId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const rounds = db.prepare(
         'SELECT * FROM rounds WHERE session_id = ? ORDER BY round_number'
