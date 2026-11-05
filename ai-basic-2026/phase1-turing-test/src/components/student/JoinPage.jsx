@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiGet, apiPost } from '../../utils/api.js'
+import { apiGet, apiPost, setJoinToken } from '../../utils/api.js'
 import { withBase } from '../../config.js'
 import { startBgm, armBgmOnFirstGesture } from '../../utils/morse.js'
 import SoundToggle from './SoundToggle.jsx'
@@ -38,6 +38,7 @@ export default function JoinPage({ navigate }) {
     }
     try {
       const data = await apiPost('/session', { teacherCode: cleaned, mode: 'join' })
+      if (data.joinToken) setJoinToken(data.id, data.joinToken)
       setSession(data)
       setError('')
     } catch (err) {
@@ -49,6 +50,12 @@ export default function JoinPage({ navigate }) {
   async function loadSession(sessionId) {
     try {
       const data = await apiGet(`/session/${sessionId}`)
+      // 입장 토큰이 없으면 팀 목록을 받지 못한다. 세션 주소만으로는 들어올 수 없으므로 코드를 입력하게 한다
+      if (!Array.isArray(data.teams)) {
+        setSession(null)
+        setError('수업 코드를 입력하세요.')
+        return
+      }
       setSession(data)
       setError('')
     } catch (loadError) {

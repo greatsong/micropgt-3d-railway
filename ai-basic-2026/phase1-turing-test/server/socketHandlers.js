@@ -1,11 +1,32 @@
 import { createRound, getPartner, getRole, pairingsToRecords } from './matchmaking.js'
 import { generateAIResponseWithTimeout, styleTransform, pickFallbackPhrase, aiEvents } from './ai.js'
 import { getTimer, timerStore } from './timer.js'
-import { buildSharedRankings } from './utils.js'
+import { buildSharedRankings, maskName, safeEqual } from './utils.js'
 import { sessionApiKeys } from './apiKeyStore.js'
-import { verifyTeacherToken, canManageSession, releaseSessionOwner } from './teacherAuth.js'
+import { verifyTeacherToken, canManageSession } from './teacherAuth.js'
 
 const activeRounds = new Map()
+
+const SESSION_ID_RE = /^[A-Za-z0-9]{1,64}$/
+const MAX_MESSAGE_LENGTH = 1000
+
+const isSessionId = (value) => typeof value === 'string' && SESSION_ID_RE.test(value)
+
+/**
+ * 학생 소켓 신원 — team:join에서 입장 토큰을 확인해 socket.data.team에 남긴다.
+ * 질문·답변·투표는 payload의 teamId를 믿지 않고 이 값과 비교한다.
+ */
+function isTeamSocket(socket, sessionId, teamId) {
+  const team = socket.data.team
+  return Boolean(team) && team.sessionId === sessionId && team.teamId === teamId
+}
+
+/** 세션 id·라운드 id·팀 id가 서로 같은 수업의 것인지 확인한다 (교사가 다른 수업의 대화를 읽지 못하게) */
+function belongsToSession(db, sessionId, { roundId, teamId }) {
+  const round = db.prepare('SELECT 1 FROM rounds WHERE id = ? AND session_id = ?').get(roundId, sessionId)
+  const team = db.prepare('SELECT 1 FROM teams WHERE id = ? AND session_id = ?').get(teamId, sessionId)
+  return Boolean(round && team)
+}
 
 /** 교사 전용 이벤트 — 토큰이 없거나 만료면 거부하고, 다른 교사의 세션이면 거부한다 */
 function teacherOk(socket, token, sessionId) {
@@ -14,7 +35,7 @@ function teacherOk(socket, token, sessionId) {
     socket.emit('error', { message: '교사 인증이 만료되었습니다. 입장 코드로 다시 들어오세요.' })
     return false
   }
-  if (sessionId && !canManageSession(sessionId, teacher.teacherId)) {
+  if (!isSessionId(sessionId) || !canManageSession(sessionId, teacher)) {
     socket.emit('error', { message: '다른 선생님이 진행 중인 수업입니다. 조작할 수 없습니다.' })
     return false
   }
@@ -43,7 +64,6 @@ function cleanupRound(io, sessionId) {
 function releaseSession(sessionId) {
   timerStore.delete(sessionId)
   sessionApiKeys.delete(sessionId)
-  releaseSessionOwner(sessionId)
 }
 
 /** 비동기 작업(말투 변환·AI 호출) 뒤에도 이 라운드가 아직 대화 단계인지 — 아니면 결과를 버린다 */
@@ -113,16 +133,35 @@ export function registerSocketHandlers(io, db) {
       socket.join(`session:${sessionId}:teacher`)
     })
 
-    socket.on('team:join', ({ sessionId, teamId }) => {
+    socket.on('team:join', ({ sessionId, teamId, joinToken } = {}) => {
+      const numericTeamId = Number(teamId)
+      // 방 이름은 세션 id로 만들므로 형식을 먼저 검사한다. 예전에는 'ID:teacher'를 보내면 교사 방에 들어갈 수 있었다
+      const session = isSessionId(sessionId) ? db.prepare('SELECT join_token FROM sessions WHERE id = ?').get(sessionId) : null
+      const team = session && Number.isInteger(numericTeamId)
+        ? db.prepare('SELECT id FROM teams WHERE id = ? AND session_id = ?').get(numericTeamId, sessionId)
+        : null
+      if (!team || !session.join_token || !safeEqual(joinToken, session.join_token)) {
+        socket.emit('team:join:error', { message: '수업 코드로 다시 입장해 주세요.' })
+        return
+      }
+
+      // 다른 팀으로 들어와 있던 소켓이면 먼저 나온다
+      const previous = socket.data.team
+      if (previous && (previous.sessionId !== sessionId || previous.teamId !== numericTeamId)) {
+        for (const room of [...socket.rooms]) {
+          if (room.startsWith(`session:${previous.sessionId}`)) socket.leave(room)
+        }
+      }
+      socket.data.team = { sessionId, teamId: numericTeamId }
+
       socket.join(`session:${sessionId}`)
-      socket.join(`session:${sessionId}:team:${teamId}`)
+      socket.join(`session:${sessionId}:team:${numericTeamId}`)
       // 팀 단위 참여: 모든 팀원이 심판+응답 모두 보임
-      socket.join(`session:${sessionId}:team:${teamId}:judge`)
-      socket.join(`session:${sessionId}:team:${teamId}:respondent`)
+      socket.join(`session:${sessionId}:team:${numericTeamId}:judge`)
+      socket.join(`session:${sessionId}:team:${numericTeamId}:respondent`)
 
       const roundState = activeRounds.get(sessionId)
       if (roundState) {
-        const numericTeamId = Number(teamId)
         const isInPairs = roundState.pairs.some(([a, b]) => a.id === numericTeamId || b.id === numericTeamId)
         const isObserver = roundState.soloObserver?.id === numericTeamId
         if (isInPairs || isObserver) {
@@ -302,8 +341,10 @@ export function registerSocketHandlers(io, db) {
       })
     })
 
-    socket.on('judge:send-question', ({ sessionId, teamId, message }) => {
+    socket.on('judge:send-question', ({ sessionId, teamId, message } = {}) => {
       try {
+      if (!isTeamSocket(socket, sessionId, teamId)) return
+      if (typeof message !== 'string' || !message.trim() || message.length > MAX_MESSAGE_LENGTH) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.phase !== 'chatting') return
@@ -479,8 +520,10 @@ export function registerSocketHandlers(io, db) {
       } catch (err) { console.error('[judge:send-question]', err.message) }
     })
 
-    socket.on('respondent:send-answer', async ({ sessionId, teamId, message }) => {
+    socket.on('respondent:send-answer', async ({ sessionId, teamId, message } = {}) => {
       try {
+      if (!isTeamSocket(socket, sessionId, teamId)) return
+      if (typeof message !== 'string' || !message.trim() || message.length > MAX_MESSAGE_LENGTH) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.phase !== 'chatting') return
@@ -542,11 +585,13 @@ export function registerSocketHandlers(io, db) {
       endVotePhase(io, db, sessionId)
     })
 
-    socket.on('vote:submit', ({ sessionId, teamId, votes }) => {
+    socket.on('vote:submit', ({ sessionId, teamId, votes } = {}) => {
+      if (!isTeamSocket(socket, sessionId, teamId)) return
       const roundState = activeRounds.get(sessionId)
       if (!roundState) return
       if (roundState.phase !== 'voting') return
-      if (!Array.isArray(votes)) return
+      if (!Array.isArray(votes) || votes.length > roundState.totalTurns) return
+      if (!votes.every((vote) => vote && (vote.verdict === 'human' || vote.verdict === 'ai'))) return
 
       roundState.voteData[teamId] = votes
 
@@ -578,7 +623,7 @@ export function registerSocketHandlers(io, db) {
     socket.on('round:show-conversation', ({ sessionId, teamId, roundId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
       const targetRoundId = roundId || activeRounds.get(sessionId)?.roundId
-      if (!targetRoundId) return
+      if (!targetRoundId || !belongsToSession(db, sessionId, { roundId: targetRoundId, teamId })) return
       const turns = db.prepare(
         'SELECT * FROM turns WHERE round_id = ? AND team_id = ? ORDER BY turn_number'
       ).all(targetRoundId, teamId)
@@ -587,6 +632,7 @@ export function registerSocketHandlers(io, db) {
 
     socket.on('teacher:get-live-turns', ({ sessionId, teamId, roundId, token }) => {
       if (!teacherOk(socket, token, sessionId)) return
+      if (!belongsToSession(db, sessionId, { roundId, teamId })) return
       const turns = db.prepare(`
         SELECT turn_number, question_text, styled_answer, respondent_type
         FROM turns
@@ -703,13 +749,18 @@ export function registerSocketHandlers(io, db) {
         WHERE r.session_id = ?
       `).all(sessionId)
 
-      io.to(`session:${sessionId}`).emit('tournament:final', {
-        finalStandings: standings,
+      // 실명이 든 순위표는 교사 화면에만 보낸다. 학생 화면은 가린 이름으로 받는다
+      const finalPayload = {
         allRoundResults: rounds,
         roundStats,
         mvpTeamId: mvpTeam?.teamId ?? null,
         overallStats: calcStats(allTurns),
-      })
+      }
+      io.to(`session:${sessionId}:teacher`).emit('tournament:final', { ...finalPayload, finalStandings: standings })
+      const maskedStandings = standings.map((team) => ({ ...team, members: team.members.map(maskName) }))
+      for (const team of teams) {
+        io.to(`session:${sessionId}:team:${team.id}`).emit('tournament:final', { ...finalPayload, finalStandings: maskedStandings })
+      }
 
       db.prepare("UPDATE sessions SET status = 'ended' WHERE id = ?").run(sessionId)
       cleanupRound(io, sessionId)

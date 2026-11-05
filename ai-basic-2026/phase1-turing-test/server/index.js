@@ -7,14 +7,16 @@ import cors from 'cors'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import fs from 'fs'
-import { nanoid } from './utils.js'
+import { nanoid, createJoinToken, maskName, safeEqual } from './utils.js'
 import db from './db.js'
 import { registerSocketHandlers, buildSessionSummary } from './socketHandlers.js'
 import { sessionApiKeys } from './apiKeyStore.js'
 import {
-  issueTeacherToken, verifyTeacherToken, requireTeacher, requireSessionOwner, getTeacherPin,
-  pinBlocked, recordPinFailure, clearPinFailures, normalizeTeacherId, canManageSession, sessionOwner,
+  issueTeacherToken, verifyTeacherToken, requireSessionOwner, getTeacherPin,
+  pinBlocked, recordPinFailure, clearPinFailures, normalizeTeacherId, canManageSession,
+  joinCodeBlocked, recordJoinCodeFailure,
 } from './teacherAuth.js'
+import { startRetentionJob } from './retention.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -31,13 +33,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : DEFAULT_ORIGINS
 
 const corsOptions = {
+  // 앱은 API와 같은 주소에서 서빙되므로 CORS 허용이 필요 없다. 목록에 없는 사이트에는 허용 헤더를 주지 않는다
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      // 프로덕션: 같은 도메인 서빙이므로 origin 없는 요청 허용
-      callback(null, true)
-    }
+    callback(null, !origin || allowedOrigins.includes(origin))
   },
   credentials: true,
 }
@@ -62,6 +60,9 @@ app.use(express.json())
 // (그대로 두면 교사 화면이 "진행 중"으로 판단해 다음 라운드를 시작하지 못한다)
 const orphaned = db.prepare("UPDATE rounds SET status = 'closed' WHERE status IN ('chatting', 'voting', 'revealed')").run()
 if (orphaned.changes > 0) console.log(`[boot] 진행 중이던 라운드 ${orphaned.changes}개를 중단 처리했습니다 (서버 재시작)`)
+
+// 보존 기간(TURING_RETENTION_DAYS)을 설정했으면 지난 수업 기록을 지운다
+startRetentionJob(db)
 
 // db와 io를 라우터에서 사용할 수 있도록 주입
 app.use((req, res, next) => {
@@ -111,12 +112,13 @@ app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
     if (!expected) {
       return res.status(503).json({ error: '입장 코드가 서버에 설정되지 않았습니다. 관리자에게 문의하세요.' })
     }
-    if (pin.trim() !== expected) {
+    // 차단 중에는 코드를 비교하지 않는다. 비교한 뒤 실패에만 429를 주면 맞는 코드는 계속 통과해 제한이 되지 않는다
+    if (pinBlocked(req.ip)) {
+      return res.status(429).json({ error: '입장 코드 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
+    }
+    if (!safeEqual(pin.trim(), expected)) {
       // 실패만 센다 (같은 공용 IP의 정상 로그인이 막히지 않게)
       recordPinFailure(req.ip)
-      if (pinBlocked(req.ip)) {
-        return res.status(429).json({ error: '입장 코드 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
-      }
       return res.status(401).json({ error: '입장 코드가 올바르지 않습니다' })
     }
     clearPinFailures(req.ip)
@@ -136,7 +138,7 @@ app.post(`${BASE_PATH}/api/auth/teacher`, async (req, res) => {
 
 // 세션에 API 키 연결 (본인 키 입장 시에만, 세션 소유자만)
 app.post(`${BASE_PATH}/api/session/:sessionId/api-keys`, requireSessionOwner, (req, res) => {
-  const { apiKeys } = req.body
+  const { apiKeys } = req.body || {}
   if (!apiKeys || !apiKeys.anthropic) {
     return res.status(400).json({ error: 'Anthropic API 키는 필수입니다' })
   }
@@ -155,6 +157,60 @@ app.get(`${BASE_PATH}/api/session/:sessionId/api-keys/status`, requireSessionOwn
   })
 })
 
+// ── 학생 입장 권한 ────────────────────────────────────────────────────────
+// 학생은 로그인 없이 수업 코드로 들어온다. 코드를 확인하면 세션의 입장 토큰을 받고,
+// 팀 조회·등록과 소켓 입장에서 이 토큰을 확인한다. 세션 id나 팀 번호만으로는 명단을 볼 수 없다.
+const MAX_TEAMS_PER_SESSION = 60
+const MAX_MEMBERS_PER_TEAM = 6
+const MAX_NAME_LENGTH = 30
+
+function ensureJoinToken(session) {
+  if (session.join_token) return session.join_token
+  const token = createJoinToken()
+  db.prepare('UPDATE sessions SET join_token = ? WHERE id = ? AND join_token IS NULL').run(token, session.id)
+  return db.prepare('SELECT join_token FROM sessions WHERE id = ?').get(session.id).join_token
+}
+
+/** 'teacher'(이 세션의 소유 교사) · 'student'(입장 토큰 보유) · null */
+function sessionViewer(req, session) {
+  const teacher = verifyTeacherToken(req.get('x-teacher-token'))
+  if (teacher && canManageSession(session.id, teacher)) return 'teacher'
+  if (session.join_token && safeEqual(req.get('x-join-token') || '', session.join_token)) return 'student'
+  return null
+}
+
+/** 학생에게는 팀원 이름을 가려서 보낸다. 실명은 소유 교사에게만 간다 */
+function teamForViewer(team, viewer) {
+  const parsed = parseTeam(team)
+  return viewer === 'teacher' ? parsed : { ...parsed, members: parsed.members.map(maskName) }
+}
+
+function sessionForViewer(session, teams, viewer) {
+  const { join_token: joinToken, owner_teacher_id: _owner, ...publicSession } = session
+  return {
+    ...publicSession,
+    joinToken: viewer === 'teacher' || viewer === 'student' ? ensureJoinToken({ ...session, join_token: joinToken }) : undefined,
+    teams: teams.map((team) => teamForViewer(team, viewer)),
+  }
+}
+
+/** teacher 또는 student만 통과 — :sessionId의 세션을 req.session에 담는다 */
+function requireSessionAccess(req, res, next) {
+  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.sessionId)
+  if (!session) return res.status(404).json({ error: '세션 없음' })
+  const viewer = sessionViewer(req, session)
+  if (!viewer) return res.status(403).json({ error: '수업 코드로 다시 입장해 주세요.' })
+  req.session = session
+  req.viewer = viewer
+  next()
+}
+
+function parseMembers(value) {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MEMBERS_PER_TEAM) return null
+  const members = value.map((member) => (typeof member === 'string' ? member.trim() : ''))
+  return members.every((member) => member && member.length <= MAX_NAME_LENGTH) ? members : null
+}
+
 // ── 세션 API ──────────────────────────────────────────────────────────────
 
 // 세션 생성/조회 — mode='join' (학생) 시에는 새 세션을 만들지 않고 404 반환
@@ -165,6 +221,11 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
     return res.status(400).json({ error: '수업 코드 필요' })
   }
   const teacherCode = rawCode.trim().toUpperCase()
+
+  // 수업 코드 추측 제한 — 실패만 세고, 차단 중에는 코드를 확인하지 않는다
+  if (mode === 'join' && joinCodeBlocked(req.ip)) {
+    return res.status(429).json({ error: '코드 입력 실패가 너무 많습니다. 10분 뒤 다시 시도하세요.' })
+  }
 
   // 세션 생성은 교사만 (학생 입장 mode='join'은 토큰 불필요)
   const teacher = mode !== 'join' ? verifyTeacherToken(req.get('x-teacher-token')) : null
@@ -180,15 +241,16 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
   if (existing) {
     // 교사가 만들 때: 같은 코드의 활성 세션이 다른 교사(브라우저) 것이면 거부 (겹친 코드로 한 세션에 합쳐지는 일 방지)
     // 소유자 기록은 서버 메모리라 재배포 뒤에는 비어 있고, 그때는 처음 여는 교사가 가져간다
-    if (mode !== 'join' && !canManageSession(existing.id, teacher.teacherId)) {
+    if (mode !== 'join' && !canManageSession(existing.id, teacher)) {
       return res.status(409).json({ error: `'${teacherCode}'는 다른 선생님이 진행 중인 수업 코드입니다. 다른 코드를 입력하세요.` })
     }
     const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(existing.id)
-    return res.json({ ...existing, teams: teams.map(parseTeam) })
+    return res.json(sessionForViewer(existing, teams, mode === 'join' ? 'student' : 'teacher'))
   }
 
   // 학생 입장: 활성 세션이 없으면 빈 세션을 만들지 않고 안내
   if (mode === 'join') {
+    recordJoinCodeFailure(req.ip)
     return res.status(404).json({
       error: '입력한 수업 코드의 세션을 찾을 수 없어요. 선생님이 코드를 시작했는지, 코드가 정확한지 확인해 주세요.',
     })
@@ -196,31 +258,45 @@ app.post(`${BASE_PATH}/api/session`, (req, res) => {
 
   // 교사 생성: 새 세션 생성
   const id = nanoid()
-  db.prepare('INSERT INTO sessions (id, teacher_code) VALUES (?, ?)').run(id, teacherCode)
-  canManageSession(id, teacher.teacherId) // 소유자 등록
-  res.json({ id, teacher_code: teacherCode, status: 'waiting', teams: [] })
+  const joinToken = createJoinToken()
+  db.prepare('INSERT INTO sessions (id, teacher_code, owner_teacher_id, join_token) VALUES (?, ?, ?, ?)')
+    .run(id, teacherCode, teacher.teacherId, joinToken)
+  res.json({ id, teacher_code: teacherCode, status: 'waiting', joinToken, teams: [] })
 })
 
-// 세션 조회
+// 세션 조회 — 입장 권한이 없으면 상태만 알려 준다 (학생 화면이 수업 종료 여부를 확인하는 용도)
 app.get(`${BASE_PATH}/api/session/:sessionId`, (req, res) => {
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.sessionId)
   if (!session) return res.status(404).json({ error: '세션 없음' })
+  // 토큰을 보냈는데 만료됐으면 교사 화면이 다시 로그인하도록 401을 준다
+  if (req.get('x-teacher-token') && !verifyTeacherToken(req.get('x-teacher-token'))) {
+    return res.status(401).json({ error: '교사 인증이 필요합니다. 입장 코드로 다시 들어오세요.' })
+  }
+  const viewer = sessionViewer(req, session)
+  if (!viewer) return res.json({ id: session.id, status: session.status })
   const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(session.id)
-  res.json({ ...session, teams: teams.map(parseTeam) })
+  res.json(sessionForViewer(session, teams, viewer))
 })
 
 // 팀 등록
-app.post(`${BASE_PATH}/api/session/:sessionId/team`, (req, res) => {
-  const { name, members, color } = req.body
-  if (!name || !members) return res.status(400).json({ error: '팀명, 팀원 필요' })
+app.post(`${BASE_PATH}/api/session/:sessionId/team`, requireSessionAccess, (req, res) => {
+  const { color } = req.body || {}
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : ''
+  const members = parseMembers(req.body?.members)
+  if (!name || name.length > MAX_NAME_LENGTH || !members) return res.status(400).json({ error: '팀명, 팀원 필요' })
 
-  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.sessionId)
-  if (!session) return res.status(404).json({ error: '세션 없음' })
+  const session = req.session
+  if (session.status !== 'waiting' && session.status !== 'active') {
+    return res.status(410).json({ error: '이미 종료된 수업입니다.' })
+  }
+  const teamCount = db.prepare('SELECT COUNT(*) AS count FROM teams WHERE session_id = ?').get(session.id).count
+  if (teamCount >= MAX_TEAMS_PER_SESSION) return res.status(409).json({ error: '팀 수가 너무 많습니다. 선생님께 알려 주세요.' })
 
   // 팀 색상 — 제공 안 되면 자동 배정
   const colors = ['#EF4444','#3B82F6','#22C55E','#EAB308','#A855F7','#F97316','#06B6D4','#EC4899']
   const usedColors = db.prepare('SELECT color FROM teams WHERE session_id = ?').all(session.id).map(t => t.color)
-  const assignedColor = color || colors.find(c => !usedColors.includes(c)) || colors[0]
+  const requestedColor = typeof color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(color) ? color : null
+  const assignedColor = requestedColor || colors.find(c => !usedColors.includes(c)) || colors[0]
 
   const result = db.prepare(
     'INSERT INTO teams (session_id, name, members, color) VALUES (?, ?, ?, ?)'
@@ -235,16 +311,18 @@ app.post(`${BASE_PATH}/api/session/:sessionId/team`, (req, res) => {
     `).run(session.id, team.id, member, 'member')
   })
 
-  req.io.to(`session:${session.id}`).emit('team:registered', {
+  // 실명이 든 알림은 교사 방에만 보낸다 (학생 화면은 이 이벤트를 쓰지 않는다)
+  req.io.to(`session:${session.id}:teacher`).emit('team:registered', {
     team: parseTeam(team),
   })
 
+  // 방금 입력한 본인 팀 정보는 그대로 돌려준다
   res.json(parseTeam(team))
 })
 
 // 팀 참가 — 팀 단위 참여 (개인 역할 없음)
-app.post(`${BASE_PATH}/api/session/:sessionId/join`, (req, res) => {
-  const { teamId } = req.body
+app.post(`${BASE_PATH}/api/session/:sessionId/join`, requireSessionAccess, (req, res) => {
+  const { teamId } = req.body || {}
   if (!teamId) return res.status(400).json({ error: '팀 ID 필요' })
 
   const team = db.prepare('SELECT * FROM teams WHERE id = ? AND session_id = ?')
@@ -254,16 +332,19 @@ app.post(`${BASE_PATH}/api/session/:sessionId/join`, (req, res) => {
   res.json({ teamId: Number(teamId) })
 })
 
-app.get(`${BASE_PATH}/api/session/:sessionId/teams`, (req, res) => {
-  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(req.params.sessionId)
-  res.json(teams.map(parseTeam))
+app.get(`${BASE_PATH}/api/session/:sessionId/teams`, requireSessionAccess, (req, res) => {
+  const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(req.session.id)
+  res.json(teams.map((team) => teamForViewer(team, req.viewer)))
 })
 
-// 팀 단건 조회
+// 팀 단건 조회 — 팀 번호는 1부터 차례로 붙으므로 그 팀이 속한 세션의 입장 권한을 확인한다.
+// 권한이 없을 때도 팀이 있는지 드러나지 않도록 없는 팀과 같은 응답을 준다
 app.get(`${BASE_PATH}/api/team/:teamId`, (req, res) => {
   const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(req.params.teamId)
-  if (!team) return res.status(404).json({ error: '팀 없음' })
-  res.json(parseTeam(team))
+  const session = team && db.prepare('SELECT * FROM sessions WHERE id = ?').get(team.session_id)
+  const viewer = session && sessionViewer(req, session)
+  if (!viewer) return res.status(404).json({ error: '팀 없음' })
+  res.json(teamForViewer(team, viewer))
 })
 
 // ── 대시보드 API ──────────────────────────────────────────────────────────
@@ -278,7 +359,8 @@ app.get(`${BASE_PATH}/api/dashboard/:sessionId/rounds`, requireSessionOwner, (re
 
 // 라운드 상세 (턴 진행 현황 포함)
 app.get(`${BASE_PATH}/api/dashboard/:sessionId/round/:roundId`, requireSessionOwner, (req, res) => {
-  const round = db.prepare('SELECT * FROM rounds WHERE id = ?').get(req.params.roundId)
+  // 라운드 번호는 전역이므로 이 세션의 라운드인지 확인한다 (다른 수업의 대화를 읽지 못하게)
+  const round = db.prepare('SELECT * FROM rounds WHERE id = ? AND session_id = ?').get(req.params.roundId, req.params.sessionId)
   if (!round) return res.status(404).json({ error: '라운드 없음' })
 
   const teams = db.prepare('SELECT * FROM teams WHERE session_id = ? ORDER BY id').all(req.params.sessionId)

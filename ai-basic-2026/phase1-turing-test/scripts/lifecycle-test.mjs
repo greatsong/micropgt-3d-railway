@@ -38,7 +38,7 @@ async function setupSession(code, nTeams) {
   const sockets = []
   for (const t of teams) sockets.push(await connect())
   teacher.emit('teacher:join', { sessionId: session.id, token: TOKEN })
-  sockets.forEach((s, i) => s.emit('team:join', { sessionId: session.id, teamId: teams[i].id }))
+  sockets.forEach((s, i) => s.emit('team:join', { sessionId: session.id, teamId: teams[i].id, joinToken: session.joinToken }))
   const ctx = { session, teams, teacher, sockets, errors: [], ticks: 0, aiPreviews: 0, timeouts: 0, aiErrors: 0 }
   teacher.on('error', (e) => ctx.errors.push(e.message))
   teacher.on('ai:error', () => { ctx.aiErrors++ })

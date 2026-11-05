@@ -31,9 +31,26 @@ export function getTeacherId() {
   }
 }
 
+// 학생 입장 토큰 — 수업 코드를 확인하면 서버가 준다. 새로고침·재접속 뒤에도 이어지도록 localStorage에 둔다
+const JOIN_TOKEN_KEY = 'turing_test_join_token'
+
+export function getJoinToken() {
+  try { return JSON.parse(localStorage.getItem(JOIN_TOKEN_KEY) || '{}').token || '' } catch { return '' }
+}
+export function setJoinToken(sessionId, token) {
+  try { localStorage.setItem(JOIN_TOKEN_KEY, JSON.stringify({ sessionId, token })) } catch {}
+}
+export function clearJoinToken() {
+  try { localStorage.removeItem(JOIN_TOKEN_KEY) } catch {}
+}
+
 function authHeaders() {
   const token = getTeacherToken()
-  return token ? { 'x-teacher-token': token } : {}
+  const joinToken = getJoinToken()
+  return {
+    ...(token ? { 'x-teacher-token': token } : {}),
+    ...(joinToken ? { 'x-join-token': joinToken } : {}),
+  }
 }
 
 async function readJson(response) {
