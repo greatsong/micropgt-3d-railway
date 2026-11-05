@@ -336,7 +336,9 @@ export default function DashboardPage() {
         socket.off('auth_error');
 
         const onConnect = () => {
-            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
+            let resumeToken = resumeTokenRef.current;
+            try { resumeToken = resumeToken || sessionStorage.getItem('microgpt-dashboard-token') || ''; } catch { /* 저장소를 못 읽으면 비밀번호만 쓴다 */ }
+            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim(), resumeToken });
         };
         dashConnectHandlerRef.current = onConnect;
 
@@ -355,7 +357,10 @@ export default function DashboardPage() {
         socket.on('connect', onConnect);
         socket.on('auth_error', onAuthError);
         socket.off('dashboard_token');
-        socket.on('dashboard_token', (data) => { resumeTokenRef.current = data?.token || ''; });
+        socket.on('dashboard_token', (data) => {
+            resumeTokenRef.current = data?.token || '';
+            try { sessionStorage.setItem('microgpt-dashboard-token', resumeTokenRef.current); } catch { /* 저장 실패는 무시 */ }
+        });
         // room_state가 오면 인증 성공으로 판단
         socket.once('room_state', onRoomState);
 

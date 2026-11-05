@@ -152,6 +152,15 @@ export function registerSocketHandlers(io) {
         return;
       }
 
+      // 같은 브라우저 소켓을 대시보드와 학생 화면이 함께 쓴다. 학생으로 들어오면 교사 역할과 이전 방을 정리한다.
+      // 남겨 두면 학생 화면의 소켓이 교사용 학번·이름을 계속 받는다
+      const previousRoom = currentRoom ? rooms.get(currentRoom) : null;
+      if (previousRoom?.teacherId === socket.id) previousRoom.teacherId = null;
+      if (currentRoom && currentRoom !== roomCode) {
+        previousRoom?.students.delete(socket.id);
+        socket.leave(currentRoom);
+      }
+
       currentRoom = roomCode;
       studentInfo = {
         id: socket.id,

@@ -35,7 +35,19 @@ app.prepare().then(() => {
   const httpServer = createServer(expressApp);
 
   // ── Socket.io ──
+  // CORS는 WebSocket을 막지 못하므로 Origin을 직접 확인한다. 브라우저 밖 요청은 Origin이 없다
+  const sameOrigin = (req) => {
+    const { origin, host } = req.headers;
+    if (!origin) return true;
+    try {
+      return new URL(origin).host === host;
+    } catch {
+      return false;
+    }
+  };
+
   const io = new SocketIOServer(httpServer, {
+    allowRequest: (req, callback) => callback(null, dev || sameOrigin(req)),
     pingTimeout: 60000,
     pingInterval: 25000,
     cors: {

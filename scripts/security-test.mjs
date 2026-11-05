@@ -73,6 +73,21 @@ attacker.emit('join_dashboard', { roomCode: 'ROOM1', password: 'test-pw' });
 await wait(200);
 check('비밀번호 실패 제한 뒤에는 맞아도 막힌다', !granted && errors.at(-1)?.includes('너무 많습니다'));
 
+// 교사로 인증했던 소켓이 학생으로 들어오면 교사 정보를 받지 않는다
+const switched = await connect();
+switched.emit('join_dashboard', { roomCode: 'ROOM2', resumeToken: resume });
+await wait(100);
+switched.emit('join_class', { studentName: '오조', memberNames: '10105 정지호', roomCode: 'ROOM2', stableId: 'stable-e' });
+await wait(100);
+const switchedEvents = [];
+switched.onAny((event, payload) => switchedEvents.push([event, payload]));
+const other = await connect();
+other.emit('join_class', { studentName: '육조', memberNames: '10106 한서연', roomCode: 'ROOM2', stableId: 'stable-f' });
+await wait(200);
+check('교사였던 소켓도 학생이 되면 학번·이름을 받지 않는다', switchedEvents.length > 0 && !JSON.stringify(switchedEvents).includes('한서연'));
+switched.disconnect();
+other.disconnect();
+
 const reconnected = await connect();
 let resumed = false;
 reconnected.on('room_state', () => { resumed = true; });
