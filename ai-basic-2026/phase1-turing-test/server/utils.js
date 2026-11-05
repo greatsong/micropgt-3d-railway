@@ -1,11 +1,44 @@
-// nanoid 대체 — 의존성 없이 짧은 고유 ID 생성
-export function nanoid(size = 10) {
+import crypto from 'crypto'
+
+// nanoid 대체 — 의존성 없이 고유 ID 생성. 세션 id는 입장 권한과 이어지므로 암호학적 난수를 쓴다
+export function nanoid(size = 16) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let id = ''
   for (let i = 0; i < size; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)]
+    id += chars[crypto.randomInt(chars.length)]
   }
   return id
+}
+
+/** 학생 입장 토큰 — 수업 코드를 아는 사람에게만 주고 팀·소켓 요청에서 확인한다 */
+export function createJoinToken() {
+  return crypto.randomBytes(24).toString('hex')
+}
+
+/**
+ * 수업 코드 뒤에 붙이는 임의 문자열 (5자, 약 2,800만 가지). 기본 코드는 낱말 59종이라 전수 탐색이 되므로
+ * 교사가 고른 낱말과 상관없이 서버가 붙인다. 칠판에서 헷갈리는 0·O·1·I·L은 뺐다
+ */
+export function createCodeSuffix(size = 5) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  let suffix = ''
+  for (let i = 0; i < size; i++) suffix += chars[crypto.randomInt(chars.length)]
+  return suffix
+}
+
+/** 무인증·학생 응답에서 실명을 가린다: "김철수" → "김○○" */
+export function maskName(name) {
+  const chars = Array.from(String(name ?? ''))
+  if (chars.length === 0) return ''
+  return chars[0] + '○'.repeat(Math.max(1, chars.length - 1))
+}
+
+/** 길이가 달라도 시간 차이가 드러나지 않는 문자열 비교 */
+export function safeEqual(input, expected) {
+  if (typeof input !== 'string' || typeof expected !== 'string' || !expected) return false
+  const a = crypto.createHash('sha256').update(input).digest()
+  const b = crypto.createHash('sha256').update(expected).digest()
+  return crypto.timingSafeEqual(a, b)
 }
 
 // 배열 셔플 (Fisher-Yates)

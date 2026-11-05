@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { apiGet } from '../../utils/api.js'
+import { apiGet, getJoinToken, clearJoinToken } from '../../utils/api.js'
 import { createSocket } from '../../utils/socket.js'
 import ChatScreen from './ChatScreen.jsx'
 import MissionBriefing from './MissionBriefing.jsx'
@@ -59,11 +59,11 @@ export default function TeamPage({ navigate }) {
   useEffect(() => {
     if (!sessionId || !teamId) { navigate('/'); return }
     localStorage.setItem(ACCESS_KEY, JSON.stringify({ sessionId, teamId }))
-    void apiGet(`/team/${teamId}`).then(setTeam).catch(() => navigate('/'))
+    void apiGet(`/team/${teamId}`, sessionId).then(setTeam).catch(() => navigate('/'))
 
     // 세션이 강제 중단된 경우에만 closed 화면 (새로고침 시 복구 방지)
     // 'ended'는 토너먼트 정상 종료 — 학생은 tournament:final 이벤트로 ScoreBoard 받음
-    void apiGet(`/session/${sessionId}`)
+    void apiGet(`/session/${sessionId}`, sessionId)
       .then((data) => {
         if (data?.status === 'closed') {
           setPhase('closed')
@@ -79,11 +79,19 @@ export default function TeamPage({ navigate }) {
 
     const socket = createSocket()
     socketRef.current = socket
-    socket.emit('team:join', { sessionId, teamId: Number(teamId) })
+    const joinPayload = { sessionId, teamId: Number(teamId), joinToken: getJoinToken(sessionId) }
+    socket.emit('team:join', joinPayload)
 
     // 재연결 시 자동으로 팀 재합류
     socket.on('connect', () => {
-      socket.emit('team:join', { sessionId, teamId: Number(teamId) })
+      socket.emit('team:join', joinPayload)
+    })
+
+    // 입장 토큰이 없거나 맞지 않으면 수업 코드 입력 화면으로 돌아간다
+    socket.on('team:join:error', () => {
+      clearJoinToken(sessionId)
+      localStorage.removeItem(ACCESS_KEY)
+      navigate('/')
     })
 
     socket.on('round:locked', (payload) => {
@@ -257,19 +265,19 @@ export default function TeamPage({ navigate }) {
     setAwaitingAnswer(true)
     setQuestionSentAt(Date.now())
     socketRef.current?.emit('judge:send-question', {
-      sessionId, teamId: Number(teamId), message: msg,
+      sessionId, teamId: Number(teamId), message: msg, joinToken: getJoinToken(sessionId),
     })
   }
 
   function submitAnswer(msg) {
     if (!msg) return
     socketRef.current?.emit('respondent:send-answer', {
-      sessionId, teamId: Number(teamId), message: msg,
+      sessionId, teamId: Number(teamId), message: msg, joinToken: getJoinToken(sessionId),
     })
   }
 
   function submitVotes(voteArray) {
-    socketRef.current?.emit('vote:submit', { sessionId, teamId: Number(teamId), votes: voteArray })
+    socketRef.current?.emit('vote:submit', { sessionId, teamId: Number(teamId), votes: voteArray, joinToken: getJoinToken(sessionId) })
     setVoteSubmitted(true)
   }
 

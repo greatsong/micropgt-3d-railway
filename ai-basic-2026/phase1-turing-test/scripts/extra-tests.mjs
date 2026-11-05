@@ -27,9 +27,9 @@ const once = (s, ev, ms = 15000) => new Promise((res, rej) => { const t = setTim
 async function makeSession(teacher, code, nTeams) {
   const s = (await api('POST', '/session', { teacherCode: code }, teacher.token)).data
   const teams = []
-  for (let i = 1; i <= nTeams; i++) teams.push((await api('POST', `/session/${s.id}/team`, { name: `${i}조`, members: ['a'] })).data)
+  for (let i = 1; i <= nTeams; i++) teams.push((await api('POST', `/session/${s.id}/team`, { name: `${i}조`, members: ['a'] }, teacher.token)).data)
   const sockets = []
-  for (const t of teams) { const k = await connect(); k.emit('team:join', { sessionId: s.id, teamId: t.id }); sockets.push(k) }
+  for (const t of teams) { const k = await connect(); k.emit('team:join', { sessionId: s.id, teamId: t.id, joinToken: s.joinToken }); sockets.push(k) }
   const ts = await connect(); ts.emit('teacher:join', { sessionId: s.id, token: teacher.token })
   await wait(200)
   return { s, teams, sockets, ts }
@@ -76,9 +76,9 @@ const cleanup = (c, token) => { c.ts.emit('session:close', { sessionId: c.s.id, 
   const A = await auth('teacherLATE0003')
   const c = await makeSession(A, 'EX-LATE-' + Date.now().toString(36).slice(-3), 2)
   await start(c, A.token)
-  const late = (await api('POST', `/session/${c.s.id}/team`, { name: '늦은팀', members: ['늦음'] })).data
+  const late = (await api('POST', `/session/${c.s.id}/team`, { name: '늦은팀', members: ['늦음'] }, A.token)).data
   const ls = await connect(); const lockP = once(ls, 'round:locked', 5000)
-  ls.emit('team:join', { sessionId: c.s.id, teamId: late.id })
+  ls.emit('team:join', { sessionId: c.s.id, teamId: late.id, joinToken: c.s.joinToken })
   const lock = await lockP.catch(() => null)
   lock ? pass('늦은 팀 round:locked 수신') : flag('늦은 팀에 round:locked가 오지 않음')
   // 대화 강제 종료 → 투표 마감 → 공개 → 다음 라운드에 참여
@@ -115,7 +115,7 @@ const cleanup = (c, token) => { c.ts.emit('session:close', { sessionId: c.s.id, 
   const rejoin = await connect()
   const restoredP = once(rejoin, 'round:started', 5000)
   const histP = once(rejoin, 'turn:history', 5000)
-  rejoin.emit('team:join', { sessionId: c.s.id, teamId: c.teams[jIdx].id })
+  rejoin.emit('team:join', { sessionId: c.s.id, teamId: c.teams[jIdx].id, joinToken: c.s.joinToken })
   const restored = await restoredP
   const hist = await histP.catch(() => null)
   restored.restored && restored.chatStarted === true && restored.briefingTime === 0 ? pass('대화 중 재접속: restored·chatStarted·브리핑 0 확인') : flag('대화 중 재접속 payload 이상 ' + JSON.stringify({ restored: restored.restored, chatStarted: restored.chatStarted, briefingTime: restored.briefingTime }))
@@ -125,7 +125,7 @@ const cleanup = (c, token) => { c.ts.emit('session:close', { sessionId: c.s.id, 
   c.ts.emit('round:force-end-chat', { sessionId: c.s.id, token: A.token }); await wait(400)
   const rejoin2 = await connect()
   const voteP = once(rejoin2, 'vote:phase-started', 5000)
-  rejoin2.emit('team:join', { sessionId: c.s.id, teamId: c.teams[0].id })
+  rejoin2.emit('team:join', { sessionId: c.s.id, teamId: c.teams[0].id, joinToken: c.s.joinToken })
   const v = await voteP.catch(() => null)
   v && v.restored ? pass('투표 중 재접속: vote:phase-started 복원') : flag('투표 중 재접속 복원 실패')
   rejoin2.disconnect()

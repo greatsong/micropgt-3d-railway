@@ -719,7 +719,7 @@ export default function TeacherApp({ navigate }) {
         <div className="panel auth-panel">
           <p className="eyebrow">NEW SESSION</p>
           <h1>수업 세션 만들기</h1>
-          <p className="muted">학생이 입력할 수업 코드입니다. 부르기 쉬운 말로 바꿔도 됩니다. 같은 코드로 다시 열면 기존 활성 세션을 이어서 사용합니다.</p>
+          <p className="muted">학생이 입력할 수업 코드입니다. 부르기 쉬운 말로 바꿔도 됩니다. 세션을 열면 코드 뒤에 임의 문자 다섯 자가 붙고, 학생은 그 전체 코드나 QR로 입장합니다. 같은 코드로 다시 열면 기존 활성 세션을 이어서 사용합니다.</p>
           <input
             className="field"
             value={teacherCode}

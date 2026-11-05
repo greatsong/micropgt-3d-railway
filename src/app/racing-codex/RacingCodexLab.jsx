@@ -1955,7 +1955,7 @@ export default function RacingCodexLab() {
                             <span className={styles.teamSwatch} style={{ backgroundColor: team.color }} />
                             <div>
                               <strong>{team.teamName}</strong>
-                              <small>{team.memberNames || '팀원 정보 없음'}</small>
+                              {team.memberNames ? <small>{team.memberNames}</small> : null}
                             </div>
                           </div>
                           <TeamStatusBadge status={team.status} />
@@ -2052,7 +2052,7 @@ export default function RacingCodexLab() {
                             <div key={student.id} className={styles.rosterItem}>
                               <div>
                                 <strong>{student.studentName}</strong>
-                                <small>{student.memberNames || '팀원 정보 없음'}</small>
+                                {student.memberNames ? <small>{student.memberNames}</small> : null}
                               </div>
                               <TeamStatusBadge status={team?.status || 'waiting'} />
                             </div>

@@ -95,6 +95,7 @@ export default function DashboardPage() {
     // 재연결 시 join_dashboard를 다시 emit하기 위해 인증 정보를 ref로 유지
     const roomCodeRef = useRef('');
     const passwordRef = useRef('');
+    const resumeTokenRef = useRef('');
     // Fix 7: handleConnect에서 등록한 onConnect 핸들러 참조 저장 → 전체 제거 대신 특정 핸들러만 off
     const dashConnectHandlerRef = useRef(null);
 
@@ -254,6 +255,7 @@ export default function DashboardPage() {
             socket.emit('join_dashboard', {
                 roomCode: roomCodeRef.current,
                 password: passwordRef.current,
+                resumeToken: resumeTokenRef.current,
             });
         };
 
@@ -334,7 +336,9 @@ export default function DashboardPage() {
         socket.off('auth_error');
 
         const onConnect = () => {
-            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim() });
+            let resumeToken = resumeTokenRef.current;
+            try { resumeToken = resumeToken || sessionStorage.getItem('microgpt-dashboard-token') || ''; } catch { /* 저장소를 못 읽으면 비밀번호만 쓴다 */ }
+            socket.emit('join_dashboard', { roomCode: roomCode.trim(), password: password.trim(), resumeToken });
         };
         dashConnectHandlerRef.current = onConnect;
 
@@ -352,6 +356,11 @@ export default function DashboardPage() {
 
         socket.on('connect', onConnect);
         socket.on('auth_error', onAuthError);
+        socket.off('dashboard_token');
+        socket.on('dashboard_token', (data) => {
+            resumeTokenRef.current = data?.token || '';
+            try { sessionStorage.setItem('microgpt-dashboard-token', resumeTokenRef.current); } catch { /* 저장 실패는 무시 */ }
+        });
         // room_state가 오면 인증 성공으로 판단
         socket.once('room_state', onRoomState);
 

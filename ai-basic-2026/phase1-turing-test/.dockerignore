@@ -1,6 +1,8 @@
 node_modules
 dist
-server/db
 .env
-.DS_Store
-npm-debug.log*
+.env.*
+server/db
+scripts
+*.md
+.git
